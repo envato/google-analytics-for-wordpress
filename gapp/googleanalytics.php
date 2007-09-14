@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://www.joostdevalk.nl/code/wordpress/analytics/
+Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
 Version: 1.0

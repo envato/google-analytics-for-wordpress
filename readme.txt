@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== Google Analytics for WordPress ===
 Contributors: joostdevalk
 Donate link: http://www.joostdevalk.nl/donate/
 Tags: analytics, google analytics, statistics
