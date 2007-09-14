@@ -1,0 +1,48 @@
+=== Plugin Name ===
+Contributors: joostdevalk
+Donate link: http://www.joostdevalk.nl/donate/
+Tags: analytics, google analytics, statistics
+Requires at least: 2.2
+Tested up to: 2.3
+Stable tag: 1.0
+
+The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
+
+== Description ==
+
+The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
+
+In the options panel for the plugin, you can determine the prefixes to use for the different kinds of outbound links and downloads it tracks.
+
+== Installation ==
+
+This section describes how to install the plugin and get it working.
+
+1. Upload `gapp` folder to the `/wp-content/plugins/` directory
+1. Activate the plugin through the 'Plugins' menu in WordPress
+1. Go to the options panel under the 'Plugins' menu and add your Analytics account number and set the settings you want.
+
+== Frequently Asked Questions ==
+
+= This inflates my clicks, can I filter those out? =
+
+Yes you can, create a new profile based on your original profile and name it something like 'domain - clean'. For each different outbound clicks or download prefix you have, create an exclude filter. You do this by:
+1. choosing a name for the filter, something like 'Exclude Downloads';
+1. selecting 'Custom filter' from the dropdown;
+1. selecting 'Exclude';
+1. selecting 'Request URI' in the Filter Field dropdown;
+1. setting the Filter Pattern to '/downloads/(.*)$' for a prefix '/downloads/';
+1. setting case sensitive to 'No'.
+
+For some more info, see the screenshot under Screenshots.
+
+== Screenshots ==
+
+1. Screenshot of the configuration panel for this plugin.
+2. Example of the exclude filter in Google Analytics.
+
+== More info ==
+
+* For more info, version history, etc. check out the page on my site about the [Google Analytics for WordPress plugin](http://www.joostdevalk.nl/wordpress/google-analytics/). 
+* To check out the other WordPress plugins I wrote, check out my [WordPress plugins](http://www.joostdevalk.nl/wordpress/) page.
+* For updates about this plugin and other plugins I created read my [SEO blog](http://www.joostdevalk.nl/)
