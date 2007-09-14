@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Google Analytics++
+Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
@@ -25,14 +25,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function add_config_page() {
 			global $wpdb;
 			if ( function_exists('add_submenu_page') ) {
-				add_submenu_page('plugins.php', 'Google Analytics++ Configuration', 'Google Analytics++', 1, basename(__FILE__), array('GA_Admin','config_page'));
+				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 1, basename(__FILE__), array('GA_Admin','config_page'));
 			}
 		} // end add_GA_config_page()
 
 		function config_page() {
 			global $dlextensions;
 			if ( isset($_POST['submit']) ) {
-				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics++ options.'));
+				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				$options['uastring'] = $_POST['uastring'];
 
@@ -101,7 +101,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						}
 					}
 				</script>
-				<h2>Google Analytics++ Configuration</h2>
+				<h2>Google Analytics for WordPress Configuration</h2>
 				<fieldset>
 					<form action="" method="post" id="analytics-conf" style="width: 35em; ">
 						<?php
@@ -255,13 +255,13 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$options = unserialize($opt);
 			
 			if ($options["uastring"] != "") {
-				echo("\n\t<!-- Google Analytics plugin for WordPress++ | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
+				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
+					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/custom_se.js\" type=\"text/javascript\"></script>\n");
 				}
 				if ( $options['imagese'] ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
+					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
 				}
 				echo("\t<script type=\"text/javascript\">\n");
 				echo("\t\t_uacct = \"".$options["uastring"]."\";\n");
