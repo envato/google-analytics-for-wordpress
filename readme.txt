@@ -14,6 +14,9 @@ The Google Analytics for WordPress plugina automatically tracks and segments all
 
 In the options panel for the plugin, you can determine the prefixes to use for the different kinds of outbound links and downloads it tracks.
 
+* [Google Analytics for WordPress](http://www.joostdevalk.nl/wordpress/google-analytics/).
+* Other [Wordpress plugins](http://www.joostdevalk.nl/wordpress/) by the same author.
+
 == Installation ==
 
 This section describes how to install the plugin and get it working.
