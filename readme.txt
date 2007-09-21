@@ -17,6 +17,24 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 * [Google Analytics for WordPress](http://www.joostdevalk.nl/wordpress/google-analytics/).
 * Other [Wordpress plugins](http://www.joostdevalk.nl/wordpress/) by the same author.
 
+== FAQ ==
+
+= Can I run this plugin together with another Google Analytics plugin? =
+
+No. You can not. It will break tracking.
+
+= How do I check the image search stats and keywords after installing this plugin? =
+
+Check out this <a href="http://www.joostdevalk.nl/wordpress/google-analytics/how-to-check-your-image-search-stats-and-keywords/">tutorial on checking your image search stats and keywords</a>.
+
+= How do I check my outbound link and download stats? =
+
+Check out this <a href="http://www.joostdevalk.nl/wordpress/google-analytics/checking-your-outbound-click-stats/">tutorial on checking your outbound click stats</a>.
+
+= I want the image search keywords in one big overview... =
+
+Create a <a href="http://www.joostdevalk.nl/wordpress/google-analytics/creating-a-google-analytics-filter-for-image-search/">Google Analytics filter for image search</a>.
+
 == Installation ==
 
 This section describes how to install the plugin and get it working.
