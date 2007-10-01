@@ -1,10 +1,10 @@
-=== Plugin Name ===
+=== Google Analytics for WordPress ===
 Contributors: joostdevalk
 Donate link: http://www.joostdevalk.nl/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
 Tested up to: 2.3
-Stable tag: 1.0
+Stable tag: 1.1
 
 The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -13,6 +13,9 @@ The Google Analytics for WordPress plugina automatically tracks and segments all
 The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
 
 In the options panel for the plugin, you can determine the prefixes to use for the different kinds of outbound links and downloads it tracks.
+
+* [Google Analytics for WordPress](http://www.joostdevalk.nl/wordpress/google-analytics/).
+* Other [Wordpress plugins](http://www.joostdevalk.nl/wordpress/) by the same author.
 
 == Installation ==
 
@@ -35,6 +38,22 @@ Yes you can, create a new profile based on your original profile and name it som
 1. setting case sensitive to 'No'.
 
 For some more info, see the screenshot under Screenshots.
+
+= Can I run this plugin together with another Google Analytics plugin? =
+
+No. You can not. It will break tracking.
+
+= How do I check the image search stats and keywords after installing this plugin? =
+
+Check out this <a href="http://www.joostdevalk.nl/wordpress/google-analytics/how-to-check-your-image-search-stats-and-keywords/">tutorial on checking your image search stats and keywords</a>.
+
+= How do I check my outbound link and download stats? =
+
+Check out this <a href="http://www.joostdevalk.nl/wordpress/google-analytics/checking-your-outbound-click-stats/">tutorial on checking your outbound click stats</a>.
+
+= I want the image search keywords in one big overview... =
+
+Create a <a href="http://www.joostdevalk.nl/wordpress/google-analytics/creating-a-google-analytics-filter-for-image-search/">Google Analytics filter for image search</a>.
 
 == Screenshots ==
 

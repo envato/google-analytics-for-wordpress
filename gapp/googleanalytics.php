@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://www.joostdevalk.nl/code/wordpress/analytics/
+Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
 Version: 1.0
@@ -258,10 +258,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/custom_se.js\" type=\"text/javascript\"></script>\n");
+					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
 				}
 				if ( $options['imagese'] ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
+					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
 				}
 				echo("\t<script type=\"text/javascript\">\n");
 				echo("\t\t_uacct = \"".$options["uastring"]."\";\n");
