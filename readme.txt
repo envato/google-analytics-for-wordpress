@@ -4,7 +4,7 @@ Donate link: http://www.joostdevalk.nl/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
 Tested up to: 2.3
-Stable tag: 1.0
+Stable tag: 1.2.1
 
 The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -59,6 +59,10 @@ Create a <a href="http://www.joostdevalk.nl/wordpress/google-analytics/creating-
 
 1. Screenshot of the configuration panel for this plugin.
 2. Example of the exclude filter in Google Analytics.
+
+== Changelog ==
+
+1.2.1: Fixed bug where plugin wouldn't work if WordPress URL was not blog URL.
 
 == More info ==
 
