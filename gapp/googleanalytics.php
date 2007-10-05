@@ -267,14 +267,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
 				}
 				if ( $options['imagese'] && $options['yahooreffirst']) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/track-imagesearch-and-yahoo.js\" type=\"text/javascript\"></script>\n");	
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch-and-yahoo.js\" type=\"text/javascript\"></script>\n");	
 				} else if ( $options['imagese'] && !$options['yahooreffirst'] ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
 				} else if ( !$options['imagese'] && $options['yahooreffirst'] ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/gapp/track-yahoo.js\" type=\"text/javascript\"></script>\n");	
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-yahoo.js\" type=\"text/javascript\"></script>\n");	
 				}
 				echo("\t<script type=\"text/javascript\">\n");
 				echo("\t\t_uacct = \"".$options["uastring"]."\";\n");
