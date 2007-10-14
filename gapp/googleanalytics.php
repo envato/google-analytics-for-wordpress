@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.0
+Version: 1.3
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -72,6 +72,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['extrase'] = true;
 				} else {
 					$options['imagese'] = false;
+				}
+
+				if (isset($_POST['yahooreffirst'])) {
+					$options['yahooreffirst'] = true;
+				} else {
+					$options['yahooreffirst'] = false;
 				}
 
 				if (isset($_POST['userv2'])) {
@@ -175,7 +181,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<label for="extrase">Track extra Search Engines</label><br/>
 							<br/>
 							<input type="checkbox" id="imagese" name="imagese" <?php if ($options['imagese']) echo ' checked="checked" '; ?>/> 
-							<label for="imagese">Track Google Image search keywords (this needs the tracking of extra search engines too)</label><br/>
+							<label for="imagese">Track Google Image search keywords (this needs the tracking of extra search engines too) (<a href="http://www.joostdevalk.nl/google-analytics-and-google-image-search-revisited/">more info</a>)</label><br/>
+							<br/>
+							<input type="checkbox" id="yahooreffirst" name="yahooreffirst" <?php if ($options['yahooreffirst']) echo ' checked="checked" '; ?>/> 
+							<label for="yahooreffirst">Track the keyword people used to search before they refined their search queries in Yahoo! (<a href="http://www.joostdevalk.nl/yahoos-search-assist-and-tracking-keywords/">more info</a>)</label><br/>
 							<br/>
 							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/> 
 							<label for="userv2">I use Urchin too, so add <code>_userv = 2;</code></label>
@@ -258,10 +267,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/custom_se.js\" type=\"text/javascript\"></script>\n");
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
 				}
-				if ( $options['imagese'] ) {
-					echo("\t<script src=\"".get_bloginfo('url')."/wp-content/plugins/ga-extra-se/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
+				if ( $options['imagese'] && $options['yahooreffirst']) {
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch-and-yahoo.js\" type=\"text/javascript\"></script>\n");	
+				} else if ( $options['imagese'] && !$options['yahooreffirst'] ) {
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
+				} else if ( !$options['imagese'] && $options['yahooreffirst'] ) {
+					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-yahoo.js\" type=\"text/javascript\"></script>\n");	
 				}
 				echo("\t<script type=\"text/javascript\">\n");
 				echo("\t\t_uacct = \"".$options["uastring"]."\";\n");
@@ -372,15 +385,17 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			if (!is_admin()) {
+				$opt  = get_option('GoogleAnalyticsPP');
+				$options = unserialize($opt);
 
-			foreach ( (array) $bookmarks as $bookmark ) {
-				if ($options['domainorurl'] == "domain") {
-					$target = GA_Filter::ga_get_domain($bookmark->link_url);
-					$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$target["host"]."');\"";
-				} else if ($options['domainorurl'] == "url") {
-					$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+				foreach ( (array) $bookmarks as $bookmark ) {
+					if ($options['domainorurl'] == "domain") {
+						$target = GA_Filter::ga_get_domain($bookmark->link_url);
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$target["host"]."');\"";
+					} else if ($options['domainorurl'] == "url") {
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+					}
 				}
 			}
 			return $bookmarks;
