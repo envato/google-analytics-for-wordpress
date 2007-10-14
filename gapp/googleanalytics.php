@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.2.1
+Version: 1.3
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -385,15 +385,17 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			if (!is_admin()) {
+				$opt  = get_option('GoogleAnalyticsPP');
+				$options = unserialize($opt);
 
-			foreach ( (array) $bookmarks as $bookmark ) {
-				if ($options['domainorurl'] == "domain") {
-					$target = GA_Filter::ga_get_domain($bookmark->link_url);
-					$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$target["host"]."');\"";
-				} else if ($options['domainorurl'] == "url") {
-					$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+				foreach ( (array) $bookmarks as $bookmark ) {
+					if ($options['domainorurl'] == "domain") {
+						$target = GA_Filter::ga_get_domain($bookmark->link_url);
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$target["host"]."');\"";
+					} else if ($options['domainorurl'] == "url") {
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+					}
 				}
 			}
 			return $bookmarks;
