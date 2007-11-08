@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.3
+Version: 1.4
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -367,8 +367,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 	
-			static $anchorPattern = '(.*href\s*=\s*)[\"\']*(.*)[\"\'] (.*)';
-			ereg($anchorPattern, $text, $matches);
+	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
+			preg_match($anchorPattern, $text, $matches);
 			if ($matches[2] == "") return $text;
 	
 			$target = GA_Filter::ga_get_domain($matches[2]);
