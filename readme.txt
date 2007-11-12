@@ -16,6 +16,7 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 
 * [Google Analytics for WordPress](http://www.joostdevalk.nl/wordpress/google-analytics/).
 * Other [Wordpress plugins](http://www.joostdevalk.nl/wordpress/) by the same author.
+* You can hire this author to write [WordPress themes](http://www.altha.co.uk/wordpress/themes/) and [plugins](http://www.altha.co.uk/wordpress/plugins/)!
 
 == Installation ==
 
