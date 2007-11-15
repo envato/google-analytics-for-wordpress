@@ -4,7 +4,7 @@ Donate link: http://www.joostdevalk.nl/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
 Tested up to: 2.3
-Stable tag: 1.4
+Stable tag: 1.5
 
 The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -25,6 +25,10 @@ This section describes how to install the plugin and get it working.
 1. Upload `gapp` folder to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Go to the options panel under the 'Plugins' menu and add your Analytics account number and set the settings you want.
+
+== Changelog ==
+
+1.5: added option to enable admin tracking, off by default
 
 == Frequently Asked Questions ==
 
