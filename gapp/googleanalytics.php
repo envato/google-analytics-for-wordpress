@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.3
+Version: 1.5
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -78,6 +78,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['yahooreffirst'] = true;
 				} else {
 					$options['yahooreffirst'] = false;
+				}
+
+				if (isset($_POST['admintracking'])) {
+					$options['admintracking'] = true;
+				} else {
+					$options['admintracking'] = false;
 				}
 
 				if (isset($_POST['userv2'])) {
@@ -186,6 +192,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="yahooreffirst" name="yahooreffirst" <?php if ($options['yahooreffirst']) echo ' checked="checked" '; ?>/> 
 							<label for="yahooreffirst">Track the keyword people used to search before they refined their search queries in Yahoo! (<a href="http://www.joostdevalk.nl/yahoos-search-assist-and-tracking-keywords/">more info</a>)</label><br/>
 							<br/>
+							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
+							<label for="admintracking">Track the administrator too (default is not to)</label>
+							<br/>
 							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/> 
 							<label for="userv2">I use Urchin too, so add <code>_userv = 2;</code></label>
 						</p>
@@ -263,7 +272,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
-			if ($options["uastring"] != "") {
+			global $user_level;
+			get_currentuserinfo();
+			
+			if ($options["uastring"] != "" && ($user_level != 10 || $options["admintracking"]) ) {
 				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
@@ -367,8 +379,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 	
-			static $anchorPattern = '(.*href\s*=\s*)[\"\']*(.*)[\"\'] (.*)';
-			ereg($anchorPattern, $text, $matches);
+	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
+			preg_match($anchorPattern, $text, $matches);
 			if ($matches[2] == "") return $text;
 	
 			$target = GA_Filter::ga_get_domain($matches[2]);
