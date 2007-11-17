@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.5
+Version: 2.0
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -84,6 +84,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['admintracking'] = true;
 				} else {
 					$options['admintracking'] = false;
+				}
+
+				if (isset($_POST['trackadsense'])) {
+					$options['trackadsense'] = true;
+				} else {
+					$options['trackadsense'] = false;
 				}
 
 				if (isset($_POST['userv2'])) {
@@ -183,6 +189,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="trackoutbound" name="trackoutbound" <?php if ($options['trackoutbound']) echo ' checked="checked" '; ?>/> 
 							<label for="trackoutbound">Track outbound clicks &amp; downloads</label><br/>
 							<br/>
+							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/> 
+							<label for="trackadsense">Track AdSense clicks</label><br/>
+							<br/>
 							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/> 
 							<label for="extrase">Track extra Search Engines</label><br/>
 							<br/>
@@ -272,10 +281,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
-			global $user_level;
-			get_currentuserinfo();
-			
-			if ($options["uastring"] != "" && ($user_level != 10 || $options["admintracking"]) ) {
+			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) ) {
 				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
 				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
 				if ( $options["extrase"] == true ) {
@@ -299,6 +305,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}
 
+		function track_adsense() {
+			echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/adsense-track.js\" type=\"text/javascript\"></script>\n");
+		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
 		 * "host" e.g. store.boakes.org
@@ -364,40 +373,48 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function the_content($text) {
-			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
+			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
+				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
+			}
 			return $text;
 		}
 
 		function comment_text($text) {
-			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
+			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
+				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
+			}
 			return $text;
 		}
 
 		function comment_author_link($text) {
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
+				$opt  = get_option('GoogleAnalyticsPP');
+				$options = unserialize($opt);
 	
-	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
-			preg_match($anchorPattern, $text, $matches);
-			if ($matches[2] == "") return $text;
+		        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
+				preg_match($anchorPattern, $text, $matches);
+				if ($matches[2] == "") return $text;
 	
-			$target = GA_Filter::ga_get_domain($matches[2]);
-			$coolbit = "";
-			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-			if ( $target["domain"] != $origin["domain"]  ){
-				if ($options['domainorurl'] == "domain") {
-					$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$target["host"]."');\"";
-				} else if ($options['domainorurl'] == "url") {
-					$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$matches[2]."');\"";
-				}
-			} 
-			return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
+				$target = GA_Filter::ga_get_domain($matches[2]);
+				$coolbit = "";
+				$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
+				if ( $target["domain"] != $origin["domain"]  ){
+					if ($options['domainorurl'] == "domain") {
+						$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$target["host"]."');\"";
+					} else if ($options['domainorurl'] == "url") {
+						$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$matches[2]."');\"";
+					}
+				} 
+				return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
+			} else {
+				return $text;
+			}
 		}
 		
 		function bookmarks($bookmarks) {
-			if (!is_admin()) {
+			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
 				$opt  = get_option('GoogleAnalyticsPP');
 				$options = unserialize($opt);
 
@@ -460,7 +477,6 @@ if ($options['position'] =='footer') {
 } else if ($options['position'] =='header') {
 	add_action('wp_head', array('GA_Filter','spool_analytics'));	
 }
-
 if ($options['trackoutbound']) {
 	// filters alter the existing content
 	add_filter('the_content', array('GA_Filter','the_content'), 99);
@@ -468,5 +484,8 @@ if ($options['trackoutbound']) {
 	add_filter('comment_text', array('GA_Filter','comment_text'), 99);
 	add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);
 	add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
+}
+if ($options['trackadsense']) {
+	add_action('wp_footer', array('GA_Filter','track_adsense'));	
 }
 ?>
