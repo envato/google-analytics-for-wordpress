@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 1.6
+Version: 2.0
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -84,6 +84,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['admintracking'] = true;
 				} else {
 					$options['admintracking'] = false;
+				}
+
+				if (isset($_POST['trackadsense'])) {
+					$options['trackadsense'] = true;
+				} else {
+					$options['trackadsense'] = false;
 				}
 
 				if (isset($_POST['userv2'])) {
@@ -182,6 +188,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<?php } ?>
 							<input type="checkbox" id="trackoutbound" name="trackoutbound" <?php if ($options['trackoutbound']) echo ' checked="checked" '; ?>/> 
 							<label for="trackoutbound">Track outbound clicks &amp; downloads</label><br/>
+							<br/>
+							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/> 
+							<label for="trackadsense">Track AdSense clicks</label><br/>
 							<br/>
 							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/> 
 							<label for="extrase">Track extra Search Engines</label><br/>
@@ -296,6 +305,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}
 
+		function track_adsense() {
+			echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/adsense-track.js\" type=\"text/javascript\"></script>\n");
+		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
 		 * "host" e.g. store.boakes.org
@@ -459,22 +471,21 @@ if ($opt == "") {
 // adds the menu item to the admin interface
 add_action('admin_menu', array('GA_Admin','add_config_page'));
 
-//get_currentuserinfo();
-
-	// adds the footer so the javascript is loaded
-	if ($options['position'] =='footer') {
-		add_action('wp_footer', array('GA_Filter','spool_analytics'));	
-	} else if ($options['position'] =='header') {
-		add_action('wp_head', array('GA_Filter','spool_analytics'));	
-	}
-
-	if ($options['trackoutbound']) {
-		// filters alter the existing content
-		add_filter('the_content', array('GA_Filter','the_content'), 99);
-		add_filter('the_excerpt', array('GA_Filter','the_content'), 99);
-		add_filter('comment_text', array('GA_Filter','comment_text'), 99);
-		add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);
-		add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
-	}
-//}
+// adds the footer so the javascript is loaded
+if ($options['position'] =='footer') {
+	add_action('wp_footer', array('GA_Filter','spool_analytics'));	
+} else if ($options['position'] =='header') {
+	add_action('wp_head', array('GA_Filter','spool_analytics'));	
+}
+if ($options['trackoutbound']) {
+	// filters alter the existing content
+	add_filter('the_content', array('GA_Filter','the_content'), 99);
+	add_filter('the_excerpt', array('GA_Filter','the_content'), 99);
+	add_filter('comment_text', array('GA_Filter','comment_text'), 99);
+	add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);
+	add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
+}
+if ($options['trackadsense']) {
+	add_action('wp_footer', array('GA_Filter','track_adsense'));	
+}
 ?>
