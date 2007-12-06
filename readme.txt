@@ -3,14 +3,14 @@ Contributors: joostdevalk
 Donate link: http://www.joostdevalk.nl/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
-Tested up to: 2.3
-Stable tag: 1.5
+Tested up to: 2.3.1
+Stable tag: 2.1
 
-The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
+The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
 == Description ==
 
-The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to add extra search engines, track image search queries and it will even work together with Urchin.
+The Google Analytics for WordPress plugina automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
 In the options panel for the plugin, you can determine the prefixes to use for the different kinds of outbound links and downloads it tracks.
 
@@ -28,6 +28,8 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+2.1: made sure tracking was disabled on preview pages
+2.0: added AdSense tracking
 1.5: added option to enable admin tracking, off by default
 
 == Frequently Asked Questions ==
