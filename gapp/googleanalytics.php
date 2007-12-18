@@ -67,7 +67,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 				if (isset($_POST['trackoutbound'])) {
 					$options['trackoutbound'] = true;
-					$options['position'] = 'header';
 				} else {
 					$options['trackoutbound'] = false;
 				}
@@ -462,7 +461,7 @@ if ($options['trackadsense']) {
 }
 
 // adds the footer so the javascript is loaded
-add_action('wp_footer', array('GA_Filter','spool_analytics'));	
+add_action('wp_head', array('GA_Filter','spool_analytics'));	
 
 if ($options['trackadsense']) {
 	add_action('wp_footer', array('GA_Filter','track_adsense'));	
