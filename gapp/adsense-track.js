@@ -8,7 +8,7 @@ You are allowed to use this but you should keep this copyright notice here
 
 ******************************************************************************/
 function as_click () {
-	urchinTracker ('/outbound/asclick');
+	pageTracker._trackVisit('/outbound/asclick');
 }
 if(typeof window.addEventListener != 'undefined') {
  	window.addEventListener('load', adsense_init, false);
@@ -70,7 +70,7 @@ function doPageExit(e) {
 		var inFrameX = (px > (adLeft - 10) && px < (parseInt(adLeft) + parseInt(ad[i].width) + 15));
 		var inFrameY = (py > (adTop - 10) && py < (parseInt(adTop) + parseInt(ad[i].height) + 10));
 		if (inFrameY && inFrameX) {
-			urchinTracker('/outbound/asclick');
+			pageTracker._trackVisit('/outbound/asclick');
 		}
 	}
 }
