@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.2
+Version: 2.3
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -138,8 +138,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									just defined, that is your User Account string
 									(it's shown in <strong>bold</strong> in the example below).</p>
 								<tt>&lt;script type="text/javascript"&gt;<br/>
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");<br/>
-document.write("\&lt;script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'&gt;\&lt;\/script&gt;" );<br/>
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 &lt;/script&gt;<br/>
 &lt;script type="text/javascript"&gt;<br/>
 var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
@@ -269,7 +269,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->
 	<script type="text/javascript">
 		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-		document.write("\<script src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'>\<\/script>" );
+		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 	</script>
 	<script type="text/javascript">
 		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
