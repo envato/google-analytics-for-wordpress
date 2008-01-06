@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.3
+Version: 2.4
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -325,14 +325,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target["domain"] != $origin["domain"] ){
 				if ($options['domainorurl'] == "domain") {
-					$coolBit .= "onclick=\"javascript:pageTracker._trackVisit('".$leaf."/".$target["host"]."');\"";
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');\"";
 				} else if ($options['domainorurl'] == "url") {
-					$coolBit .= "onclick=\"javascript:pageTracker._trackVisit('".$leaf."/".$matches[2]."//".$matches[3]."');\"";
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');\"";
 				}
 			} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
 				$file = str_replace($origin["domain"],"",$matches[3]);
 				$file = str_replace('www.',"",$file);
-				$coolBit .= "onclick=\"javascript:pageTracker._trackVisit('".$options['dlprefix'].$file."');\"";
+				$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');\"";
 			}
 			return '<a href="' . $matches[2] . '//' . $matches[3] . '"' . $matches[1] . $matches[4] . ' '.$coolBit.'>' . $matches[5] . '</a>';    
 		}
@@ -379,9 +379,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
 				if ( $target["domain"] != $origin["domain"]  ){
 					if ($options['domainorurl'] == "domain") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackVisit('".$options['comautprefix']."/".$target["host"]."');\"";
+						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
 					} else if ($options['domainorurl'] == "url") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackVisit('".$options['comautprefix']."/".$matches[2]."');\"";
+						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
 					}
 				} 
 				return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
@@ -398,9 +398,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				foreach ( (array) $bookmarks as $bookmark ) {
 					if ($options['domainorurl'] == "domain") {
 						$target = GA_Filter::ga_get_domain($bookmark->link_url);
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackVisit('".$options['blogrollprefix']."/".$target["host"]."');\"";
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$target["host"]."');";
 					} else if ($options['domainorurl'] == "url") {
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackVisit('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$bookmark->link_url."');";
 					}
 				}
 			}
