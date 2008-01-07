@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.0
+Version: 2.4.1
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -25,7 +25,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function add_config_page() {
 			global $wpdb;
 			if ( function_exists('add_submenu_page') ) {
-				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 1, basename(__FILE__), array('GA_Admin','config_page'));
+				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
 			}
 		} // end add_GA_config_page()
 
@@ -52,19 +52,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (isset($_POST['domainorurl']) && $_POST['domainorurl'] != "") 
 					$options['domainorurl'] 	= $_POST['domainorurl'];
 
-				$options['position'] = $_POST['position'];
-				
 				if (isset($_POST['extrase'])) {
 					$options['extrase'] = true;
 				} else {
 					$options['extrase'] = false;
-				}
-
-				if (isset($_POST['trackoutbound'])) {
-					$options['trackoutbound'] = true;
-					$options['position'] = 'header';
-				} else {
-					$options['trackoutbound'] = false;
 				}
 
 				if (isset($_POST['imagese'])) {
@@ -74,10 +65,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['imagese'] = false;
 				}
 
-				if (isset($_POST['yahooreffirst'])) {
-					$options['yahooreffirst'] = true;
+				if (isset($_POST['trackoutbound'])) {
+					$options['trackoutbound'] = true;
 				} else {
-					$options['yahooreffirst'] = false;
+					$options['trackoutbound'] = false;
 				}
 
 				if (isset($_POST['admintracking'])) {
@@ -146,8 +137,15 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									unique string that identifies the website you 
 									just defined, that is your User Account string
 									(it's shown in <strong>bold</strong> in the example below).</p>
-								<tt>&lt;script src="http://www.google-analytics.com/urchin.js" type="text/javascript"&gt;<br />&lt;/script&gt;<br />&lt;script type="text/javascript"&gt;<br />_uacct = "<strong><?php echo($mulch);?></strong>";<br />urchinTracker();<br />&lt;/script&gt;<br /></tt>
-
+								<tt>&lt;script type="text/javascript"&gt;<br/>
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+&lt;/script&gt;<br/>
+&lt;script type="text/javascript"&gt;<br/>
+var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
+pageTracker._initData();<br/>
+pageTracker._trackPageview();<br/>
+&lt;/script&gt;</tt>
 								<p>Once you have entered your User Account String in
 								   the box above your pages will be trackable by
 									Google Analytics.</p>
@@ -178,13 +176,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
 							</select><br/>
 							<br/>
-							<?php } else { ?>
-							<strong><label for="position">Place the script in the header or in the footer?</label></strong><br/>
-							<select name="position" id="position" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;">
-								<option value="header"<?php if ($options['position'] == 'header') { echo ' selected="selected"';} ?>>Header</option>
-								<option value="footer"<?php if ($options['position'] == 'footer') { echo ' selected="selected"';} ?>>Footer</option>
-							</select><br/>
-							<br/>
 							<?php } ?>
 							<input type="checkbox" id="trackoutbound" name="trackoutbound" <?php if ($options['trackoutbound']) echo ' checked="checked" '; ?>/> 
 							<label for="trackoutbound">Track outbound clicks &amp; downloads</label><br/>
@@ -195,17 +186,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/> 
 							<label for="extrase">Track extra Search Engines</label><br/>
 							<br/>
-							<input type="checkbox" id="imagese" name="imagese" <?php if ($options['imagese']) echo ' checked="checked" '; ?>/> 
-							<label for="imagese">Track Google Image search keywords (this needs the tracking of extra search engines too) (<a href="http://www.joostdevalk.nl/google-analytics-and-google-image-search-revisited/">more info</a>)</label><br/>
-							<br/>
-							<input type="checkbox" id="yahooreffirst" name="yahooreffirst" <?php if ($options['yahooreffirst']) echo ' checked="checked" '; ?>/> 
-							<label for="yahooreffirst">Track the keyword people used to search before they refined their search queries in Yahoo! (<a href="http://www.joostdevalk.nl/yahoos-search-assist-and-tracking-keywords/">more info</a>)</label><br/>
-							<br/>
 							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
 							<label for="admintracking">Track the administrator too (default is not to)</label>
 							<br/>
 							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/> 
-							<label for="userv2">I use Urchin too, so add <code>_userv = 2;</code></label>
+							<label for="userv2">I use Urchin too, make it both work.</label>
 						</p>
 						<p class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
 					</form>
@@ -236,7 +221,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			$options['comautprefix'] = '/outbound/commentauthor';
 			$options['blogrollprefix'] = '/outbound/blogroll';
 			$options['domainorurl'] = 'domain';
-			$options['position'] = 'header';
 			$options['userv2'] = false;
 			$options['extrase'] = false;
 			$options['imagese'] = false;
@@ -247,7 +231,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		
 		function success() {
 			echo "
-			<div id='analytics-warning' class='updated fade-ff0000'><p><strong>Congratulations! You have just activated Google Analytics - take a look at the source of your blog pages and search for the word 'urchin' to see how your pages have been affected.</p></div>
+			<div id='analytics-warning' class='updated fade-ff0000'><p><strong>Congratulations! You have just activated Google Analytics.</p></div>
 			<style type='text/css'>
 			#adminmenu { margin-bottom: 7em; }
 			#analytics-warning { position: absolute; top: 7em; }
@@ -281,27 +265,32 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
-			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) ) {
-				echo("\n\t<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->\n");
-				echo("\t<script src=\"http://www.google-analytics.com/urchin.js\" type=\"text/javascript\"></script>\n");	
-				if ( $options["extrase"] == true ) {
-					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n");
-				}
-				if ( $options['imagese'] && $options['yahooreffirst']) {
-					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch-and-yahoo.js\" type=\"text/javascript\"></script>\n");	
-				} else if ( $options['imagese'] && !$options['yahooreffirst'] ) {
-					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-imagesearch.js\" type=\"text/javascript\"></script>\n");	
-				} else if ( !$options['imagese'] && $options['yahooreffirst'] ) {
-					echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/track-yahoo.js\" type=\"text/javascript\"></script>\n");	
-				}
-				echo("\t<script type=\"text/javascript\">\n");
-				echo("\t\t_uacct = \"".$options["uastring"]."\";\n");
-				if ( $options['userv2'] ) {
-					echo("\t\t_userv=2;\n");
-				}
-				echo("\t\turchinTracker();\n");
-				echo("\t</script>\n");
-				echo("\t<!-- End of Google Analytics code -->\n\n");
+			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
+	<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->
+	<script type="text/javascript">
+		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
+	</script>
+<?php if ( $options["extrase"] == true ) {
+		echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n"); 
+} ?>
+	<script type="text/javascript">
+<?php if ( $options['userv2'] ) {
+		echo("\tpageTracker._setLocalRemoteServerMode();");
+} ?>
+		pageTracker._initData();
+<?php if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"]) { ?>
+		regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
+		var match = regex.exec(pageTracker.qa);
+		pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);
+<?php } ?>		
+		pageTracker._trackPageview();
+	</script>
+	<!-- End of Google Analytics code -->
+	<?php
 			}
 		}
 
@@ -324,18 +313,6 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 		}
 
-		/* Take the result of parsing an HTML anchor ($matches)
-		 * and from that, extract the target domain.  If the 
-		 * target is not local, then when the anchor is re-written
-		 * then an urchinTracker call is added.
-		 *
-		 * the format of the outbound link is definedin the $leaf
-		 * variable which must begin with a / and which may 
-		 * contain multiple path levels:
-		 * e.g. /outbound/x/y/z 
-		 * or which may be just "/"
-		 *
-		 */
 		function ga_parse_link($leaf, $matches){
 			global $origin ;
 			
@@ -348,14 +325,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target["domain"] != $origin["domain"] ){
 				if ($options['domainorurl'] == "domain") {
-					$coolBit .= "onclick=\"javascript:urchinTracker('".$leaf."/".$target["host"]."');\"";
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');\"";
 				} else if ($options['domainorurl'] == "url") {
-					$coolBit .= "onclick=\"javascript:urchinTracker('".$leaf."/".$matches[2]."//".$matches[3]."');\"";
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');\"";
 				}
 			} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
 				$file = str_replace($origin["domain"],"",$matches[3]);
 				$file = str_replace('www.',"",$file);
-				$coolBit .= "onclick=\"javascript:urchinTracker('".$options['dlprefix'].$file."');\"";
+				$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');\"";
 			}
 			return '<a href="' . $matches[2] . '//' . $matches[3] . '"' . $matches[1] . $matches[4] . ' '.$coolBit.'>' . $matches[5] . '</a>';    
 		}
@@ -402,9 +379,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
 				if ( $target["domain"] != $origin["domain"]  ){
 					if ($options['domainorurl'] == "domain") {
-						$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$target["host"]."');\"";
+						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
 					} else if ($options['domainorurl'] == "url") {
-						$coolBit .= "onclick=\"javascript:urchinTracker('".$options['comautprefix']."/".$matches[2]."');\"";
+						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
 					}
 				} 
 				return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
@@ -421,9 +398,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				foreach ( (array) $bookmarks as $bookmark ) {
 					if ($options['domainorurl'] == "domain") {
 						$target = GA_Filter::ga_get_domain($bookmark->link_url);
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$target["host"]."');\"";
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$target["host"]."');";
 					} else if ($options['domainorurl'] == "url") {
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:urchinTracker('".$options['blogrollprefix']."/".$bookmark->link_url."');\"";
+						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$bookmark->link_url."');";
 					}
 				}
 			}
@@ -471,12 +448,6 @@ if ($opt == "") {
 // adds the menu item to the admin interface
 add_action('admin_menu', array('GA_Admin','add_config_page'));
 
-// adds the footer so the javascript is loaded
-if ($options['position'] =='footer') {
-	add_action('wp_footer', array('GA_Filter','spool_analytics'));	
-} else if ($options['position'] =='header') {
-	add_action('wp_head', array('GA_Filter','spool_analytics'));	
-}
 if ($options['trackoutbound']) {
 	// filters alter the existing content
 	add_filter('the_content', array('GA_Filter','the_content'), 99);
@@ -485,6 +456,13 @@ if ($options['trackoutbound']) {
 	add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);
 	add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
 }
+if ($options['trackadsense']) {
+	add_action('wp_footer', array('GA_Filter','track_adsense'));	
+}
+
+// adds the footer so the javascript is loaded
+add_action('wp_head', array('GA_Filter','spool_analytics'));	
+
 if ($options['trackadsense']) {
 	add_action('wp_footer', array('GA_Filter','track_adsense'));	
 }
