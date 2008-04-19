@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.4.1
+Version: 2.5.2
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -12,6 +12,7 @@ Based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
 */
 
+$pluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
 $uastring = "UA-00000-0";
 
 /*
@@ -111,15 +112,17 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					}
 				</script>
 				<h2>Google Analytics for WordPress Configuration</h2>
-				<fieldset>
-					<form action="" method="post" id="analytics-conf" style="width: 35em; ">
-						<?php
-						if ( function_exists('wp_nonce_field') )
-							wp_nonce_field('analyticspp-config');
-						?>
-						<p>
-							<strong><label for="uastring">Analytics User Account</label></strong>
-							<small><a href="#" onclick="javascript:toggle_help(this, 'expl');">What's this?</a></small><br/>
+				<form action="" method="post" id="analytics-conf">
+					<table class="form-table" style="width:100%;">
+					<?php
+					if ( function_exists('wp_nonce_field') )
+						wp_nonce_field('analyticspp-config');
+					?>
+					<tr>
+						<th scope="row" style="width:400px;" valign="top">
+							<label for="uastring">Analytics User Account</label> <small><a href="#" onclick="javascript:toggle_help(this, 'expl');">What's this?</a></small>
+						</th>
+						<td>
 							<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="<?php echo $options['uastring']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;" /><br/>
 							<div id="expl" style="display:none;">
 								<h3>Explanation</h3>
@@ -138,63 +141,127 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									just defined, that is your User Account string
 									(it's shown in <strong>bold</strong> in the example below).</p>
 								<tt>&lt;script type="text/javascript"&gt;<br/>
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;<br/>
-&lt;script type="text/javascript"&gt;<br/>
-var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
-pageTracker._initData();<br/>
-pageTracker._trackPageview();<br/>
-&lt;/script&gt;</tt>
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	&lt;/script&gt;<br/>
+	&lt;script type="text/javascript"&gt;<br/>
+	var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
+	pageTracker._initData();<br/>
+	pageTracker._trackPageview();<br/>
+	&lt;/script&gt;</tt>
 								<p>Once you have entered your User Account String in
 								   the box above your pages will be trackable by
 									Google Analytics.</p>
 							</div>
-							<?php if ($options['trackoutbound']) { ?>
-							<strong><label for="dlextensions">Extensions of files to track as downloads</label></strong><br/>
-							(If the extension is only two chars, prefix it with a dot, like '.js')
-							<input type="text" name="dlextensions" size="40" value="<?php echo $options['dlextensions']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="dlprefix">Prefix for tracked downloads</label></strong><br/>
-							<input type="text" id="dlprefix" name="dlprefix" size="40" value="<?php echo $options['dlprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="artprefix">Prefix for outbound clicks from articles</label></strong><br/>
-							<input type="text" id="artprefix" name="artprefix" size="40" value="<?php echo $options['artprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="comprefix">Prefix for outbound clicks from within comments</label></strong><br/>
-							<input type="text" id="comprefix" name="comprefix" size="40" value="<?php echo $options['comprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="comautprefix">Prefix for outbound clicks from comment author links</label></strong><br/>
-							<input type="text" id="comautprefix" name="comautprefix" size="40" value="<?php echo $options['comautprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="blogrollprefix">Prefix for outbound clicks from blogroll links</label></strong><br/>
-							<input type="text" id="blogrollprefix" name="blogrollprefix" size="40" value="<?php echo $options['blogrollprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/><br/>
-							<br/>
-							<strong><label for="domainorurl">Track full URL of outbound clicks or just the domain?</label></strong><br/>
-							<select name="domainorurl" id="domainorurl" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;">
+						</td>
+					</tr>							
+					<?php if ($options['trackoutbound']) { ?>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="dlextensions">Extensions of files to track as downloads</label><br/>
+							<small>(If the extension is only two chars, prefix it with a dot, like '.js')</small>
+						</th>
+						<td>
+							<input type="text" name="dlextensions" size="40" value="<?php echo $options['dlextensions']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>	
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="dlprefix">Prefix for tracked downloads</label>
+						</th>
+						<td>
+							<input type="text" id="dlprefix" name="dlprefix" size="40" value="<?php echo $options['dlprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="artprefix">Prefix for outbound clicks from articles</label>
+						</th>
+						<td>
+							<input type="text" id="artprefix" name="artprefix" size="40" value="<?php echo $options['artprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="comprefix">Prefix for outbound clicks from within comments</label>
+						</th>
+						<td>
+							<input type="text" id="comprefix" name="comprefix" size="40" value="<?php echo $options['comprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="comautprefix">Prefix for outbound clicks from comment author links</label>
+						</th>
+						<td>
+							<input type="text" id="comautprefix" name="comautprefix" size="40" value="<?php echo $options['comautprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="blogrollprefix">Prefix for outbound clicks from blogroll links</label>
+						</th>
+						<td>
+							<input type="text" id="blogrollprefix" name="blogrollprefix" size="40" value="<?php echo $options['blogrollprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="domainorurl">Track full URL of outbound clicks or just the domain?</label>
+						</th>
+						<td>
+							<select name="domainorurl" id="domainorurl">
 								<option value="domain"<?php if ($options['domainorurl'] == 'domain') { echo ' selected="selected"';} ?>>Just the domain</option>
 								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
-							</select><br/>
-							<br/>
-							<?php } ?>
+							</select>
+						</td>
+					</tr>
+						<?php } ?>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="trackoutbound">Track outbound clicks<br/>
+							&amp; downloads</label>
+						</th>
+						<td>
 							<input type="checkbox" id="trackoutbound" name="trackoutbound" <?php if ($options['trackoutbound']) echo ' checked="checked" '; ?>/> 
-							<label for="trackoutbound">Track outbound clicks &amp; downloads</label><br/>
-							<br/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="trackadsense">Track AdSense clicks</label>
+						</th>
+						<td>
 							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/> 
-							<label for="trackadsense">Track AdSense clicks</label><br/>
-							<br/>
-							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/> 
-							<label for="extrase">Track extra Search Engines</label><br/>
-							<br/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="extrase">Track extra Search Engines</label>
+						</th>
+						<td>
+							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="admintracking">Track the administrator too</label><br/>
+							<small>(default is not to)</small>
+						</th>
+						<td>
 							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
-							<label for="admintracking">Track the administrator too (default is not to)</label>
-							<br/>
-							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/> 
-							<label for="userv2">I use Urchin too, make it both work.</label>
-						</p>
-						<p class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
-					</form>
-				</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="userv2">I use Urchin too.</label>
+						</th>
+						<td>
+							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/>
+						</td>
+					</tr>
+					</table>
+					<p style="border:0;" class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
+				</form>
 			</div>
 			<?php
 			if (isset($options['uastring'])) {
@@ -262,6 +329,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {
+			global $pluginpath;
+			
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
@@ -275,7 +344,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
 	</script>
 <?php if ( $options["extrase"] == true ) {
-		echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n"); 
+		echo("\t<script src=\"".$pluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
 } ?>
 	<script type="text/javascript">
 <?php if ( $options['userv2'] ) {
@@ -295,7 +364,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function track_adsense() {
-			echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/adsense-track.js\" type=\"text/javascript\"></script>\n");
+			echo("\t<script src=\"".$pluginpath."adsense-track.js\" type=\"text/javascript\"></script>\n");
 		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
@@ -334,7 +403,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				$file = str_replace('www.',"",$file);
 				$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');\"";
 			}
-			return '<a href="' . $matches[2] . '//' . $matches[3] . '"' . $matches[1] . $matches[4] . ' '.$coolBit.'>' . $matches[5] . '</a>';    
+			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' .$coolBit . $matches[4] . '>' . $matches[5] . '</a>';    
 		}
 
 		function ga_parse_article_link($matches){
@@ -350,44 +419,35 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function the_content($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
-			}
+			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
 			return $text;
 		}
 
 		function comment_text($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
-			}
-			return $text;
+			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
 		}
 
 		function comment_author_link($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				$opt  = get_option('GoogleAnalyticsPP');
-				$options = unserialize($opt);
-	
-		        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
-				preg_match($anchorPattern, $text, $matches);
-				if ($matches[2] == "") return $text;
-	
-				$target = GA_Filter::ga_get_domain($matches[2]);
-				$coolbit = "";
-				$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-				if ( $target["domain"] != $origin["domain"]  ){
-					if ($options['domainorurl'] == "domain") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
-					} else if ($options['domainorurl'] == "url") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
-					}
-				} 
-				return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
-			} else {
-				return $text;
-			}
+			$opt  = get_option('GoogleAnalyticsPP');
+			$options = unserialize($opt);
+
+	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
+			preg_match($anchorPattern, $text, $matches);
+			if ($matches[2] == "") return $text;
+
+			$target = GA_Filter::ga_get_domain($matches[2]);
+			$coolbit = "";
+			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
+			if ( $target["domain"] != $origin["domain"]  ){
+				if ($options['domainorurl'] == "domain") {
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
+				} else if ($options['domainorurl'] == "url") {
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
+				}
+			} 
+			return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
 		}
 		
 		function bookmarks($bookmarks) {
