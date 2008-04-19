@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.5
+Version: 2.5.2
 Author URI: http://www.joostdevalk.nl/
 License: GPL
 
@@ -12,6 +12,7 @@ Based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
 */
 
+$pluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
 $uastring = "UA-00000-0";
 
 /*
@@ -328,6 +329,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {
+			global $pluginpath;
+			
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
@@ -341,7 +344,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
 	</script>
 <?php if ( $options["extrase"] == true ) {
-		echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/custom_se.js\" type=\"text/javascript\"></script>\n"); 
+		echo("\t<script src=\"".$pluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
 } ?>
 	<script type="text/javascript">
 <?php if ( $options['userv2'] ) {
@@ -361,7 +364,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function track_adsense() {
-			echo("\t<script src=\"".get_bloginfo('wpurl')."/wp-content/plugins/gapp/adsense-track.js\" type=\"text/javascript\"></script>\n");
+			echo("\t<script src=\"".$pluginpath."adsense-track.js\" type=\"text/javascript\"></script>\n");
 		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
@@ -400,7 +403,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				$file = str_replace('www.',"",$file);
 				$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');\"";
 			}
-			return '<a href="' . $matches[2] . '//' . $matches[3] . '"' . $matches[1] . $matches[4] . ' '.$coolBit.'>' . $matches[5] . '</a>';    
+			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' .$coolBit . $matches[4] . '>' . $matches[5] . '</a>';    
 		}
 
 		function ga_parse_article_link($matches){
@@ -416,44 +419,35 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function the_content($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
-			}
+			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
 			return $text;
 		}
 
 		function comment_text($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
-			}
-			return $text;
+			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
 		}
 
 		function comment_author_link($text) {
-			if (!current_user_can('edit_users')|| $options['admintracking'] ) {
-				$opt  = get_option('GoogleAnalyticsPP');
-				$options = unserialize($opt);
-	
-		        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
-				preg_match($anchorPattern, $text, $matches);
-				if ($matches[2] == "") return $text;
-	
-				$target = GA_Filter::ga_get_domain($matches[2]);
-				$coolbit = "";
-				$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-				if ( $target["domain"] != $origin["domain"]  ){
-					if ($options['domainorurl'] == "domain") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
-					} else if ($options['domainorurl'] == "url") {
-						$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
-					}
-				} 
-				return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
-			} else {
-				return $text;
-			}
+			$opt  = get_option('GoogleAnalyticsPP');
+			$options = unserialize($opt);
+
+	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
+			preg_match($anchorPattern, $text, $matches);
+			if ($matches[2] == "") return $text;
+
+			$target = GA_Filter::ga_get_domain($matches[2]);
+			$coolbit = "";
+			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
+			if ( $target["domain"] != $origin["domain"]  ){
+				if ($options['domainorurl'] == "domain") {
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$target["host"]."');\"";
+				} else if ($options['domainorurl'] == "url") {
+					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['comautprefix']."/".$matches[2]."');\"";
+				}
+			} 
+			return $matches[1] . "\"" . $matches[2] . "\" " . $coolBit ." ". $matches[3];    
 		}
 		
 		function bookmarks($bookmarks) {
