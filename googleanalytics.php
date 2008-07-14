@@ -1,18 +1,18 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
+Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.5.3
-Author URI: http://www.joostdevalk.nl/
+Version: 2.5.5
+Author URI: http://yoast.com/
 License: GPL
 
 Based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
 */
 
-$pluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
+$gapppluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
 $uastring = "UA-00000-0";
 
 /*
@@ -329,13 +329,13 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {
-			global $pluginpath;
+			global $gapppluginpath;
 			
 			$opt  = get_option('GoogleAnalyticsPP');
 			$options = unserialize($opt);
 			
 			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
-	<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->
+	<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->
 	<script type="text/javascript">
 		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
@@ -344,7 +344,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
 	</script>
 <?php if ( $options["extrase"] == true ) {
-		echo("\t<script src=\"".$pluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
+		echo("\t<script src=\"".$gapppluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
 } ?>
 	<script type="text/javascript">
 <?php if ( $options['userv2'] ) {
@@ -364,7 +364,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function track_adsense() {
-			echo("\t<script src=\"".$pluginpath."adsense-track.js\" type=\"text/javascript\"></script>\n");
+			global $gapppluginpath;
+			echo("\t<script src=\"".$gapppluginpath."adsense-track.js\" type=\"text/javascript\"></script>\n");
 		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
@@ -522,9 +523,6 @@ if ($options['trackadsense']) {
 }
 
 // adds the footer so the javascript is loaded
-add_action('wp_head', array('GA_Filter','spool_analytics'));	
+add_action('wp_footer', array('GA_Filter','spool_analytics'));	
 
-if ($options['trackadsense']) {
-	add_action('wp_footer', array('GA_Filter','track_adsense'));	
-}
 ?>
