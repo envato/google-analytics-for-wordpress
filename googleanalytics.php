@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.6.1
+Version: 2.6.2
 Author URI: http://yoast.com/
 License: GPL
 
@@ -19,7 +19,7 @@ if ( !defined('WP_CONTENT_DIR') )
     define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
  
 // Guess the location
-$gapppluginpath = WP_CONTENT_DIR.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
+$gapppluginpath = WP_CONTENT_URL.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
 
 $uastring = "UA-00000-0";
 
@@ -40,6 +40,20 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 		function config_page() {
 			global $dlextensions;
+			if ( $_GET['reset'] == "true") {
+				$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
+				$options['dlprefix'] = '/downloads';
+				$options['artprefix'] = '/outbound/article';
+				$options['comprefix'] = '/outbound/comment';
+				$options['comautprefix'] = '/outbound/commentauthor';
+				$options['blogrollprefix'] = '/outbound/blogroll';
+				$options['domainorurl'] = 'domain';
+				$options['userv2'] = false;
+				$options['extrase'] = false;
+				$options['imagese'] = false;
+				$options['trackoutbound'] = true;
+				update_option('GoogleAnalyticsPP',$options);
+			}
 			if ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
@@ -232,6 +246,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>
 					</table>
 					<p style="border:0;" class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
+					
+					<p><a href="?page=googleanalytics.php&amp;reset=true">Reset all settings</a></p>
 				</form>
 			</div>
 			<?php
