@@ -4,14 +4,23 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.5.6
+Version: 2.6.1
 Author URI: http://yoast.com/
 License: GPL
 
 Originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
 */
-$gapppluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
+
+// Pre-2.6 compatibility
+if ( !defined('WP_CONTENT_URL') )
+    define( 'WP_CONTENT_URL', get_option('siteurl') . '/wp-content');
+if ( !defined('WP_CONTENT_DIR') )
+    define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
+ 
+// Guess the location
+$gapppluginpath = WP_CONTENT_DIR.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
+
 $uastring = "UA-00000-0";
 
 /*
@@ -54,13 +63,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['extrase'] = true;
 				} 
 
-				$opt = serialize($options);
-				update_option('GoogleAnalyticsPP', $opt);
+				update_option('GoogleAnalyticsPP', $options);
 			}
 			$mulch = ($uastring=""?"##-#####-#":$uastring);
 
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			?>
 			<div class="wrap">
 				<script type="text/javascript">
@@ -256,8 +263,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			$options['extrase'] = false;
 			$options['imagese'] = false;
 			$options['trackoutbound'] = true;
-			$opt = serialize($options);
-			update_option('GoogleAnalyticsPP',$opt);
+			update_option('GoogleAnalyticsPP',$options);
 		}
 		
 		function success() {
@@ -295,8 +301,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function spool_analytics() {
 			global $gapppluginpath;
 			
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
 	<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->
@@ -350,8 +355,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function ga_parse_link($leaf, $matches){
 			global $origin ;
 			
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			$target = GA_Filter::ga_get_domain($matches[3]);
 			$coolbit = "";
@@ -372,14 +376,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function ga_parse_article_link($matches){
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			return GA_Filter::ga_parse_link($options['artprefix'],$matches);
 		}
 
 		function ga_parse_comment_link($matches){
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			return GA_Filter::ga_parse_link($options['comprefix'],$matches);
 		}
 
@@ -396,8 +398,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
 			preg_match($anchorPattern, $text, $matches);
@@ -418,8 +419,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		
 		function bookmarks($bookmarks) {
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
-				$opt  = get_option('GoogleAnalyticsPP');
-				$options = unserialize($opt);
+				$options  = get_option('GoogleAnalyticsPP');
 
 				foreach ( (array) $bookmarks as $bookmark ) {
 					if ($options['domainorurl'] == "domain") {
@@ -440,8 +440,7 @@ $uakey = "analytics";
 
 if (function_exists("get_option")) {
 	if ($wp_uastring_takes_precedence) {
-		$opt  = get_option('GoogleAnalyticsPP');
-		$options = unserialize($opt);
+		$options  = get_option('GoogleAnalyticsPP');
 		$uastring = $options['uastring'];
 	}
 } 
@@ -450,9 +449,9 @@ $mulch = ($uastring=""?"##-#####-#":$uastring);
 $gaf = new GA_Filter();
 $origin = $gaf->ga_get_domain($_SERVER["HTTP_HOST"]);
 
-$opt  = get_option('GoogleAnalyticsPP',"");
+$options  = get_option('GoogleAnalyticsPP',"");
 
-if ($opt == "") {
+if ($options == "") {
 	$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
 	$options['dlprefix'] = '/downloads';
 	$options['artprefix'] = '/outbound/article';
@@ -465,11 +464,8 @@ if ($opt == "") {
 	$options['extrase'] = false;
 	$options['imagese'] = false;
 	$options['trackoutbound'] = true;
-	$opt = serialize($options);
-	update_option('GoogleAnalyticsPP',$opt);
-} else {
-	$options = unserialize($opt);
-}
+	update_option('GoogleAnalyticsPP',$options);
+} 
 
 // adds the menu item to the admin interface
 add_action('admin_menu', array('GA_Admin','add_config_page'));
