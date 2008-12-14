@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.6.3
+Version: 2.6.4
 Author URI: http://yoast.com/
 License: GPL
 
@@ -117,23 +117,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									Analytics code in your blog, so you don't have to
 									edit any PHP. If you don't have a Google Analytics
 									account yet, you can get one at 
-									<a href="https://www.google.com/analytics/home/">analytics.google.com</a>.</p>
+									<a href="https://www.google.com/analytics/">google.com/analyics</a>.</p>
 
 								<p>In the Google interface, when you "Add Website 
-									Profile" you are shown a piece of JavaScript that
-									you are told to insert into the page, in that script is a 
-									unique string that identifies the website you 
-									just defined, that is your User Account string
-									(it's shown in <strong>bold</strong> in the example below).</p>
-								<tt>&lt;script type="text/javascript"&gt;<br/>
-	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-	&lt;/script&gt;<br/>
-	&lt;script type="text/javascript"&gt;<br/>
-	var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
-	pageTracker._initData();<br/>
-	pageTracker._trackPageview();<br/>
-	&lt;/script&gt;</tt>
+									Profile" you are shown a Web Property ID, a number that starts with "UA-". 
+									Copy paste that into the box above.</p>
 								<p>Once you have entered your User Account String in
 								   the box above your pages will be trackable by
 									Google Analytics.</p>
@@ -402,7 +390,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function the_content($text) {
-			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			static $anchorPattern = '/<a (.*?)href=[\'\"\s](.*?)\/\/([^\"]+?)"(.*?)>(.*?)<\/a>/i';
 			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
 			return $text;
 		}
