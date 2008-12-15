@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.6.6
+Version: 2.6.7
 Author URI: http://yoast.com/
 License: GPL
 
@@ -375,8 +375,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			preg_match($hostPattern, $uri, $matches);
 			$host = $matches[2];
 			preg_match($domainPattern, $host, $matches);
-			return array("domain"=>$matches[0],"host"=>$host);    
-
+			if (isset($matches[0]))
+				return array("domain"=>$matches[0],"host"=>$host);    
+			else
+				return array("domain"=>"","host"=>"");
 		}
 
 		function ga_parse_link($leaf, $matches){
@@ -385,7 +387,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$options  = get_option('GoogleAnalyticsPP');
 			
 			$target = GA_Filter::ga_get_domain($matches[3]);
-			$coolbit = "";
+			$coolBit = "";
 			$extension = substr($matches[3],-3);
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target["domain"] != $origin["domain"] ){
@@ -413,7 +415,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function the_content($text) {
-			static $anchorPattern = '/<a (.*?)href=[\'\"\s](.*?)\/\/([^\"]+?)"(.*?)>(.*?)<\/a>/i';
+			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
 			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
 			return $text;
 		}
@@ -432,7 +434,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			if ($matches[2] == "") return $text;
 
 			$target = GA_Filter::ga_get_domain($matches[2]);
-			$coolbit = "";
+			$coolBit = "";
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
 			if ( $target["domain"] != $origin["domain"]  ){
 				if ($options['domainorurl'] == "domain") {
@@ -464,13 +466,6 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 $version = "0.61";
 $uakey = "analytics";
-
-if (function_exists("get_option")) {
-	if ($wp_uastring_takes_precedence) {
-		$options  = get_option('GoogleAnalyticsPP');
-		$uastring = $options['uastring'];
-	}
-} 
 
 $mulch = ($uastring=""?"##-#####-#":$uastring);
 $gaf = new GA_Filter();
