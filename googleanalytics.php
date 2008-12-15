@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.6.4
+Version: 2.6.5
 Author URI: http://yoast.com/
 License: GPL
 
@@ -35,9 +35,32 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			global $wpdb;
 			if ( function_exists('add_submenu_page') ) {
 				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
+				add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
+				add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
 			}
 		} // end add_GA_config_page()
 
+		function add_ozh_adminmenu_icon( $hook ) {
+			static $gawpicon;
+			if (!$gawpicon) {
+				$gawpicon = WP_CONTENT_URL . '/plugins/' . plugin_basename(dirname(__FILE__)). '/chart_curve.png';
+			}
+			if ($hook == 'googleanalytics.php') return $gawpicon;
+			return $hook;
+		}
+
+		function filter_plugin_actions( $links, $file ){
+			//Static so we don't call plugin_basename on every plugin row.
+			static $this_plugin;
+			if ( ! $this_plugin ) $this_plugin = plugin_basename(__FILE__);
+			
+			if ( $file == $this_plugin ){
+				$settings_link = '<a href="options-general.php?page=googleanalytics.php">' . __('Settings') . '</a>';
+				array_unshift( $links, $settings_link ); // before other links
+			}
+			return $links;
+		}
+		
 		function config_page() {
 			global $dlextensions;
 			if ( $_GET['reset'] == "true") {
