@@ -1,18 +1,26 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://www.joostdevalk.nl/wordpress/analytics/
+Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.5.3
-Author URI: http://www.joostdevalk.nl/
+Version: 2.7
+Author URI: http://yoast.com/
 License: GPL
 
-Based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
+Originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
 */
 
-$pluginpath = str_replace(str_replace('\\', '/', ABSPATH), get_settings('siteurl').'/', str_replace('\\', '/', dirname(__FILE__))).'/';
+// Pre-2.6 compatibility
+if ( !defined('WP_CONTENT_URL') )
+    define( 'WP_CONTENT_URL', get_option('siteurl') . '/wp-content');
+if ( !defined('WP_CONTENT_DIR') )
+    define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
+ 
+// Guess the location
+$gapppluginpath = WP_CONTENT_URL.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
+
 $uastring = "UA-00000-0";
 
 /*
@@ -27,76 +35,75 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			global $wpdb;
 			if ( function_exists('add_submenu_page') ) {
 				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
+				add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
+				add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
 			}
 		} // end add_GA_config_page()
 
+		function add_ozh_adminmenu_icon( $hook ) {
+			static $gawpicon;
+			if (!$gawpicon) {
+				$gawpicon = WP_CONTENT_URL . '/plugins/' . plugin_basename(dirname(__FILE__)). '/chart_curve.png';
+			}
+			if ($hook == 'googleanalytics.php') return $gawpicon;
+			return $hook;
+		}
+
+		function filter_plugin_actions( $links, $file ){
+			//Static so we don't call plugin_basename on every plugin row.
+			static $this_plugin;
+			if ( ! $this_plugin ) $this_plugin = plugin_basename(__FILE__);
+
+			if ( $file == $this_plugin ){
+				$settings_link = '<a href="plugins.php?page=googleanalytics.php">' . __('Settings') . '</a>';
+				array_unshift( $links, $settings_link ); // before other links
+			}
+			return $links;
+		}
+		
 		function config_page() {
 			global $dlextensions;
+			if ( isset($_GET['reset']) && $_GET['reset'] == "true") {
+				$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
+				$options['dlprefix'] = '/downloads';
+				$options['artprefix'] = '/outbound/article';
+				$options['comprefix'] = '/outbound/comment';
+				$options['comautprefix'] = '/outbound/commentauthor';
+				$options['blogrollprefix'] = '/outbound/blogroll';
+				$options['domainorurl'] = 'domain';
+				$options['userv2'] = false;
+				$options['extrase'] = false;
+				$options['imagese'] = false;
+				$options['trackoutbound'] = true;
+				update_option('GoogleAnalyticsPP',$options);
+			}
 			if ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				$options['uastring'] = $_POST['uastring'];
+				
+				foreach (array('dlextensions', 'dlprefix', 'artprefix', 'comprefix', 'comautprefix', 'blogrollprefix', 'domainorurl','position') as $option_name) {
+					if (isset($_POST[$option_name])) {
+						$options[$option_name] = strtolower($_POST[$option_name]);
+					}
+				}
+				
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'userv2') as $option_name) {
+					if (isset($_POST[$option_name])) {
+						$options[$option_name] = true;
+					} else {
+						$options[$option_name] = false;
+					}
+				}
 
-				if (isset($_POST['dlextensions']) && $_POST['dlextensions'] != "") 
-					$options['dlextensions'] 	= strtolower($_POST['dlextensions']);
-				if (isset($_POST['dlprefix']) && $_POST['dlprefix'] != "") 
-					$options['dlprefix'] 		= strtolower($_POST['dlprefix']);
-
-				if (isset($_POST['artprefix']) && $_POST['artprefix'] != "") 
-					$options['artprefix'] 		= strtolower($_POST['artprefix']);
-				if (isset($_POST['comprefix']) && $_POST['comprefix'] != "") 
-					$options['comprefix'] 		= strtolower($_POST['comprefix']);
-				if (isset($_POST['comautprefix']) && $_POST['comautprefix'] != "") 
-					$options['comautprefix'] 	= strtolower($_POST['comautprefix']);
-				if (isset($_POST['blogrollprefix']) && $_POST['blogrollprefix'] != "") 
-					$options['blogrollprefix'] 	= strtolower($_POST['blogrollprefix']);
-				if (isset($_POST['domainorurl']) && $_POST['domainorurl'] != "") 
-					$options['domainorurl'] 	= $_POST['domainorurl'];
-
-				if (isset($_POST['extrase'])) {
+				if ($options['imagese']) {
 					$options['extrase'] = true;
-				} else {
-					$options['extrase'] = false;
-				}
+				} 
 
-				if (isset($_POST['imagese'])) {
-					$options['imagese'] = true;
-					$options['extrase'] = true;
-				} else {
-					$options['imagese'] = false;
-				}
-
-				if (isset($_POST['trackoutbound'])) {
-					$options['trackoutbound'] = true;
-				} else {
-					$options['trackoutbound'] = false;
-				}
-
-				if (isset($_POST['admintracking'])) {
-					$options['admintracking'] = true;
-				} else {
-					$options['admintracking'] = false;
-				}
-
-				if (isset($_POST['trackadsense'])) {
-					$options['trackadsense'] = true;
-				} else {
-					$options['trackadsense'] = false;
-				}
-
-				if (isset($_POST['userv2'])) {
-					$options['userv2'] = true;
-				} else {
-					$options['userv2'] = false;
-				}
-
-				$opt = serialize($options);
-				update_option('GoogleAnalyticsPP', $opt);
+				update_option('GoogleAnalyticsPP', $options);
 			}
-			$mulch = ($uastring=""?"##-#####-#":$uastring);
 
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			?>
 			<div class="wrap">
 				<script type="text/javascript">
@@ -132,23 +139,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									Analytics code in your blog, so you don't have to
 									edit any PHP. If you don't have a Google Analytics
 									account yet, you can get one at 
-									<a href="https://www.google.com/analytics/home/">analytics.google.com</a>.</p>
+									<a href="https://www.google.com/analytics/">google.com/analyics</a>.</p>
 
 								<p>In the Google interface, when you "Add Website 
-									Profile" you are shown a piece of JavaScript that
-									you are told to insert into the page, in that script is a 
-									unique string that identifies the website you 
-									just defined, that is your User Account string
-									(it's shown in <strong>bold</strong> in the example below).</p>
-								<tt>&lt;script type="text/javascript"&gt;<br/>
-	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-	&lt;/script&gt;<br/>
-	&lt;script type="text/javascript"&gt;<br/>
-	var pageTracker = _gat._getTracker("<strong><?php echo($mulch);?></strong>");<br/>
-	pageTracker._initData();<br/>
-	pageTracker._trackPageview();<br/>
-	&lt;/script&gt;</tt>
+									Profile" you are shown a Web Property ID, a number that starts with "UA-". 
+									Copy paste that into the box above.</p>
 								<p>Once you have entered your User Account String in
 								   the box above your pages will be trackable by
 									Google Analytics.</p>
@@ -210,13 +205,24 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<label for="domainorurl">Track full URL of outbound clicks or just the domain?</label>
 						</th>
 						<td>
-							<select name="domainorurl" id="domainorurl">
+							<select name="domainorurl" id="domainorurl" style="width:200px;">
 								<option value="domain"<?php if ($options['domainorurl'] == 'domain') { echo ' selected="selected"';} ?>>Just the domain</option>
 								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
 							</select>
 						</td>
 					</tr>
 						<?php } ?>
+					<tr>
+						<th scope="row" valign="top">
+							<label for="position">Track full URL of outbound clicks or just the domain?</label>
+						</th>
+						<td>
+							<select name="position" id="position" style="width:200px;">
+								<option value="footer"<?php if ($options['position'] == 'footer' || $options['position'] == "") { echo ' selected="selected"';} ?>>In the footer (default)</option>
+								<option value="header"<?php if ($options['position'] == 'header') { echo ' selected="selected"';} ?>>In the header</option>
+							</select>
+						</td>
+					</tr>						
 					<tr>
 						<th scope="row" valign="top">
 							<label for="trackoutbound">Track outbound clicks<br/>
@@ -228,10 +234,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>
 					<tr>
 						<th scope="row" valign="top">
-							<label for="trackadsense">Track AdSense clicks</label>
+							<label for="trackadsense">Track AdSense</label><br/>
+							<small>This requires integration of your Analytics and AdSense account, for help, <a href="https://www.google.com/adsense/support/bin/topic.py?topic=15007">look here</a>.</small>
 						</th>
 						<td>
-							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/> 
+							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/>
 						</td>
 					</tr>
 					<tr>
@@ -261,6 +268,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>
 					</table>
 					<p style="border:0;" class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
+					
+					<p><a href="?page=googleanalytics.php&amp;reset=true">Reset all settings</a></p>
 				</form>
 			</div>
 			<?php
@@ -292,8 +301,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			$options['extrase'] = false;
 			$options['imagese'] = false;
 			$options['trackoutbound'] = true;
-			$opt = serialize($options);
-			update_option('GoogleAnalyticsPP',$opt);
+			update_option('GoogleAnalyticsPP',$options);
 		}
 		
 		function success() {
@@ -329,13 +337,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {
-			global $pluginpath;
+			global $gapppluginpath;
 			
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
-	<!-- Google Analytics for WordPress | http://www.joostdevalk.nl/wordpress/google-analytics/ -->
+	<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->
 	<script type="text/javascript">
 		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
@@ -344,7 +351,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
 	</script>
 <?php if ( $options["extrase"] == true ) {
-		echo("\t<script src=\"".$pluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
+		echo("\t<script src=\"".$gapppluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
 } ?>
 	<script type="text/javascript">
 <?php if ( $options['userv2'] ) {
@@ -363,9 +370,20 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}
 
-		function track_adsense() {
-			echo("\t<script src=\"".$pluginpath."adsense-track.js\" type=\"text/javascript\"></script>\n");
-		}
+		/*
+		 * Insert the AdSense parameter code into the page. This'll go into the header per Google's instructions.
+		 */
+		function spool_adsense() {
+			$options  = get_option('GoogleAnalyticsPP');
+			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
+				
+	<script type="text/javascript">
+		window.google_analytics_uacct = "<?php echo $options["uastring"]; ?>";
+	</script>
+	<?php
+			}
+		}		
+
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
 		 * "host" e.g. store.boakes.org
@@ -378,18 +396,19 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			preg_match($hostPattern, $uri, $matches);
 			$host = $matches[2];
 			preg_match($domainPattern, $host, $matches);
-			return array("domain"=>$matches[0],"host"=>$host);    
-
+			if (isset($matches[0]))
+				return array("domain"=>$matches[0],"host"=>$host);    
+			else
+				return array("domain"=>"","host"=>"");
 		}
 
 		function ga_parse_link($leaf, $matches){
 			global $origin ;
 			
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			$target = GA_Filter::ga_get_domain($matches[3]);
-			$coolbit = "";
+			$coolBit = "";
 			$extension = substr($matches[3],-3);
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target["domain"] != $origin["domain"] ){
@@ -407,19 +426,17 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function ga_parse_article_link($matches){
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			return GA_Filter::ga_parse_link($options['artprefix'],$matches);
 		}
 
 		function ga_parse_comment_link($matches){
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 			return GA_Filter::ga_parse_link($options['comprefix'],$matches);
 		}
 
 		function the_content($text) {
-			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
 			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
 			return $text;
 		}
@@ -431,15 +448,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
-			$opt  = get_option('GoogleAnalyticsPP');
-			$options = unserialize($opt);
+			$options  = get_option('GoogleAnalyticsPP');
 
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
 			preg_match($anchorPattern, $text, $matches);
 			if ($matches[2] == "") return $text;
 
 			$target = GA_Filter::ga_get_domain($matches[2]);
-			$coolbit = "";
+			$coolBit = "";
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
 			if ( $target["domain"] != $origin["domain"]  ){
 				if ($options['domainorurl'] == "domain") {
@@ -452,9 +468,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
+			$options  = get_option('GoogleAnalyticsPP');
+			
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
-				$opt  = get_option('GoogleAnalyticsPP');
-				$options = unserialize($opt);
+				$options  = get_option('GoogleAnalyticsPP');
 
 				foreach ( (array) $bookmarks as $bookmark ) {
 					if ($options['domainorurl'] == "domain") {
@@ -473,21 +490,13 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 $version = "0.61";
 $uakey = "analytics";
 
-if (function_exists("get_option")) {
-	if ($wp_uastring_takes_precedence) {
-		$opt  = get_option('GoogleAnalyticsPP');
-		$options = unserialize($opt);
-		$uastring = $options['uastring'];
-	}
-} 
-
 $mulch = ($uastring=""?"##-#####-#":$uastring);
 $gaf = new GA_Filter();
 $origin = $gaf->ga_get_domain($_SERVER["HTTP_HOST"]);
 
-$opt  = get_option('GoogleAnalyticsPP',"");
+$options  = get_option('GoogleAnalyticsPP',"");
 
-if ($opt == "") {
+if ($options == "") {
 	$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
 	$options['dlprefix'] = '/downloads';
 	$options['artprefix'] = '/outbound/article';
@@ -500,11 +509,8 @@ if ($opt == "") {
 	$options['extrase'] = false;
 	$options['imagese'] = false;
 	$options['trackoutbound'] = true;
-	$opt = serialize($options);
-	update_option('GoogleAnalyticsPP',$opt);
-} else {
-	$options = unserialize($opt);
-}
+	update_option('GoogleAnalyticsPP',$options);
+} 
 
 // adds the menu item to the admin interface
 add_action('admin_menu', array('GA_Admin','add_config_page'));
@@ -517,14 +523,15 @@ if ($options['trackoutbound']) {
 	add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);
 	add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
 }
-if ($options['trackadsense']) {
-	add_action('wp_footer', array('GA_Filter','track_adsense'));	
-}
-
-// adds the footer so the javascript is loaded
-add_action('wp_head', array('GA_Filter','spool_analytics'));	
 
 if ($options['trackadsense']) {
-	add_action('wp_footer', array('GA_Filter','track_adsense'));	
+	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
 }
+
+if ($options['position'] == 'footer' || $options['position'] == "") {
+	add_action('wp_footer', array('GA_Filter','spool_analytics'));	
+} else {
+	add_action('wp_head', array('GA_Filter','spool_analytics'),20);	
+}
+
 ?>
