@@ -29,7 +29,7 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
-1. 2.9: Re arranged admin panel to have "standard" and "advanced" settigns, added domain tracking.
+1. 2.9: Re arranged admin panel to have "standard" and "advanced" settigns, added domain tracking, added fix for double onclick parameter, as suggest here: http://wordpress.org/support/topic/241757
 1. 2.8: Added the option to add setAllowAnchor to the tracking code, allowing you to track campaigns with # instead of ?
 1. 2.7: Added option to select either header of footer position, added new AdSense integration options, remove now unneeded adsense tracking script.
 1. 2.6.6: Fixed settings link

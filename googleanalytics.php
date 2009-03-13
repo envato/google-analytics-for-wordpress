@@ -466,16 +466,21 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target["domain"] != $origin["domain"] ){
 				if ($options['domainorurl'] == "domain") {
-					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');\"";
+					$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');";
 				} else if ($options['domainorurl'] == "url") {
-					$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');\"";
+					$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');";
 				}
 			} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
 				$file = str_replace($origin["domain"],"",$matches[3]);
 				$file = str_replace('www.',"",$file);
-				$coolBit .= "onclick=\"javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');\"";
+				$coolBit .= "javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');";
 			}
-			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' .$coolBit . $matches[4] . '>' . $matches[5] . '</a>';    
+			if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
+				$matches[4] = preg_replace('/onclick=[\'\"](.*?)[\'\"]/i', 'onclick="' . $coolBit .' $1"', $matches[4]);
+			} else {
+				$matches[4] = 'onclick="' . $coolBit . '"' . $matches[4];
+			}
+			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
 		}
 
 		function ga_parse_article_link($matches){
