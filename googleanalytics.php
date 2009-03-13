@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.8
+Version: 2.9
 Author URI: http://yoast.com/
 License: GPL
 
@@ -34,7 +34,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function add_config_page() {
 			global $wpdb;
 			if ( function_exists('add_submenu_page') ) {
-				add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
+				$plugin_page = add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
+				add_action( 'admin_head-'. $plugin_page, array('GA_Admin','config_page_head') );
 				add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
 				add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
 			}
@@ -61,9 +62,36 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			return $links;
 		}
 		
+		function config_page_head() {
+				wp_enqueue_script('jquery');
+			?>
+				 <script type="text/javascript" charset="utf-8">
+				 	jQuery(document).ready(function(){
+						jQuery('#explanation td').css("display","none");
+						jQuery('#advancedsettings').change(function(){
+							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
+								jQuery('#advancedsettingstr').css("border-bottom","1px solid #333");
+								jQuery('.advanced th, .advanced td').css("display","table-cell");
+							} else {
+								jQuery('#advancedsettingstr').css("border-bottom","none");
+								jQuery('.advanced th, .advanced td').css("display","none");
+							}
+						}).change();
+						jQuery('#explain').click(function(){
+							if ((jQuery('#explanation td').css("display")) == "table-cell")  {
+								jQuery('#explanation td').css("display","none");
+							} else {
+								jQuery('#explanation td').css("display","table-cell");
+							}
+						});
+					});
+				 </script>
+			<?php
+		}
+		
 		function config_page() {
-			global $dlextensions;
-			if ( isset($_GET['reset']) && $_GET['reset'] == "true") {
+			global $dlextensions, $gapppluginpath;
+			if ( isset($_POST['reset']) && $_POST['reset'] == "true") {
 				$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
 				$options['dlprefix'] = '/downloads';
 				$options['artprefix'] = '/outbound/article';
@@ -74,15 +102,19 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				$options['userv2'] = false;
 				$options['extrase'] = false;
 				$options['imagese'] = false;
+				$options['admintracking'] = true;
 				$options['trackoutbound'] = true;
+				$options['advancedsettings'] = false;
+				$options['allowanchor'] = false;
 				update_option('GoogleAnalyticsPP',$options);
+				echo "<div class=\"updated\"><p>Google Analytics settings reset to default.</p></div>\n";
 			}
 			if ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				$options['uastring'] = $_POST['uastring'];
 				
-				foreach (array('dlextensions', 'dlprefix', 'artprefix', 'comprefix', 'comautprefix', 'blogrollprefix', 'domainorurl','position') as $option_name) {
+				foreach (array('dlextensions', 'dlprefix', 'artprefix', 'comprefix', 'comautprefix', 'blogrollprefix', 'domainorurl','position','domain') as $option_name) {
 					if (isset($_POST[$option_name])) {
 						$options[$option_name] = strtolower($_POST[$option_name]);
 					}
@@ -101,6 +133,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				} 
 
 				update_option('GoogleAnalyticsPP', $options);
+				echo "<div id=\"message\" class=\"updated\"><p>Google Analytics settings updated.</p></div>\n";
 			}
 
 			$options  = get_option('GoogleAnalyticsPP');
@@ -109,18 +142,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				<h2>Google Analytics for WordPress Configuration</h2>
 				<iframe style="float: right; width: 200px; height: 250px" src="http://yoast.com/wp/google-analytics.php"></iframe>
 				
-				<script type="text/javascript">
-					function toggle_help(ele, ele2) {
-						var expl = document.getElementById(ele2);
-						if (expl.style.display == "block") {
-							expl.style.display = "none";
-							ele.innerHTML = "What's this?";
-						} else {
-							expl.style.display = "block";
-							ele.innerHTML = "Hide explanation";
-						}
-					}
-				</script>
 				<form action="" method="post" id="analytics-conf">
 					<table class="form-table" style="clear:none;">
 					<?php
@@ -129,91 +150,24 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					?>
 					<tr>
 						<th scope="row" style="width:250px;" valign="top">
-							<label for="uastring">Analytics User Account</label> <small><a href="#" onclick="javascript:toggle_help(this, 'expl');">What's this?</a></small>
+							<label for="uastring">Analytics Account ID</label> &nbsp; &nbsp; &nbsp; <small><a href="#" id="explain">What's this?</a></small>
 						</th>
 						<td>
 							<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="<?php echo $options['uastring']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;" /><br/>
-							<div id="expl" style="display:none;">
-								<h3>Explanation</h3>
-								<p>Google Analytics is a statistics service provided
-									free of charge by Google.  This plugin simplifies
-									the process of including the <em>basic</em> Google
-									Analytics code in your blog, so you don't have to
-									edit any PHP. If you don't have a Google Analytics
-									account yet, you can get one at 
-									<a href="https://www.google.com/analytics/">google.com/analyics</a>.</p>
-
-								<p>In the Google interface, when you "Add Website 
-									Profile" you are shown a Web Property ID, a number that starts with "UA-". 
-									Copy paste that into the box above.</p>
-								<p>Once you have entered your User Account String in
-								   the box above your pages will be trackable by
-									Google Analytics.</p>
+						</td>
+					</tr>
+					<tr id="explanation">
+						<td colspan="2">
+							<div style="background: #fff; border: 1px solid #ccc; width: 60%; padding: 5px;">
+								<strong>Explanation</strong><br/>
+								Find the Account ID, starting with UA- in your account overview, as marked below:<br/>
+								<br/>
+								<img src="<?php echo $gapppluginpath ?>/account-id.png" alt="Account ID"/><br/>
+								<br/>
+								Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.
 							</div>
 						</td>
-					</tr>							
-					<?php if ($options['trackoutbound']) { ?>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="dlextensions">Extensions of files to track as downloads</label><br/>
-							<small>(If the extension is only two chars, prefix it with a dot, like '.js')</small>
-						</th>
-						<td>
-							<input type="text" name="dlextensions" size="30" value="<?php echo $options['dlextensions']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>	
 					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="dlprefix">Prefix for tracked downloads</label>
-						</th>
-						<td>
-							<input type="text" id="dlprefix" name="dlprefix" size="30" value="<?php echo $options['dlprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="artprefix">Prefix for outbound clicks from articles</label>
-						</th>
-						<td>
-							<input type="text" id="artprefix" name="artprefix" size="30" value="<?php echo $options['artprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="comprefix">Prefix for outbound clicks from within comments</label>
-						</th>
-						<td>
-							<input type="text" id="comprefix" name="comprefix" size="30" value="<?php echo $options['comprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="comautprefix">Prefix for outbound clicks from comment author links</label>
-						</th>
-						<td>
-							<input type="text" id="comautprefix" name="comautprefix" size="30" value="<?php echo $options['comautprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="blogrollprefix">Prefix for outbound clicks from blogroll links</label>
-						</th>
-						<td>
-							<input type="text" id="blogrollprefix" name="blogrollprefix" size="30" value="<?php echo $options['blogrollprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="domainorurl">Track full URL of outbound clicks or just the domain?</label>
-						</th>
-						<td>
-							<select name="domainorurl" id="domainorurl" style="width:200px;">
-								<option value="domain"<?php if ($options['domainorurl'] == 'domain') { echo ' selected="selected"';} ?>>Just the domain</option>
-								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
-							</select>
-						</td>
-					</tr>
-						<?php } ?>
 					<tr>
 						<th scope="row" valign="top">
 							<label for="position">Where should the tracking script be placed?</label>
@@ -236,6 +190,93 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>
 					<tr>
 						<th scope="row" valign="top">
+							<label for="advancedsettings">Show advanced settings</label><br/>
+							<small>Only adviced for advanced users who know their way around Google Analytics</small>
+						</th>
+						<td>
+							<input type="checkbox" id="advancedsettings" name="advancedsettings" <?php if ($options['advancedsettings']) echo ' checked="checked" '; ?>/> 
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="admintracking">Track the administrator too</label><br/>
+							<small>(default is true)</small>
+						</th>
+						<td>
+							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="dlextensions">Extensions of files to track as downloads</label><br/>
+							<small>(If the extension is only two chars, prefix it with a dot, like '.js')</small>
+						</th>
+						<td>
+							<input type="text" name="dlextensions" size="30" value="<?php echo $options['dlextensions']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>	
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="dlprefix">Prefix for tracked downloads</label>
+						</th>
+						<td>
+							<input type="text" id="dlprefix" name="dlprefix" size="30" value="<?php echo $options['dlprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="artprefix">Prefix for outbound clicks from articles</label>
+						</th>
+						<td>
+							<input type="text" id="artprefix" name="artprefix" size="30" value="<?php echo $options['artprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="comprefix">Prefix for outbound clicks from within comments</label>
+						</th>
+						<td>
+							<input type="text" id="comprefix" name="comprefix" size="30" value="<?php echo $options['comprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="comautprefix">Prefix for outbound clicks from comment author links</label>
+						</th>
+						<td>
+							<input type="text" id="comautprefix" name="comautprefix" size="30" value="<?php echo $options['comautprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="blogrollprefix">Prefix for outbound clicks from blogroll links</label>
+						</th>
+						<td>
+							<input type="text" id="blogrollprefix" name="blogrollprefix" size="30" value="<?php echo $options['blogrollprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="domainorurl">Track full URL of outbound clicks or just the domain?</label>
+						</th>
+						<td>
+							<select name="domainorurl" id="domainorurl" style="width:200px;">
+								<option value="domain"<?php if ($options['domainorurl'] == 'domain') { echo ' selected="selected"';} ?>>Just the domain</option>
+								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
+							</select>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="domain">Domain Tracking</label><br/>
+							<small>This allows you to set the domain that's set by <a href="http://code.google.com/apis/analytics/docs/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setDomainName"><code>setDomainName</code></a> for tracking subdomains, if empty this will not be set.</small>
+						</th>
+						<td>
+							<input type="text" id="domain" name="domain" size="30" value="<?php echo $options['domain']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
 							<label for="trackadsense">Track AdSense</label><br/>
 							<small>This requires integration of your Analytics and AdSense account, for help, <a href="https://www.google.com/adsense/support/bin/topic.py?topic=15007">look here</a>.</small>
 						</th>
@@ -243,7 +284,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/>
 						</td>
 					</tr>
-					<tr>
+					<tr class="advanced">
 						<th scope="row" valign="top">
 							<label for="extrase">Track extra Search Engines</label>
 						</th>
@@ -251,16 +292,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/>
 						</td>
 					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="admintracking">Track the administrator too</label><br/>
-							<small>(default is not to)</small>
-						</th>
-						<td>
-							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
-						</td>
-					</tr>
-					<tr>
+					<tr class="advanced">
 						<th scope="row" valign="top">
 							<label for="userv2">I use Urchin too.</label>
 						</th>
@@ -268,7 +300,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/>
 						</td>
 					</tr>
-					<tr>
+					<tr class="advanced">
 						<th scope="row" valign="top">
 							<label for="allowanchor">Use # instead of ? for Campaign tracking?</label><br/>
 							<small>This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script.</small>
@@ -279,8 +311,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>					
 					</table>
 					<p style="border:0;" class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
-					
-					<p><a href="?page=googleanalytics.php&amp;reset=true">Reset all settings</a></p>
+				</form>
+				<form action="" method="post">
+					<input type="hidden" name="reset" value="true"/>
+					<p style="border:0;" class="submit"><input type="submit" value="Reset Settings &raquo;" /></p>
 				</form>
 			</div>
 			<?php
@@ -317,7 +351,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		
 		function success() {
 			echo "
-			<div id='analytics-warning' class='updated fade-ff0000'><p><strong>Congratulations! You have just activated Google Analytics.</p></div>
+			<div id='analytics-warning' class='updated'><p><strong>Congratulations! You have just activated Google Analytics.</p></div>
 			<style type='text/css'>
 			#adminmenu { margin-bottom: 7em; }
 			#analytics-warning { position: absolute; top: 7em; }
@@ -326,7 +360,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 		function warning() {
 			echo "
-			<div id='analytics-warning' class='updated fade-ff0000'><p><strong>Google Analytics is not active.</strong> You must <a href='plugins.php?page=googleanalytics.php'>enter your UA String</a> for it to work.</p></div>
+			<div id='analytics-warning' class='updated-ff0000'><p><strong>Google Analytics is not active.</strong> You must <a href='plugins.php?page=googleanalytics.php'>enter your UA String</a> for it to work.</p></div>
 			<style type='text/css'>
 			#adminmenu { margin-bottom: 6em; }
 			#analytics-warning { position: absolute; top: 7em; }
@@ -370,9 +404,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 } 
 if ( $options['allowanchor'] ) {
 		echo("\t\tpageTracker._setAllowAnchor(true);\n");
-} ?>
-		pageTracker._initData();
-<?php if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"]) { ?>
+} 
+if ( isset($options['domain']) && $options['domain'] != "" ) {
+		if (substr($options['domain'],0,1) != ".") {
+			$options['domain'] = ".".$options['domain'];
+		}
+		echo("\t\tpageTracker._setDomainName(\"".$options['domain']."\");\n");
+}
+if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"]) { ?>
 		regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
 		var match = regex.exec(pageTracker.qa);
 		pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);
@@ -527,6 +566,7 @@ if ($options == "") {
 } 
 
 // adds the menu item to the admin interface
+add_action('admin_menu', array('GA_Admin','add_config_page'));
 add_action('admin_menu', array('GA_Admin','add_config_page'));
 
 if ($options['trackoutbound']) {
