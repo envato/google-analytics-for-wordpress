@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9
+Version: 2.9.1
 Author URI: http://yoast.com/
 License: GPL
 
@@ -86,6 +86,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						});
 					});
 				 </script>
+				<style type="text/css" media="screen">
+				.pluginmenu li {
+					list-style-type: square;
+					margin-left: 20px;
+					padding-left: 5px;
+				}
+				</style>				
 			<?php
 		}
 		
@@ -164,7 +171,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								<br/>
 								<img src="<?php echo $gapppluginpath ?>/account-id.png" alt="Account ID"/><br/>
 								<br/>
-								Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.
+								Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.<br/>
+								Still can't find it? Watch <a href="http://yoast.com/wordpress/google-analytics/#accountid">this video</a>!
 							</div>
 						</td>
 					</tr>
@@ -316,6 +324,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					<input type="hidden" name="reset" value="true"/>
 					<p style="border:0;" class="submit"><input type="submit" value="Reset Settings &raquo;" /></p>
 				</form>
+				<br/><br/>
+				<h3>Like this plugin?</h3>
+				<p>Why not do any of the following:</p>
+				<ul class="pluginmenu">
+					<li>Link to it so other folks can find out about it.</li>
+					<li><a href="http://wordpress.org/extend/plugins/google-analytics-for-wordpress/">Give it a good rating</a> on WordPress.org, so others will find it more easily too!</li>
+					<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=2017947">Donate a token of your appreciation</a>.</li>
+				</ul>
 			</div>
 			<?php
 			if (isset($options['uastring'])) {
@@ -331,9 +347,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			} else {
 				add_action('admin_footer', array('GA_Admin','warning'));
 			}
-
 		} // end config_page()
-
+		
 		function restore_defaults() {
 			$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
 			$options['dlprefix'] = '/downloads';
@@ -494,14 +509,18 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 		}
 
 		function the_content($text) {
-			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
-			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);
+			if (!is_feed()) {
+				static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
+				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);				
+			}
 			return $text;
 		}
 
 		function comment_text($text) {
-			static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
-			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
+			if (!is_feed()) {
+				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
+				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
+			}
 			return $text;
 		}
 
