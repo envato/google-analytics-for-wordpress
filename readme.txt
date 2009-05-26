@@ -3,8 +3,8 @@ Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
-Tested up to: 2.7
-Stable tag: 2.7
+Tested up to: 2.7.1
+Stable tag: 2.9.2
 
 The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -16,7 +16,7 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 
 * [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/).
 * Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
-* You can hire this author to write [WordPress themes](http://www.altha.co.uk/wordpress/themes/) and [plugins](http://www.altha.co.uk/wordpress/plugins/)!
+* Check out the authors [WordPress Hosting](http://yoast.com/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
 
 == Installation ==
 
@@ -29,6 +29,16 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+1. 2.9.2: 
+	* Added a check to see whether the wp_footer() call is in footer.php
+	* Added a message to the source when tracking code is left out because user is logged in as admin
+	* Added option to segment logged in users
+	* Added try - catch to script lines like in new Google Analytics scripts
+	* Fixed bug in warning when no UA code is entered
+	* Prevent link tracking when admin is logged in and admin tracking is disabled
+	* Now prevents parsing of non http and https link
+1. 2.9: Re arranged admin panel to have "standard" and "advanced" settigns, added domain tracking, added fix for double onclick parameter, as suggest here: http://wordpress.org/support/topic/241757
+1. 2.8: Added the option to add setAllowAnchor to the tracking code, allowing you to track campaigns with # instead of ?
 1. 2.7: Added option to select either header of footer position, added new AdSense integration options, remove now unneeded adsense tracking script.
 1. 2.6.6: Fixed settings link
 1. 2.6.5: added Ozh admin menu icon and settings link
