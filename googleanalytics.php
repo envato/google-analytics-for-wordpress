@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9.1
+Version: 2.9.2
 Author URI: http://yoast.com/
 License: GPL
 
@@ -127,7 +127,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					}
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'userv2', 'allowanchor') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor') as $option_name) {
 					if (isset($_POST[$option_name])) {
 						$options[$option_name] = true;
 					} else {
@@ -141,6 +141,15 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 				update_option('GoogleAnalyticsPP', $options);
 				echo "<div id=\"message\" class=\"updated\"><p>Google Analytics settings updated.</p></div>\n";
+			}
+
+			$templates = array();
+			$templates[] = "footer.php";
+			$file = file_get_contents(locate_template($templates));
+			// Check for wp_footer
+			preg_match('/.*(wp_footer\(\);).*/',$file,$matches);
+			if (!$matches[1]) {
+				echo "<div id=\"message\" class=\"error\"><p><strong>Warning</strong> wp_footer(); not found in your footer.php file,  this might mean this plugin will not work!</p></div>\n";
 			}
 
 			$options  = get_option('GoogleAnalyticsPP');
@@ -212,6 +221,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						</th>
 						<td>
 							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
+							<label for="trackloggedin">Segment logged in users</label><br/>
+						</th>
+						<td>
+							<input type="checkbox" id="trackloggedin" name="trackloggedin" <?php if ($options['trackloggedin']) echo ' checked="checked" '; ?>/> 
 						</td>
 					</tr>
 					<tr class="advanced">
@@ -361,25 +378,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			$options['extrase'] = false;
 			$options['imagese'] = false;
 			$options['trackoutbound'] = true;
+			$options['admintracking'] = true;
 			update_option('GoogleAnalyticsPP',$options);
 		}
 		
-		function success() {
-			echo "
-			<div id='analytics-warning' class='updated'><p><strong>Congratulations! You have just activated Google Analytics.</p></div>
-			<style type='text/css'>
-			#adminmenu { margin-bottom: 7em; }
-			#analytics-warning { position: absolute; top: 7em; }
-			</style>";
-		} // end success()
-
 		function warning() {
-			echo "
-			<div id='analytics-warning' class='updated-ff0000'><p><strong>Google Analytics is not active.</strong> You must <a href='plugins.php?page=googleanalytics.php'>enter your UA String</a> for it to work.</p></div>
-			<style type='text/css'>
-			#adminmenu { margin-bottom: 6em; }
-			#analytics-warning { position: absolute; top: 7em; }
-			</style>";
+			echo "<div id='message' class='error'><p><strong>Google Analytics is not active.</strong> You must <a href='plugins.php?page=googleanalytics.php'>enter your UA String</a> for it to work.</p></div>";
 		} // end warning()
 
 	} // end class GA_Admin
@@ -408,33 +412,43 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 	</script>
 	<script type="text/javascript">
-		var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
+		try {
+			var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
+		} catch(err) {}
 	</script>
 <?php if ( $options["extrase"] == true ) {
 		echo("\t<script src=\"".$gapppluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
 } ?>
 	<script type="text/javascript">
+		try {
 <?php if ( $options['userv2'] ) {
-		echo("\t\tpageTracker._setLocalRemoteServerMode();\n");
+	echo("\t\t\tpageTracker._setLocalRemoteServerMode();\n");
 } 
 if ( $options['allowanchor'] ) {
-		echo("\t\tpageTracker._setAllowAnchor(true);\n");
+	echo("\t\t\tpageTracker._setAllowAnchor(true);\n");
 } 
+if ($options['trackloggedin'] && !isset($_COOKIE['__utmv']) && is_user_logged_in() ) {
+	echo("\t\t\tpageTracker._setVar('logged-in');\n");
+} else {
+	echo("\t\t\t// Cookied already: ".$_COOKIE['__utmv']."\n");
+}
 if ( isset($options['domain']) && $options['domain'] != "" ) {
-		if (substr($options['domain'],0,1) != ".") {
-			$options['domain'] = ".".$options['domain'];
-		}
-		echo("\t\tpageTracker._setDomainName(\"".$options['domain']."\");\n");
+	if (substr($options['domain'],0,1) != ".") {
+		$options['domain'] = ".".$options['domain'];
+	}
+	echo("\t\t\tpageTracker._setDomainName(\"".$options['domain']."\");\n");
 }
 if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"]) { ?>
-		regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
-		var match = regex.exec(pageTracker.qa);
-		pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);
-<?php } ?>		
-		pageTracker._trackPageview();
+			regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
+			var match = regex.exec(pageTracker.qa);
+			pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]); <?php } 
+?>			pageTracker._trackPageview();
+		} catch(err) {}
 	</script>
 	<!-- End of Google Analytics code -->
 	<?php
+			} else if ((current_user_can('edit_users') && !$options["admintracking"])) {
+				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
 			}
 		}
 
@@ -457,7 +471,6 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 		 * "host" e.g. store.boakes.org
 		 */
 		function ga_get_domain($uri){
-
 			$hostPattern = "/^(http:\/\/)?([^\/]+)/i";
 			$domainPattern = "/[^\.\/]+\.[^\.\/]+$/";
 
@@ -475,25 +488,34 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 			
 			$options  = get_option('GoogleAnalyticsPP');
 			
-			$target = GA_Filter::ga_get_domain($matches[3]);
+			// Break out immediately if the link is not an http or https link.
+			if (strpos($matches[2],"http") !== 0)
+				$target = false;
+			else
+				$target = GA_Filter::ga_get_domain($matches[3]);
+				
 			$coolBit = "";
 			$extension = substr($matches[3],-3);
 			$dlextensions = split(",",$options['dlextensions']);
-			if ( $target["domain"] != $origin["domain"] ){
-				if ($options['domainorurl'] == "domain") {
-					$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');";
-				} else if ($options['domainorurl'] == "url") {
-					$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');";
-				}
-			} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
-				$file = str_replace($origin["domain"],"",$matches[3]);
-				$file = str_replace('www.',"",$file);
-				$coolBit .= "javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');";
-			}
-			if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
-				$matches[4] = preg_replace('/onclick=[\'\"](.*?)[\'\"]/i', 'onclick="' . $coolBit .' $1"', $matches[4]);
-			} else {
-				$matches[4] = 'onclick="' . $coolBit . '"' . $matches[4];
+			if ( $target ) {
+				if ( $target["domain"] != $origin["domain"] ){
+					if ($options['domainorurl'] == "domain") {
+						$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$target["host"]."');";
+					} else if ($options['domainorurl'] == "url") {
+						$coolBit .= "javascript:pageTracker._trackPageview('".$leaf."/".$matches[2]."//".$matches[3]."');";
+					}
+				} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
+					$file = str_replace($origin["domain"],"",$matches[3]);
+					$file = str_replace('www.',"",$file);
+					$coolBit .= "javascript:pageTracker._trackPageview('".$options['dlprefix'].$file."');";
+				}				
+			} 
+			if ($coolBit != "") {
+				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
+					$matches[4] = preg_replace('/onclick=[\'\"](.*?)[\'\"]/i', 'onclick="' . $coolBit .' $1"', $matches[4]);
+				} else {
+					$matches[4] = 'onclick="' . $coolBit . '"' . $matches[4];
+				}				
 			}
 			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
 		}
@@ -526,7 +548,10 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 
 		function comment_author_link($text) {
 			$options  = get_option('GoogleAnalyticsPP');
-
+			
+			if (current_user_can('edit_users') && !$options["admintracking"]) {
+				return $text;
+			}
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
 			preg_match($anchorPattern, $text, $matches);
 			if ($matches[2] == "") return $text;

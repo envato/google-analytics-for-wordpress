@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
 Tested up to: 2.7.1
-Stable tag: 2.9.1
+Stable tag: 2.9.2
 
 The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -22,14 +22,21 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 
 This section describes how to install the plugin and get it working.
 
-1. Delete any existing `google-analytics-for-wordpress` folder from the `/wp-content/plugins/` directory
-1. Upload `google-analytics-for-wordpress` folder to the `/wp-content/plugins/` directory
+1. Delete any existing `gapp` folder from the `/wp-content/plugins/` directory
+1. Upload `gapp` folder to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Go to the options panel under the 'Plugins' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
 
-1. 2.9.1: Prevented click tracking from being added to feeds, to make sure feeds keep validating, added link to video about finding your account ID, added "Like this plugin" list of suggestion to help out.
+1. 2.9.2: 
+	* Added a check to see whether the wp_footer() call is in footer.php
+	* Added a message to the source when tracking code is left out because user is logged in as admin
+	* Added option to segment logged in users
+	* Added try - catch to script lines like in new Google Analytics scripts
+	* Fixed bug in warning when no UA code is entered
+	* Prevent link tracking when admin is logged in and admin tracking is disabled
+	* Now prevents parsing of non http and https link
 1. 2.9: Re arranged admin panel to have "standard" and "advanced" settigns, added domain tracking, added fix for double onclick parameter, as suggest here: http://wordpress.org/support/topic/241757
 1. 2.8: Added the option to add setAllowAnchor to the tracking code, allowing you to track campaigns with # instead of ?
 1. 2.7: Added option to select either header of footer position, added new AdSense integration options, remove now unneeded adsense tracking script.
