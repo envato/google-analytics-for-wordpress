@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9.2
+Version: 2.9.3
 Author URI: http://yoast.com/
 License: GPL
 
@@ -127,7 +127,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					}
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging') as $option_name) {
 					if (isset($_POST[$option_name])) {
 						$options[$option_name] = true;
 					} else {
@@ -327,8 +327,16 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</tr>
 					<tr class="advanced">
 						<th scope="row" valign="top">
+							<label for="rsslinktagging">Tag the links in your RSS feed with campaign variables.</label>
+						</th>
+						<td>
+							<input type="checkbox" id="rsslinktagging" name="rsslinktagging" <?php if ($options['rsslinktagging']) echo ' checked="checked" '; ?>/>
+						</td>
+					</tr>
+					<tr class="advanced">
+						<th scope="row" valign="top">
 							<label for="allowanchor">Use # instead of ? for Campaign tracking?</label><br/>
-							<small>This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script.</small>
+							<small>This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.</small>
 						</th>
 						<td>
 							<input type="checkbox" id="allowanchor" name="allowanchor" <?php if ($options['allowanchor']) echo ' checked="checked" '; ?>/>
@@ -586,27 +594,39 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 			}
 			return $bookmarks;
 		}
+		
+		function rsslinktagger($guid) {
+			$options  = get_option('GoogleAnalyticsPP');
+			global $wp;
+			if ($wp->request == 'feed') {
+				if ( $options['allowanchor'] ) {
+					$delimiter = '#';
+				} else {
+					$delimiter = '?';
+				}
+				if (strpos ( $guid, $delimiter ) > 0)
+					$delimiter = '&amp;';
+				return $guid . $delimiter . 'utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=rss';
+			}
+		}
+		
 	} // class GA_Filter
 } // endif
 
-$version = "0.61";
-$uakey = "analytics";
-
-$mulch = ($uastring=""?"##-#####-#":$uastring);
 $gaf = new GA_Filter();
 $origin = $gaf->ga_get_domain($_SERVER["HTTP_HOST"]);
 
 $options  = get_option('GoogleAnalyticsPP',"");
 
 if ($options == "") {
-	$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
+	$options['dlextensions'] = 'doc,exe,js,pdf,ppt,tgz,zip,xls';
 	$options['dlprefix'] = '/downloads';
 	$options['artprefix'] = '/outbound/article';
 	$options['comprefix'] = '/outbound/comment';
 	$options['comautprefix'] = '/outbound/commentauthor';
 	$options['blogrollprefix'] = '/outbound/blogroll';
 	$options['domainorurl'] = 'domain';
-	$options['position'] = 'header';
+	$options['position'] = 'footer';
 	$options['userv2'] = false;
 	$options['extrase'] = false;
 	$options['imagese'] = false;
@@ -636,5 +656,10 @@ if ($options['position'] == 'footer' || $options['position'] == "") {
 } else {
 	add_action('wp_head', array('GA_Filter','spool_analytics'),20);	
 }
+
+if ($options['rsslinktagging']) {
+	add_filter ( 'the_permalink_rss', array('GA_Filter','rsslinktagger'), 99 );	
+}
+
 
 ?>
