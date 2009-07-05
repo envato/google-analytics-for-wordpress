@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.2
 Tested up to: 2.8
-Stable tag: 2.9.3
+Stable tag: 2.9.4
 
 The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -29,28 +29,66 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
-1. 2.9.3: Added a new option for RSS link tagging, which allows you to tag your RSS feed links with RSS campaign variables. When you've set campaign variables to use # instead of ?, this will adhere to that setting too. Thanks to [Timan Rebel](http://rebelic.nl/) for the idea and code.
-1. 2.9.2: 
-	* Added a check to see whether the wp_footer() call is in footer.php
-	* Added a message to the source when tracking code is left out because user is logged in as admin
-	* Added option to segment logged in users
-	* Added try - catch to script lines like in new Google Analytics scripts
-	* Fixed bug in warning when no UA code is entered
-	* Prevent link tracking when admin is logged in and admin tracking is disabled
-	* Now prevents parsing of non http and https link
-1. 2.9: Re arranged admin panel to have "standard" and "advanced" settigns, added domain tracking, added fix for double onclick parameter, as suggest here: http://wordpress.org/support/topic/241757
-1. 2.8: Added the option to add setAllowAnchor to the tracking code, allowing you to track campaigns with # instead of ?
-1. 2.7: Added option to select either header of footer position, added new AdSense integration options, remove now unneeded adsense tracking script.
-1. 2.6.6: Fixed settings link
-1. 2.6.5: added Ozh admin menu icon and settings link
-1. 2.6.4: fixes for 2.7
-1. 2.6.3: fixed bug that didn't allow saving of outbound clicks from comments string
-1. 2.6: fixed incompatibility with WP 2.6
-1. 2.5.4: fixed an issue with pluginpath being used globally, and changed links to new domain.
-1. 2.2: switched to the new tracking code
-1. 2.1: made sure tracking was disabled on preview pages
-1. 2.0: added AdSense tracking
-1. 1.5: added option to enable admin tracking, off by default
+= 2.9.4 =
+* Changed to the new Changelog design.
+* Removed pre 2.6 compatibility code, plugin now requires WP 2.6 or higher.
+* Small changes to the admin screen.
+
+= 2.9.3 =
+* Added a new option for RSS link tagging, which allows you to tag your RSS feed links with RSS campaign variables. When you've set campaign variables to use # instead of ?, this will adhere to that setting too. Thanks to [Timan Rebel](http://rebelic.nl/) for the idea and code.
+
+= 2.9.2: =
+* Added a check to see whether the wp_footer() call is in footer.php.
+* Added a message to the source when tracking code is left out because user is logged in as admin.
+* Added option to segment logged in users.
+* Added try - catch to script lines like in new Google Analytics scripts.
+* Fixed bug in warning when no UA code is entered.
+* Prevent link tracking when admin is logged in and admin tracking is disabled.
+* Now prevents parsing of non http and https link.
+
+= 2.9 = 
+* Re arranged admin panel to have "standard" and "advanced" settings.
+* Added domain tracking.
+* Added fix for double onclick parameter, as suggested [here](http://wordpress.org/support/topic/241757).
+
+= 2.8 = 
+* Added the option to add setAllowAnchor to the tracking code, allowing you to track campaigns with # instead of ?.
+
+= 2.7 = 
+* Added option to select either header of footer position.
+* Added new AdSense integration options.
+* Removed now unneeded adsense tracking script.
+
+= 2.6.6=
+* Fixed settings link.
+
+= 2.6.5 = 
+* added Ozh admin menu icon and settings link.
+
+= 2.6.4 = 
+* Fixes for 2.7.
+
+= 2.6.3 = 
+* Fixed bug that didn't allow saving of outbound clicks from comments string.
+
+= 2.6 =
+* Fixed incompatibility with WP 2.6.
+
+= 2.5.4 =
+* Fixed an issue with pluginpath being used globally.
+* Changed links to [new domain](http://yoast.com/).
+
+= 2.2 = 
+* Switched to the new tracking code.
+
+= 2.1 = 
+* Made sure tracking was disabled on preview pages.
+
+= 2.0 = 
+* Added AdSense tracking.
+
+= 1.5 =
+* Added option to enable admin tracking, off by default.
 
 == Frequently Asked Questions ==
 

@@ -4,24 +4,15 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9.3
+Version: 2.9.4
+Requires at least: 2.6
 Author URI: http://yoast.com/
 License: GPL
 
-Originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
-
 */
 
-// Pre-2.6 compatibility
-if ( !defined('WP_CONTENT_URL') )
-    define( 'WP_CONTENT_URL', get_option('siteurl') . '/wp-content');
-if ( !defined('WP_CONTENT_DIR') )
-    define( 'WP_CONTENT_DIR', ABSPATH . 'wp-content' );
- 
-// Guess the location
-$gapppluginpath = WP_CONTENT_URL.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
-
-$uastring = "UA-00000-0";
+// Determine the location
+$gapppluginpath = plugins_url('', __FILE__).'/';
 
 /*
  * Admin User Interface
@@ -32,13 +23,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 	class GA_Admin {
 
 		function add_config_page() {
-			global $wpdb;
-			if ( function_exists('add_submenu_page') ) {
-				$plugin_page = add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
-				add_action( 'admin_head-'. $plugin_page, array('GA_Admin','config_page_head') );
-				add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
-				add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
-			}
+			$plugin_page = add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
+			add_action( 'admin_head-'. $plugin_page, array('GA_Admin','config_page_head') );
+			add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
+			add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
 		} // end add_GA_config_page()
 
 		function add_ozh_adminmenu_icon( $hook ) {
@@ -143,27 +131,20 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				echo "<div id=\"message\" class=\"updated\"><p>Google Analytics settings updated.</p></div>\n";
 			}
 
-			$templates = array();
-			$templates[] = "footer.php";
-			$file = file_get_contents(locate_template($templates));
-			// Check for wp_footer
-			preg_match('/.*(wp_footer\(\);).*/',$file,$matches);
-			if (!$matches[1]) {
-				echo "<div id=\"message\" class=\"error\"><p><strong>Warning</strong> wp_footer(); not found in your footer.php file,  this might mean this plugin will not work!</p></div>\n";
-			}
-
 			$options  = get_option('GoogleAnalyticsPP');
 			?>
 			<div class="wrap">
+				<?php screen_icon('tools'); ?>
 				<h2>Google Analytics for WordPress Configuration</h2>
-				<iframe style="float: right; width: 200px; height: 250px" src="http://yoast.com/wp/google-analytics.php"></iframe>
-				
+				<div style="width: 250px; float:right;">
+					<h3>The latest news on Yoast</h3>
+					<?php
+						yst_db_widget('small', 2, 150, false);
+					?>
+				</div>
 				<form action="" method="post" id="analytics-conf">
 					<table class="form-table" style="clear:none;">
-					<?php
-					if ( function_exists('wp_nonce_field') )
-						wp_nonce_field('analyticspp-config');
-					?>
+					<?php wp_nonce_field('analyticspp-config'); ?>
 					<tr>
 						<th scope="row" style="width:250px;" valign="top">
 							<label for="uastring">Analytics Account ID</label> &nbsp; &nbsp; &nbsp; <small><a href="#" id="explain">What's this?</a></small>
@@ -661,5 +642,54 @@ if ($options['rsslinktagging']) {
 	add_filter ( 'the_permalink_rss', array('GA_Filter','rsslinktagger'), 99 );	
 }
 
+function yst_text_limit( $text, $limit, $finish = ' [&hellip;]') {
+	if( strlen( $text ) > $limit ) {
+    	$text = substr( $text, 0, $limit );
+		$text = substr( $text, 0, - ( strlen( strrchr( $text,' ') ) ) );
+		$text .= $finish;
+	}
+	return $text;
+}
 
+function yst_db_widget($image = 'normal', $num = 3, $excerptsize = 250, $showdate = true) {
+	require_once(ABSPATH.WPINC.'/rss.php');  
+	if ( $rss = fetch_rss( 'http://feeds2.feedburner.com/joostdevalk' ) ) {
+		echo '<div class="rss-widget">';
+		if ($image != 'small') {
+			echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+		} else {
+			echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img width="80" src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+		}
+		echo '<ul>';
+		if (!is_numeric($num)) {
+			$num = 3;
+		}
+		$rss->items = array_slice( $rss->items, 0, $num );
+		foreach ( (array) $rss->items as $item ) {
+			echo '<li>';
+			echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
+			if ($showdate)
+				echo '<span class="rss-date">'. date('F j, Y', strtotime($item['pubdate'])) .'</span>';
+			echo '<div class="rssSummary">'. yst_text_limit($item['summary'],$excerptsize) .'</div>';
+			echo '</li>';
+		}
+		echo '</ul>';
+		echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
+		echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
+		if ($image != 'small') {
+			echo ' &nbsp; &nbsp; &nbsp; ';
+		} else {
+			echo '<br/>';
+		}
+		echo '<a href="http://yoast.com/email-blog-updates/"><img src="http://cdn.yoast.com/email_sub.png" alt=""/> Subscribe by email</a>';
+		echo '</div>';
+		echo '</div>';
+	}
+}
+ 
+function yst_widget_setup() {
+    wp_add_dashboard_widget( 'yst_db_widget' , 'The Latest news from Yoast' , 'yst_db_widget');
+}
+ 
+add_action('wp_dashboard_setup', 'yst_widget_setup');
 ?>
