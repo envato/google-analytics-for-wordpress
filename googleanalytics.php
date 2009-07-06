@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9.4
+Version: 2.9.5
 Requires at least: 2.6
 Author URI: http://yoast.com/
 License: GPL
@@ -642,54 +642,56 @@ if ($options['rsslinktagging']) {
 	add_filter ( 'the_permalink_rss', array('GA_Filter','rsslinktagger'), 99 );	
 }
 
-function yst_text_limit( $text, $limit, $finish = ' [&hellip;]') {
-	if( strlen( $text ) > $limit ) {
-    	$text = substr( $text, 0, $limit );
-		$text = substr( $text, 0, - ( strlen( strrchr( $text,' ') ) ) );
-		$text .= $finish;
+if (!function_exists('yst_db_widget')) {
+	function yst_text_limit( $text, $limit, $finish = ' [&hellip;]') {
+		if( strlen( $text ) > $limit ) {
+	    	$text = substr( $text, 0, $limit );
+			$text = substr( $text, 0, - ( strlen( strrchr( $text,' ') ) ) );
+			$text .= $finish;
+		}
+		return $text;
 	}
-	return $text;
-}
 
-function yst_db_widget($image = 'normal', $num = 3, $excerptsize = 250, $showdate = true) {
-	require_once(ABSPATH.WPINC.'/rss.php');  
-	if ( $rss = fetch_rss( 'http://feeds2.feedburner.com/joostdevalk' ) ) {
-		echo '<div class="rss-widget">';
-		if ($image != 'small') {
-			echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
-		} else {
-			echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img width="80" src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+	function yst_db_widget($image = 'normal', $num = 3, $excerptsize = 250, $showdate = true) {
+		require_once(ABSPATH.WPINC.'/rss.php');  
+		if ( $rss = fetch_rss( 'http://feeds2.feedburner.com/joostdevalk' ) ) {
+			echo '<div class="rss-widget">';
+			if ($image != 'small') {
+				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+			} else {
+				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img width="80" src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+			}
+			echo '<ul>';
+			if (!is_numeric($num)) {
+				$num = 3;
+			}
+			$rss->items = array_slice( $rss->items, 0, $num );
+			foreach ( (array) $rss->items as $item ) {
+				echo '<li>';
+				echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
+				if ($showdate)
+					echo '<span class="rss-date">'. date('F j, Y', strtotime($item['pubdate'])) .'</span>';
+				echo '<div class="rssSummary">'. yst_text_limit($item['summary'],$excerptsize) .'</div>';
+				echo '</li>';
+			}
+			echo '</ul>';
+			echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
+			echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
+			if ($image != 'small') {
+				echo ' &nbsp; &nbsp; &nbsp; ';
+			} else {
+				echo '<br/>';
+			}
+			echo '<a href="http://yoast.com/email-blog-updates/"><img src="http://cdn.yoast.com/email_sub.png" alt=""/> Subscribe by email</a>';
+			echo '</div>';
+			echo '</div>';
 		}
-		echo '<ul>';
-		if (!is_numeric($num)) {
-			$num = 3;
-		}
-		$rss->items = array_slice( $rss->items, 0, $num );
-		foreach ( (array) $rss->items as $item ) {
-			echo '<li>';
-			echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
-			if ($showdate)
-				echo '<span class="rss-date">'. date('F j, Y', strtotime($item['pubdate'])) .'</span>';
-			echo '<div class="rssSummary">'. yst_text_limit($item['summary'],$excerptsize) .'</div>';
-			echo '</li>';
-		}
-		echo '</ul>';
-		echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
-		echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
-		if ($image != 'small') {
-			echo ' &nbsp; &nbsp; &nbsp; ';
-		} else {
-			echo '<br/>';
-		}
-		echo '<a href="http://yoast.com/email-blog-updates/"><img src="http://cdn.yoast.com/email_sub.png" alt=""/> Subscribe by email</a>';
-		echo '</div>';
-		echo '</div>';
 	}
+
+	function yst_widget_setup() {
+	    wp_add_dashboard_widget( 'yst_db_widget' , 'The Latest news from Yoast' , 'yst_db_widget');
+	}
+
+	add_action('wp_dashboard_setup', 'yst_widget_setup');	
 }
- 
-function yst_widget_setup() {
-    wp_add_dashboard_widget( 'yst_db_widget' , 'The Latest news from Yoast' , 'yst_db_widget');
-}
- 
-add_action('wp_dashboard_setup', 'yst_widget_setup');
 ?>
