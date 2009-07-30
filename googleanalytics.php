@@ -4,8 +4,8 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 2.9.5
-Requires at least: 2.6
+Version: 3.0
+Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
 
@@ -20,37 +20,33 @@ $gapppluginpath = plugins_url('', __FILE__).'/';
 
 if ( ! class_exists( 'GA_Admin' ) ) {
 
-	class GA_Admin {
+	require_once('yst_plugin_tools.php');
+	
+	class GA_Admin extends Yoast_Plugin_Admin {
 
-		function add_config_page() {
-			$plugin_page = add_submenu_page('plugins.php', 'Google Analytics for WordPress Configuration', 'Google Analytics', 9, basename(__FILE__), array('GA_Admin','config_page'));
-			add_action( 'admin_head-'. $plugin_page, array('GA_Admin','config_page_head') );
-			add_filter( 'plugin_action_links', array( 'GA_Admin', 'filter_plugin_actions'), 10, 2 );
-			add_filter( 'ozh_adminmenu_icon', array( 'GA_Admin', 'add_ozh_adminmenu_icon' ) );				
-		} // end add_GA_config_page()
+		var $hook 		= 'google-analytics';
+		var $filename	= 'google-analytics-for-wordpress/googleanalytics.php';
+		var $longname	= 'Google Analytics Configuration';
+		var $shortname	= 'Google Analytics';
+		var $ozhicon	= 'chart_curve.png';
+		var $optionname = 'GoogleAnalyticsPP';
+		var $homepage	= 'http://yoast.com/wordpress/analytics/';
+		
 
-		function add_ozh_adminmenu_icon( $hook ) {
-			static $gawpicon;
-			if (!$gawpicon) {
-				$gawpicon = WP_CONTENT_URL . '/plugins/' . plugin_basename(dirname(__FILE__)). '/chart_curve.png';
-			}
-			if ($hook == 'googleanalytics.php') return $gawpicon;
-			return $hook;
-		}
-
-		function filter_plugin_actions( $links, $file ){
-			//Static so we don't call plugin_basename on every plugin row.
-			static $this_plugin;
-			if ( ! $this_plugin ) $this_plugin = plugin_basename(__FILE__);
-
-			if ( $file == $this_plugin ){
-				$settings_link = '<a href="plugins.php?page=googleanalytics.php">' . __('Settings') . '</a>';
-				array_unshift( $links, $settings_link ); // before other links
-			}
-			return $links;
+		function GA_Admin() {
+			add_action( 'admin_menu', array(&$this, 'register_settings_page') );
+			add_filter( 'plugin_action_links', array(&$this, 'add_action_link'), 10, 2 );
+			add_filter( 'ozh_adminmenu_icon', array(&$this, 'add_ozh_adminmenu_icon' ) );				
+			
+			add_action('admin_print_scripts', array(&$this,'config_page_scripts'));
+			add_action('admin_print_styles', array(&$this,'config_page_styles'));	
+			
+			add_action('wp_dashboard_setup', array(&$this,'widget_setup'));	
+			add_action('admin_head', array(&$this,'config_page_head'));
 		}
 		
 		function config_page_head() {
+			if ($_GET['page'] == $this->hook) {
 				wp_enqueue_script('jquery');
 			?>
 				 <script type="text/javascript" charset="utf-8">
@@ -58,30 +54,32 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						jQuery('#explanation td').css("display","none");
 						jQuery('#advancedsettings').change(function(){
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
-								jQuery('#advancedsettingstr').css("border-bottom","1px solid #333");
-								jQuery('.advanced th, .advanced td').css("display","table-cell");
+								jQuery('#advancedgasettings').css("display","block");
 							} else {
-								jQuery('#advancedsettingstr').css("border-bottom","none");
-								jQuery('.advanced th, .advanced td').css("display","none");
+								jQuery('#advancedgasettings').css("display","none");
 							}
 						}).change();
 						jQuery('#explain').click(function(){
-							if ((jQuery('#explanation td').css("display")) == "table-cell")  {
-								jQuery('#explanation td').css("display","none");
+							if ((jQuery('#explanation').css("display")) == "block")  {
+								jQuery('#explanation').css("display","none");
 							} else {
-								jQuery('#explanation td').css("display","table-cell");
+								jQuery('#explanation').css("display","block");
 							}
 						});
 					});
 				 </script>
-				<style type="text/css" media="screen">
-				.pluginmenu li {
-					list-style-type: square;
-					margin-left: 20px;
-					padding-left: 5px;
-				}
-				</style>				
 			<?php
+			}
+		}
+				
+		function checkbox($id) {
+			$options = get_option($this->optionname);
+			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/>';
+		}
+
+		function textinput($id) {
+			$options = get_option($this->optionname);
+			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 		
 		function config_page() {
@@ -115,7 +113,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					}
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging', 'advancedsettings') as $option_name) {
 					if (isset($_POST[$option_name])) {
 						$options[$option_name] = true;
 					} else {
@@ -128,217 +126,167 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				} 
 
 				update_option('GoogleAnalyticsPP', $options);
-				echo "<div id=\"message\" class=\"updated\"><p>Google Analytics settings updated.</p></div>\n";
+				echo "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
+				echo "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";
+				
 			}
 
 			$options  = get_option('GoogleAnalyticsPP');
 			?>
 			<div class="wrap">
-				<?php screen_icon('tools'); ?>
+				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/theme/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
 				<h2>Google Analytics for WordPress Configuration</h2>
-				<div style="width: 250px; float:right;">
-					<h3>The latest news on Yoast</h3>
+				<div class="postbox-container" style="width:70%;">
+					<div class="metabox-holder">	
+						<div class="meta-box-sortables">
+							<form action="" method="post" id="analytics-conf">
+								<?php
+									wp_nonce_field('analyticspp-config');
+									$rows = array();
+									$rows[] = array(
+										'id' => 'uastring',
+										'label' => 'Analytics Account ID',
+										'desc' => '<a href="#" id="explain">What\'s this?</a>',
+										'content' => '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><div id="explanation" style="background: #fff; border: 1px solid #ccc; padding: 5px; display:none;">
+											<strong>Explanation</strong><br/>
+											Find the Account ID, starting with UA- in your account overview, as marked below:<br/>
+											<br/>
+											<img src="'.$gapppluginpath.'/account-id.png" alt="Account ID"/><br/>
+											<br/>
+											Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.<br/>
+											Still can\'t find it? Watch <a href="http://yoast.com/wordpress/google-analytics/#accountid">this video</a>!
+										</div>'
+									);
+									$rows[] = array(
+										'id' => 'position',
+										'label' => 'Where should the tracking script be placed?',
+										'content' => '<select name="position" id="position">
+											<option value="footer" '.checked($options['position'],true,false).'>In the footer (default)</option>
+											<option value="header" '.checked($options['position'],true,false).'>In the header</option>
+										</select>'
+									);
+									$rows[] = array(
+										'id' => 'trackoutbound',
+										'label' => 'Track outbound clicks &amp; downloads',
+										'desc' => '',
+										'content' => $this->checkbox('trackoutbound'),
+									);
+									$rows[] = array(
+										'id' => 'advancedsettings',
+										'label' => 'Show advanced settings',
+										'desc' => 'Only adviced for advanced users who know their way around Google Analytics',
+										'content' => $this->checkbox('advancedsettings'),
+									);
+									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows));
+								
+									$rows = array();
+									$rows[] = array(
+										'id' => 'admintracking',
+										'label' => 'Track the administrator too',
+										'desc' => 'Not recommended, as this would schew your statistics.',
+										'content' =>  $this->checkbox('admintracking'),
+									);
+									$rows[] = array(
+										'id' => 'trackloggedin',
+										'label' => 'Segment logged in users',
+										'content' =>  $this->checkbox('trackloggedin'),
+									);
+									$rows[] = array(
+										'id' => 'dlextensions',
+										'label' => 'Extensions of files to track as downloads',
+										'content' => $this->textinput('dlextensions'),
+									);
+									$rows[] = array(
+										'id' => 'dlprefix',
+										'label' => 'Prefix for tracked downloads',
+										'content' => $this->textinput('dlprefix'),
+									);
+									$rows[] = array(
+										'id' => 'artprefix',
+										'label' => 'Prefix for outbound clicks from articles',
+										'content' => $this->textinput('artprefix'),
+									);
+									$rows[] = array(
+										'id' => 'comprefix',
+										'label' => 'Prefix for outbound clicks from links in comments',
+										'content' => $this->textinput('comprefix'),
+									);
+									$rows[] = array(
+										'id' => 'comautprefix',
+										'label' => 'Prefix for outbound clicks from comment author links',
+										'content' => $this->textinput('comautprefix'),
+									);
+									$rows[] = array(
+										'id' => 'blogrollprefix',
+										'label' => 'Prefix for outbound clicks from blogroll links',
+										'content' => $this->textinput('blogrollprefix'),
+									);
+									$rows[] = array(
+										'id' => 'domainorurl',
+										'label' => 'Track full URL of outbound clicks or just the domain',
+										'content' => '<select name="domainorurl" id="domainorurl">
+											<option value="domain"'.selected($options['domainorurl'],'domain',false).'>Just the domain</option>
+											<option value="url"'.selected($options['domainorurl'],'url',false).'>Track the complete URL</option>
+										</select>',
+									);
+									$rows[] = array(
+										'id' => 'domain',
+										'label' => 'Domain Tracking',
+										'desc' => 'This allows you to set the domain that\'s set by <a href="http://code.google.com/apis/analytics/docs/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setDomainName"><code>setDomainName</code></a> for tracking subdomains, if empty this will not be set.',
+										'content' => $this->textinput('domain'),
+									);
+									$rows[] = array(
+										'id' => 'trackadsense',
+										'label' => 'Track AdSense',
+										'desc' => 'This requires integration of your Analytics and AdSense account, for help, <a href="https://www.google.com/adsense/support/bin/topic.py?topic=15007">look here</a>.',
+										'content' => $this->checkbox('trackadsense'),
+									);
+									$rows[] = array(
+										'id' => 'extrase',
+										'label' => 'Track extra Search Engines',
+										'content' => $this->checkbox('extrase'),
+									);
+									$rows[] = array(
+										'id' => 'userv2',
+										'label' => 'I use Urchin',
+										'content' => $this->checkbox('userv2'),
+									);
+									$rows[] = array(
+										'id' => 'rsslinktagging',
+										'label' => 'Tag the links in your RSS feed with campaign variables.',
+										'content' => $this->checkbox('rsslinktagging'),
+									);
+									$rows[] = array(
+										'id' => 'allowanchor',
+										'label' => 'Use # instead of ? for Campaign tracking?',
+										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.',
+										'content' => $this->checkbox('allowanchor'),
+									);
+									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows));
+								
+								?>
+						<div class="submit"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div>
+					</form>
+					<form action="" method="post">
+						<input type="hidden" name="reset" value="true"/>
+						<div class="submit"><input type="submit" value="Reset Settings &raquo;" /></div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<div class="postbox-container" style="width:20%;">
+			<div class="metabox-holder">	
+				<div class="meta-box-sortables">
 					<?php
-						yst_db_widget('small', 2, 150, false);
+						$this->plugin_like('blog-icons');
+						$this->plugin_support('blog-icons');
+						$this->news(); 
 					?>
 				</div>
-				<form action="" method="post" id="analytics-conf">
-					<table class="form-table" style="clear:none;">
-					<?php wp_nonce_field('analyticspp-config'); ?>
-					<tr>
-						<th scope="row" style="width:250px;" valign="top">
-							<label for="uastring">Analytics Account ID</label> &nbsp; &nbsp; &nbsp; <small><a href="#" id="explain">What's this?</a></small>
-						</th>
-						<td>
-							<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="<?php echo $options['uastring']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;" /><br/>
-						</td>
-					</tr>
-					<tr id="explanation">
-						<td colspan="2">
-							<div style="background: #fff; border: 1px solid #ccc; width: 60%; padding: 5px;">
-								<strong>Explanation</strong><br/>
-								Find the Account ID, starting with UA- in your account overview, as marked below:<br/>
-								<br/>
-								<img src="<?php echo $gapppluginpath ?>/account-id.png" alt="Account ID"/><br/>
-								<br/>
-								Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.<br/>
-								Still can't find it? Watch <a href="http://yoast.com/wordpress/google-analytics/#accountid">this video</a>!
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="position">Where should the tracking script be placed?</label>
-						</th>
-						<td>
-							<select name="position" id="position" style="width:200px;">
-								<option value="footer"<?php if ($options['position'] == 'footer' || $options['position'] == "") { echo ' selected="selected"';} ?>>In the footer (default)</option>
-								<option value="header"<?php if ($options['position'] == 'header') { echo ' selected="selected"';} ?>>In the header</option>
-							</select>
-						</td>
-					</tr>						
-					<tr>
-						<th scope="row" valign="top">
-							<label for="trackoutbound">Track outbound clicks<br/>
-							&amp; downloads</label>
-						</th>
-						<td>
-							<input type="checkbox" id="trackoutbound" name="trackoutbound" <?php if ($options['trackoutbound']) echo ' checked="checked" '; ?>/> 
-						</td>
-					</tr>
-					<tr>
-						<th scope="row" valign="top">
-							<label for="advancedsettings">Show advanced settings</label><br/>
-							<small>Only adviced for advanced users who know their way around Google Analytics</small>
-						</th>
-						<td>
-							<input type="checkbox" id="advancedsettings" name="advancedsettings" <?php if ($options['advancedsettings']) echo ' checked="checked" '; ?>/> 
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="admintracking">Track the administrator too</label><br/>
-							<small>(default is true)</small>
-						</th>
-						<td>
-							<input type="checkbox" id="admintracking" name="admintracking" <?php if ($options['admintracking']) echo ' checked="checked" '; ?>/> 
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="trackloggedin">Segment logged in users</label><br/>
-						</th>
-						<td>
-							<input type="checkbox" id="trackloggedin" name="trackloggedin" <?php if ($options['trackloggedin']) echo ' checked="checked" '; ?>/> 
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="dlextensions">Extensions of files to track as downloads</label><br/>
-							<small>(If the extension is only two chars, prefix it with a dot, like '.js')</small>
-						</th>
-						<td>
-							<input type="text" name="dlextensions" size="30" value="<?php echo $options['dlextensions']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>	
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="dlprefix">Prefix for tracked downloads</label>
-						</th>
-						<td>
-							<input type="text" id="dlprefix" name="dlprefix" size="30" value="<?php echo $options['dlprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="artprefix">Prefix for outbound clicks from articles</label>
-						</th>
-						<td>
-							<input type="text" id="artprefix" name="artprefix" size="30" value="<?php echo $options['artprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="comprefix">Prefix for outbound clicks from within comments</label>
-						</th>
-						<td>
-							<input type="text" id="comprefix" name="comprefix" size="30" value="<?php echo $options['comprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="comautprefix">Prefix for outbound clicks from comment author links</label>
-						</th>
-						<td>
-							<input type="text" id="comautprefix" name="comautprefix" size="30" value="<?php echo $options['comautprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="blogrollprefix">Prefix for outbound clicks from blogroll links</label>
-						</th>
-						<td>
-							<input type="text" id="blogrollprefix" name="blogrollprefix" size="30" value="<?php echo $options['blogrollprefix']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="domainorurl">Track full URL of outbound clicks or just the domain?</label>
-						</th>
-						<td>
-							<select name="domainorurl" id="domainorurl" style="width:200px;">
-								<option value="domain"<?php if ($options['domainorurl'] == 'domain') { echo ' selected="selected"';} ?>>Just the domain</option>
-								<option value="url"<?php if ($options['domainorurl'] == 'url') { echo ' selected="selected"';} ?>>Track the complete URL</option>
-							</select>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="domain">Domain Tracking</label><br/>
-							<small>This allows you to set the domain that's set by <a href="http://code.google.com/apis/analytics/docs/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setDomainName"><code>setDomainName</code></a> for tracking subdomains, if empty this will not be set.</small>
-						</th>
-						<td>
-							<input type="text" id="domain" name="domain" size="30" value="<?php echo $options['domain']; ?>" style="font-family: 'Courier New', Courier, mono; font-size: 1.5em;"/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="trackadsense">Track AdSense</label><br/>
-							<small>This requires integration of your Analytics and AdSense account, for help, <a href="https://www.google.com/adsense/support/bin/topic.py?topic=15007">look here</a>.</small>
-						</th>
-						<td>
-							<input type="checkbox" id="trackadsense" name="trackadsense" <?php if ($options['trackadsense']) echo ' checked="checked" '; ?>/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="extrase">Track extra Search Engines</label>
-						</th>
-						<td>
-							<input type="checkbox" id="extrase" name="extrase" <?php if ($options['extrase']) echo ' checked="checked" '; ?>/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="userv2">I use Urchin too.</label>
-						</th>
-						<td>
-							<input type="checkbox" id="userv2" name="userv2" <?php if ($options['userv2']) echo ' checked="checked" '; ?>/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="rsslinktagging">Tag the links in your RSS feed with campaign variables.</label>
-						</th>
-						<td>
-							<input type="checkbox" id="rsslinktagging" name="rsslinktagging" <?php if ($options['rsslinktagging']) echo ' checked="checked" '; ?>/>
-						</td>
-					</tr>
-					<tr class="advanced">
-						<th scope="row" valign="top">
-							<label for="allowanchor">Use # instead of ? for Campaign tracking?</label><br/>
-							<small>This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.</small>
-						</th>
-						<td>
-							<input type="checkbox" id="allowanchor" name="allowanchor" <?php if ($options['allowanchor']) echo ' checked="checked" '; ?>/>
-						</td>
-					</tr>					
-					</table>
-					<p style="border:0;" class="submit"><input type="submit" name="submit" value="Update Settings &raquo;" /></p>
-				</form>
-				<form action="" method="post">
-					<input type="hidden" name="reset" value="true"/>
-					<p style="border:0;" class="submit"><input type="submit" value="Reset Settings &raquo;" /></p>
-				</form>
-				<br/><br/>
-				<h3>Like this plugin?</h3>
-				<p>Why not do any of the following:</p>
-				<ul class="pluginmenu">
-					<li>Link to it so other folks can find out about it.</li>
-					<li><a href="http://wordpress.org/extend/plugins/google-analytics-for-wordpress/">Give it a good rating</a> on WordPress.org, so others will find it more easily too!</li>
-					<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=2017947">Donate a token of your appreciation</a>.</li>
-				</ul>
+				<br/><br/><br/>
 			</div>
+		</div>
+	</div>
 			<?php
 			if (isset($options['uastring'])) {
 				if ($options['uastring'] == "") {
@@ -377,6 +325,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 	} // end class GA_Admin
 
+	$ga_admin = new GA_Admin();
 } //endif
 
 
@@ -594,6 +543,34 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 	} // class GA_Filter
 } // endif
 
+/**
+ * If setAllowAnchor is set to true, GA ignores all links tagged "normally", so we redirect all "normally" tagged URL's
+ * to one tagged with a hash. Needs some work as it also needs to do that when the first utm_ var is actually not the
+ * first GET variable in the URL.
+ */
+if ( $options['allowanchor'] ) {
+	function ga_utm_hastag_redirect() {
+		if (isset($_SERVER['REQUEST_URI'])) {
+			if (strpos($_SERVER['REQUEST_URI'], "utm_") !== false) {			
+				$url = 'http://';
+				if ( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "") {
+					$url = 'https://';
+				}
+				$url .= $_SERVER['SERVER_NAME'];
+				if ( strpos($_SERVER['REQUEST_URI'], "?utm_") !== false ) {
+					$url .= str_replace("?utm_","#utm_",$_SERVER['REQUEST_URI']);
+				} 
+				else if ( strpos($_SERVER['REQUEST_URI'], "&utm_") !== false ) {
+					$url .= substr_replace($_SERVER['REQUEST_URI'], "#utm_", strpos($_SERVER['REQUEST_URI'], "&utm_"), 5); 
+				}
+				wp_redirect($url, 301);
+				exit;
+			}
+		}
+	}
+	add_action('init','ga_utm_hastag_redirect',1);
+}
+
 $gaf = new GA_Filter();
 $origin = $gaf->ga_get_domain($_SERVER["HTTP_HOST"]);
 
@@ -640,58 +617,5 @@ if ($options['position'] == 'footer' || $options['position'] == "") {
 
 if ($options['rsslinktagging']) {
 	add_filter ( 'the_permalink_rss', array('GA_Filter','rsslinktagger'), 99 );	
-}
-
-if (!function_exists('yst_db_widget')) {
-	function yst_text_limit( $text, $limit, $finish = ' [&hellip;]') {
-		if( strlen( $text ) > $limit ) {
-	    	$text = substr( $text, 0, $limit );
-			$text = substr( $text, 0, - ( strlen( strrchr( $text,' ') ) ) );
-			$text .= $finish;
-		}
-		return $text;
-	}
-
-	function yst_db_widget($image = 'normal', $num = 3, $excerptsize = 250, $showdate = true) {
-		require_once(ABSPATH.WPINC.'/rss.php');  
-		if ( $rss = fetch_rss( 'http://feeds2.feedburner.com/joostdevalk' ) ) {
-			echo '<div class="rss-widget">';
-			if ($image != 'small') {
-				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
-			} else {
-				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img width="80" src="http://cdn.yoast.com/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
-			}
-			echo '<ul>';
-			if (!is_numeric($num)) {
-				$num = 3;
-			}
-			$rss->items = array_slice( $rss->items, 0, $num );
-			foreach ( (array) $rss->items as $item ) {
-				echo '<li>';
-				echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
-				if ($showdate)
-					echo '<span class="rss-date">'. date('F j, Y', strtotime($item['pubdate'])) .'</span>';
-				echo '<div class="rssSummary">'. yst_text_limit($item['summary'],$excerptsize) .'</div>';
-				echo '</li>';
-			}
-			echo '</ul>';
-			echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
-			echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
-			if ($image != 'small') {
-				echo ' &nbsp; &nbsp; &nbsp; ';
-			} else {
-				echo '<br/>';
-			}
-			echo '<a href="http://yoast.com/email-blog-updates/"><img src="http://cdn.yoast.com/email_sub.png" alt=""/> Subscribe by email</a>';
-			echo '</div>';
-			echo '</div>';
-		}
-	}
-
-	function yst_widget_setup() {
-	    wp_add_dashboard_widget( 'yst_db_widget' , 'The Latest news from Yoast' , 'yst_db_widget');
-	}
-
-	add_action('wp_dashboard_setup', 'yst_widget_setup');	
 }
 ?>

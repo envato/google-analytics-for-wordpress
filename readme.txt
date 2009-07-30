@@ -2,9 +2,9 @@
 Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics
-Requires at least: 2.2
-Tested up to: 2.8.1
-Stable tag: 2.9.5
+Requires at least: 2.7
+Tested up to: 2.8.2
+Stable tag: 3.0
 
 The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -22,12 +22,16 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 
 This section describes how to install the plugin and get it working.
 
-1. Delete any existing `gapp` folder from the `/wp-content/plugins/` directory
-1. Upload `gapp` folder to the `/wp-content/plugins/` directory
+1. Delete any existing `gapp` or `google-analytics-for-wordpress` folder from the `/wp-content/plugins/` directory
+1. Upload `google-analytics-for-wordpress` folder to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Go to the options panel under the 'Plugins' menu and add your Analytics account number and set the settings you want.
+1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 3.0 =
+* Major backend overhaul, using new Yoast backend class.
+* Added ability to automatically redirect non hashtagged campaign URLs to hashtagged campaign URL's when setAllowAnchor is set to true (if you don't get it, forget about it, you might need it but don't need to worry)
 
 = 2.9.5 =
 * Fixed a bug with the included RSS, which came up when multiple Yoast plugins were installed.
