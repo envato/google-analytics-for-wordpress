@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.0
+Version: 3.0.1
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -290,16 +290,16 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<?php
 			if (isset($options['uastring'])) {
 				if ($options['uastring'] == "") {
-					add_action('admin_footer', array('GA_Admin','warning'));
+					add_action('admin_footer', array(&$this,'warning'));
 				} else {
 					if (isset($_POST['submit'])) {
 						if ($_POST['uastring'] != $options['uastring'] ) {
-							add_action('admin_footer', array('GA_Admin','success'));
+							add_action('admin_footer', array(&$this,'success'));
 						}
 					}
 				}
 			} else {
-				add_action('admin_footer', array('GA_Admin','warning'));
+				add_action('admin_footer', array(&$this,'warning'));
 			}
 		} // end config_page()
 		
@@ -591,10 +591,6 @@ if ($options == "") {
 	$options['trackoutbound'] = true;
 	update_option('GoogleAnalyticsPP',$options);
 } 
-
-// adds the menu item to the admin interface
-add_action('admin_menu', array('GA_Admin','add_config_page'));
-add_action('admin_menu', array('GA_Admin','add_config_page'));
 
 if ($options['trackoutbound']) {
 	// filters alter the existing content
