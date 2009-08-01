@@ -32,7 +32,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		var $shortname	= 'Google Analytics';
 		var $ozhicon	= 'chart_curve.png';
 		var $optionname = 'GoogleAnalyticsPP';
-		var $homepage	= 'http://yoast.com/wordpress/analytics/';
+		var $homepage	= 'http://yoast.com/wordpress/google-analytics/';
 		
 
 		function GA_Admin() {
