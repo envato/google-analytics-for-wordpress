@@ -576,7 +576,7 @@ if ( $options['allowanchor'] ) {
 }
 
 $gaf 		= new GA_Filter();
-$options	= get_option('GoogleAnalyticsPP',"");
+$options	= get_option('GoogleAnalyticsPP');
 
 if (!is_array($options)) {
 	$ga_admin->set_defaults();
