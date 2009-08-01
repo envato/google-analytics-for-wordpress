@@ -4,15 +4,17 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.0.1
+Version: 3.1
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
 
 */
-
+	
 // Determine the location
-$gapppluginpath = plugins_url('', __FILE__).'/';
+function gapp_plugin_path() {
+	return plugins_url('', __FILE__).'/';
+}
 
 /*
  * Admin User Interface
@@ -83,55 +85,40 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		}
 		
 		function config_page() {
-			global $dlextensions, $gapppluginpath;
-			if ( isset($_POST['reset']) && $_POST['reset'] == "true") {
-				$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
-				$options['dlprefix'] = '/downloads';
-				$options['artprefix'] = '/outbound/article';
-				$options['comprefix'] = '/outbound/comment';
-				$options['comautprefix'] = '/outbound/commentauthor';
-				$options['blogrollprefix'] = '/outbound/blogroll';
-				$options['domainorurl'] = 'domain';
-				$options['userv2'] = false;
-				$options['extrase'] = false;
-				$options['imagese'] = false;
-				$options['admintracking'] = true;
-				$options['trackoutbound'] = true;
-				$options['advancedsettings'] = false;
-				$options['allowanchor'] = false;
-				update_option('GoogleAnalyticsPP',$options);
+			$options = get_option('GoogleAnalyticsPP');
+
+			if ( (isset($_POST['reset']) && $_POST['reset'] == "true") || !is_array($options) ) {
+				$this->set_defaults();
 				echo "<div class=\"updated\"><p>Google Analytics settings reset to default.</p></div>\n";
 			}
+
 			if ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
-				$options['uastring'] = $_POST['uastring'];
 				
-				foreach (array('dlextensions', 'dlprefix', 'artprefix', 'comprefix', 'comautprefix', 'blogrollprefix', 'domainorurl','position','domain') as $option_name) {
-					if (isset($_POST[$option_name])) {
-						$options[$option_name] = strtolower($_POST[$option_name]);
-					}
+				foreach (array('uastring', 'dlextensions', 'dlprefix', 'artprefix', 'comprefix', 'comautprefix', 'blogrollprefix', 'domainorurl','position','domain') as $option_name) {
+					if (isset($_POST[$option_name]))
+						$options[$option_name] = $_POST[$option_name];
+					else
+						$options[$option_name] = '';
 				}
 				
 				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging', 'advancedsettings') as $option_name) {
-					if (isset($_POST[$option_name])) {
+					if (isset($_POST[$option_name]))
 						$options[$option_name] = true;
-					} else {
+					else
 						$options[$option_name] = false;
-					}
 				}
 
-				if ($options['imagese']) {
+				if ($options['imagese'])
 					$options['extrase'] = true;
-				} 
 
 				update_option('GoogleAnalyticsPP', $options);
 				echo "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
-				echo "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";
-				
+				echo "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";	
 			}
 
-			$options  = get_option('GoogleAnalyticsPP');
+			
 			?>
 			<div class="wrap">
 				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/theme/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
@@ -151,7 +138,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											<strong>Explanation</strong><br/>
 											Find the Account ID, starting with UA- in your account overview, as marked below:<br/>
 											<br/>
-											<img src="'.$gapppluginpath.'/account-id.png" alt="Account ID"/><br/>
+											<img src="'.gapp_plugin_path().'/account-id.png" alt="Account ID"/><br/>
 											<br/>
 											Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.<br/>
 											Still can\'t find it? Watch <a href="http://yoast.com/wordpress/google-analytics/#accountid">this video</a>!
@@ -269,7 +256,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</form>
 					<form action="" method="post">
 						<input type="hidden" name="reset" value="true"/>
-						<div class="submit"><input type="submit" value="Reset Settings &raquo;" /></div>
+						<div class="submit"><input type="submit" value="Reset Default Settings &raquo;" /></div>
 					</form>
 				</div>
 			</div>
@@ -278,8 +265,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<div class="metabox-holder">	
 				<div class="meta-box-sortables">
 					<?php
-						$this->plugin_like('blog-icons');
-						$this->plugin_support('blog-icons');
+						$this->plugin_like();
+						$this->plugin_support();
 						$this->news(); 
 					?>
 				</div>
@@ -301,9 +288,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			} else {
 				add_action('admin_footer', array(&$this,'warning'));
 			}
-		} // end config_page()
+		} 
 		
-		function restore_defaults() {
+		function set_defaults() {
+			$options = get_option('GoogleAnalyticsPP');
 			$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
 			$options['dlprefix'] = '/downloads';
 			$options['artprefix'] = '/outbound/article';
@@ -314,8 +302,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			$options['userv2'] = false;
 			$options['extrase'] = false;
 			$options['imagese'] = false;
-			$options['trackoutbound'] = true;
 			$options['admintracking'] = true;
+			$options['trackoutbound'] = true;
+			$options['advancedsettings'] = false;
+			$options['allowanchor'] = false;				
 			update_option('GoogleAnalyticsPP',$options);
 		}
 		
@@ -338,55 +328,71 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		/*
 		 * Insert the tracking code into the page
 		 */
-		function spool_analytics() {
-			global $gapppluginpath;
-			
+		function spool_analytics() {						
 			$options  = get_option('GoogleAnalyticsPP');
 			
-			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
-	<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->
-	<script type="text/javascript">
-		var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-		document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-	</script>
-	<script type="text/javascript">
-		try {
-			var pageTracker = _gat._getTracker("<?php echo $options["uastring"]; ?>");
-		} catch(err) {}
-	</script>
-<?php if ( $options["extrase"] == true ) {
-		echo("\t<script src=\"".$gapppluginpath."custom_se.js\" type=\"text/javascript\"></script>\n"); 
-} ?>
-	<script type="text/javascript">
-		try {
-<?php if ( $options['userv2'] ) {
-	echo("\t\t\tpageTracker._setLocalRemoteServerMode();\n");
-} 
-if ( $options['allowanchor'] ) {
-	echo("\t\t\tpageTracker._setAllowAnchor(true);\n");
-} 
-if ($options['trackloggedin'] && !isset($_COOKIE['__utmv']) && is_user_logged_in() ) {
-	echo("\t\t\tpageTracker._setVar('logged-in');\n");
-} else {
-	echo("\t\t\t// Cookied already: ".$_COOKIE['__utmv']."\n");
-}
-if ( isset($options['domain']) && $options['domain'] != "" ) {
-	if (substr($options['domain'],0,1) != ".") {
-		$options['domain'] = ".".$options['domain'];
-	}
-	echo("\t\t\tpageTracker._setDomainName(\"".$options['domain']."\");\n");
-}
-if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"]) { ?>
-			regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
-			var match = regex.exec(pageTracker.qa);
-			pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]); <?php } 
-?>			pageTracker._trackPageview();
-		} catch(err) {}
-	</script>
-	<!-- End of Google Analytics code -->
-	<?php
-			} else if ((current_user_can('edit_users') && !$options["admintracking"])) {
+			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
+				echo "\n".'<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->'."\n";
+				echo '<script type="text/javascript">'."\n";
+				echo "\t".'var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");'."\n";
+				echo "\t".'document.write(unescape("%3Cscript src=\'" + gaJsHost + "google-analytics.com/ga.js\' type=\'text/javascript\'%3E%3C/script%3E"));'."\n";
+				echo '</script>'."\n";
+				echo '<script type="text/javascript">'."\n";
+				echo "\t".'try {'."\n";
+				echo "\t\t".'var pageTracker = _gat._getTracker("'.$options["uastring"].'");'."\n";
+
+				/**
+				 * If this is a 404 page, track the 404 and prevent all other stuff as it's not needed.
+				 */
+				if ( is_404() ) {
+					echo "\t".'try {'."\n";
+					echo "\t\t".'pageTracker._trackPageview("/404.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer);'."\n";
+					echo "\t".'} catch(err) {}'."\n";
+					echo '</script>'."\n";						
+				} else {
+					if ( $options["extrase"] ) {
+						/**
+						 * We need to load another script, so we need to close the try / catch, load the script, and open it again.
+						 */
+						echo "\t".'} catch(err) {}'."\n";
+						echo '</script>'."\n";
+						echo '<script src="'.gapp_plugin_path().'"custom_se.js" type="text/javascript"></script>'."\n"; 
+						echo '<script type="text/javascript">'."\n";
+						echo "\t".'try {'."\n";
+					}	
+				
+					if ( $options['userv2'] )
+						echo "\t\t".'pageTracker._setLocalRemoteServerMode();'."\n";
+				
+					if ( $options['allowanchor'] )
+						echo "\t\t".'pageTracker._setAllowAnchor(true);'."\n";
+				
+					if ( $options['trackloggedin'] && !isset($_COOKIE['__utmv']) && is_user_logged_in() )
+						echo "\t\tpageTracker._setVar('logged-in');\n";
+					else
+						echo "\t\t// Cookied already: ".$_COOKIE['__utmv']."\n";
+				
+					if ( isset($options['domain']) && $options['domain'] != "" ) {
+						if (substr($options['domain'],0,1) != ".")
+							$options['domain'] = ".".$options['domain'];
+						echo "\t\t".'pageTracker._setDomainName("'.$options['domain'].'");'."\n";
+					}
+				
+					if ( strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"] ) {
+						echo "\t\t".'regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");'."\n";
+						echo "\t\t".'var match = regex.exec(pageTracker.qa);'."\n";
+						echo "\t\t".'pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);'."\n";
+					}
+
+					echo "\t\t".'pageTracker._trackPageview();'."\n";
+					echo "\t".'} catch(err) {}'."\n";
+					echo '</script>'."\n";
+				}
+				echo '<!-- End of Google Analytics code -->'."\n";
+			} else if ( $options["uastring"] != "" && current_user_can('edit_users') && !$options["admintracking"] ) {
 				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
+			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
+				echo "<!-- Google Analytics tracking code not shown because yo haven't entered your UA string yet. -->";
 			}
 		}
 
@@ -395,12 +401,10 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 		 */
 		function spool_adsense() {
 			$options  = get_option('GoogleAnalyticsPP');
-			if ($options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { ?>
-				
-	<script type="text/javascript">
-		window.google_analytics_uacct = "<?php echo $options["uastring"]; ?>";
-	</script>
-	<?php
+			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) {
+				echo '<script type="text/javascript">'."\n";
+				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
+				echo '</script>'."\n";
 			}
 		}		
 
@@ -422,7 +426,7 @@ if (strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_RE
 		}
 
 		function ga_parse_link($leaf, $matches){
-			global $origin ;
+			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
 			
 			$options  = get_option('GoogleAnalyticsPP');
 			
@@ -571,25 +575,11 @@ if ( $options['allowanchor'] ) {
 	add_action('init','ga_utm_hastag_redirect',1);
 }
 
-$gaf = new GA_Filter();
-$origin = $gaf->ga_get_domain($_SERVER["HTTP_HOST"]);
+$gaf 		= new GA_Filter();
+$options	= get_option('GoogleAnalyticsPP',"");
 
-$options  = get_option('GoogleAnalyticsPP',"");
-
-if ($options == "") {
-	$options['dlextensions'] = 'doc,exe,js,pdf,ppt,tgz,zip,xls';
-	$options['dlprefix'] = '/downloads';
-	$options['artprefix'] = '/outbound/article';
-	$options['comprefix'] = '/outbound/comment';
-	$options['comautprefix'] = '/outbound/commentauthor';
-	$options['blogrollprefix'] = '/outbound/blogroll';
-	$options['domainorurl'] = 'domain';
-	$options['position'] = 'footer';
-	$options['userv2'] = false;
-	$options['extrase'] = false;
-	$options['imagese'] = false;
-	$options['trackoutbound'] = true;
-	update_option('GoogleAnalyticsPP',$options);
+if (is_array($options)) {
+	$ga_admin->set_defaults();
 } 
 
 if ($options['trackoutbound']) {
