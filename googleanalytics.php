@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.1.1
+Version: 3.2
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -26,7 +26,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 	
 	class GA_Admin extends Yoast_Plugin_Admin {
 
-		var $hook 		= 'google-analytics';
+		var $hook 		= 'google-analytics-for-wordpress';
 		var $filename	= 'google-analytics-for-wordpress/googleanalytics.php';
 		var $longname	= 'Google Analytics Configuration';
 		var $shortname	= 'Google Analytics';
@@ -103,15 +103,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging', 'advancedsettings') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'userv2', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = true;
 					else
 						$options[$option_name] = false;
 				}
-
-				if ($options['imagese'])
-					$options['extrase'] = true;
 
 				update_option('GoogleAnalyticsPP', $options);
 				echo "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
@@ -234,14 +231,25 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'content' => $this->checkbox('extrase'),
 									);
 									$rows[] = array(
+										'id' => 'imagese',
+										'label' => 'Track Google Image Search as a Search Engine',
+										'desc' => 'This functionality is in beta, and not confirmed to work yet',
+										'content' => $this->checkbox('imagese'),
+									);
+									$rows[] = array(
 										'id' => 'userv2',
 										'label' => 'I use Urchin',
 										'content' => $this->checkbox('userv2'),
 									);
 									$rows[] = array(
 										'id' => 'rsslinktagging',
-										'label' => 'Tag the links in your RSS feed with campaign variables.',
+										'label' => 'Tag links in RSS feed with campaign variables',
 										'content' => $this->checkbox('rsslinktagging'),
+									);
+									$rows[] = array(
+										'id' => 'trackregistration',
+										'label' => 'Add tracking to the login and registration forms',
+										'content' => $this->checkbox('trackregistration'),
 									);
 									$rows[] = array(
 										'id' => 'allowanchor',
@@ -356,7 +364,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						 */
 						echo "\t".'} catch(err) {}'."\n";
 						echo '</script>'."\n";
-						echo '<script src="'.gapp_plugin_path().'"custom_se.js" type="text/javascript"></script>'."\n"; 
+						echo '<script src="'.gapp_plugin_path().'custom_se.js" type="text/javascript"></script>'."\n"; 
 						echo '<script type="text/javascript">'."\n";
 						echo "\t".'try {'."\n";
 					}	
@@ -578,9 +586,8 @@ if ( $options['allowanchor'] ) {
 $gaf 		= new GA_Filter();
 $options	= get_option('GoogleAnalyticsPP');
 
-if (!is_array($options)) {
+if (!is_array($options))
 	$ga_admin->set_defaults();
-} 
 
 if ($options['trackoutbound']) {
 	// filters alter the existing content
@@ -591,17 +598,18 @@ if ($options['trackoutbound']) {
 	add_filter('get_comment_author_link', array('GA_Filter','comment_author_link'), 99);
 }
 
-if ($options['trackadsense']) {
+if ($options['trackadsense'])
 	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
-}
 
-if ($options['position'] == 'footer' || $options['position'] == "") {
+if ($options['position'] == 'footer' || $options['position'] == "")
 	add_action('wp_footer', array('GA_Filter','spool_analytics'));	
-} else {
+else
 	add_action('wp_head', array('GA_Filter','spool_analytics'),20);	
-}
 
-if ($options['rsslinktagging']) {
+if ($options['trackregistration'])
+	add_action('login_head', array('GA_Filter','spool_analytics'),20);	
+	
+if ($options['rsslinktagging'])
 	add_filter ( 'the_permalink_rss', array('GA_Filter','rsslinktagger'), 99 );	
-}
+
 ?>
