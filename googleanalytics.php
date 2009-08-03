@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/
+Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.2
+Version: 3.2.1
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -387,9 +387,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					}
 				
 					if ( strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"] ) {
-						echo "\t\t".'regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");'."\n";
-						echo "\t\t".'var match = regex.exec(pageTracker.qa);'."\n";
-						echo "\t\t".'pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);'."\n";
+						echo "\t\t".'pageTracker._addOrganic("images.google","prev");'."\n";
+						// echo "\t\t".'regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");'."\n";
+						// echo "\t\t".'var match = regex.exec(pageTracker.qa);'."\n";
+						// echo "\t\t".'pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);'."\n";
 					}
 
 					echo "\t\t".'pageTracker._trackPageview();'."\n";
@@ -422,20 +423,22 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function ga_get_domain($uri){
 			$hostPattern = "/^(http:\/\/)?([^\/]+)/i";
-			$domainPattern = "/[^\.\/]+\.[^\.\/]+$/";
+			$domainPatternUS = "/[^\.\/]+\.[^\.\/]+$/";
+			$domainPatternUK = "/[^\.\/]+\.[^\.\/]+\.[^\.\/]+$/";
 
 			preg_match($hostPattern, $uri, $matches);
 			$host = $matches[2];
-			preg_match($domainPattern, $host, $matches);
-			if (isset($matches[0]))
-				return array("domain"=>$matches[0],"host"=>$host);    
-			else
-				return array("domain"=>"","host"=>"");
+			if (preg_match("/.*\..*\..*\..*$/",$host)) {
+			        preg_match($domainPatternUK, $host, $matches);
+			} else {
+			        preg_match($domainPatternUS, $host, $matches);
+			}
+
+			return array("domain"=>$matches[0],"host"=>$host);
 		}
 
 		function ga_parse_link($leaf, $matches){
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-			
 			$options  = get_option('GoogleAnalyticsPP');
 			
 			// Break out immediately if the link is not an http or https link.
@@ -523,11 +526,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$options  = get_option('GoogleAnalyticsPP');
 			
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
-				$options  = get_option('GoogleAnalyticsPP');
-
 				foreach ( (array) $bookmarks as $bookmark ) {
+					$target = GA_Filter::ga_get_domain($bookmark->link_url);
+					$sitedomain = GA_Filter::ga_get_domain(get_bloginfo('url'));
+					if ($target['host'] == $sitedomain['host'])
+						continue;					
 					if ($options['domainorurl'] == "domain") {
-						$target = GA_Filter::ga_get_domain($bookmark->link_url);
 						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$target["host"]."');";
 					} else if ($options['domainorurl'] == "url") {
 						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$bookmark->link_url."');";
@@ -539,16 +543,16 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		
 		function rsslinktagger($guid) {
 			$options  = get_option('GoogleAnalyticsPP');
-			global $wp;
-			if ($wp->request == 'feed') {
+			global $wp, $post;
+			if ( is_feed() ) {
 				if ( $options['allowanchor'] ) {
 					$delimiter = '#';
 				} else {
 					$delimiter = '?';
+					if (strpos ( $guid, $delimiter ) > 0)
+						$delimiter = '&amp;';
 				}
-				if (strpos ( $guid, $delimiter ) > 0)
-					$delimiter = '&amp;';
-				return $guid . $delimiter . 'utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=rss';
+				return $guid . $delimiter . 'utm_source=rss&amp;utm_medium=rss&amp;utm_campaign='.urlencode($post->post_name);
 			}
 		}
 		
