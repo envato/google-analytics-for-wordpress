@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.2.1
+Version: 3.2.2
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -564,27 +564,23 @@ if ( ! class_exists( 'GA_Filter' ) ) {
  * to one tagged with a hash. Needs some work as it also needs to do that when the first utm_ var is actually not the
  * first GET variable in the URL.
  */
-if ( $options['allowanchor'] ) {
-	function ga_utm_hastag_redirect() {
-		if (isset($_SERVER['REQUEST_URI'])) {
-			if (strpos($_SERVER['REQUEST_URI'], "utm_") !== false) {			
-				$url = 'http://';
-				if ( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "") {
-					$url = 'https://';
-				}
-				$url .= $_SERVER['SERVER_NAME'];
-				if ( strpos($_SERVER['REQUEST_URI'], "?utm_") !== false ) {
-					$url .= str_replace("?utm_","#utm_",$_SERVER['REQUEST_URI']);
-				} 
-				else if ( strpos($_SERVER['REQUEST_URI'], "&utm_") !== false ) {
-					$url .= substr_replace($_SERVER['REQUEST_URI'], "#utm_", strpos($_SERVER['REQUEST_URI'], "&utm_"), 5); 
-				}
-				wp_redirect($url, 301);
-				exit;
+function ga_utm_hashtag_redirect() {
+	if (isset($_SERVER['REQUEST_URI'])) {
+		if (strpos($_SERVER['REQUEST_URI'], "utm_") !== false) {			
+			$url = 'http://';
+			if ( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "") {
+				$url = 'https://';
 			}
+			$url .= $_SERVER['SERVER_NAME'];
+			if ( strpos($_SERVER['REQUEST_URI'], "?utm_") !== false ) {
+				$url .= str_replace("?utm_","#utm_",$_SERVER['REQUEST_URI']);
+			} else if ( strpos($_SERVER['REQUEST_URI'], "&utm_") !== false ) {
+				$url .= substr_replace($_SERVER['REQUEST_URI'], "#utm_", strpos($_SERVER['REQUEST_URI'], "&utm_"), 5); 
+			}
+			wp_redirect($url, 301);
+			exit;
 		}
 	}
-	add_action('init','ga_utm_hastag_redirect',1);
 }
 
 $gaf 		= new GA_Filter();
@@ -592,6 +588,10 @@ $options	= get_option('GoogleAnalyticsPP');
 
 if (!is_array($options))
 	$ga_admin->set_defaults();
+
+if ( $options['allowanchor'] ) {
+	add_action('init','ga_utm_hashtag_redirect',1);
+}
 
 if ($options['trackoutbound']) {
 	// filters alter the existing content
