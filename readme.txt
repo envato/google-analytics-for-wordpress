@@ -29,6 +29,9 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 3.2.4 =
+* Fixed a bug in search tracking introduced with previous version.
+
 = 3.2.3 =
 * Added 0 result search tracking inspired by [Justin Cutroni's post](http://www.epikone.com/blog/2009/09/08/tracking-ero-result-searches-in-google-analytics/).
 
