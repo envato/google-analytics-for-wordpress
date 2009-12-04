@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 3.2.4
+Version: 3.2.5
 Requires at least: 2.7
 Author URI: http://yoast.com/
 License: GPL
@@ -118,7 +118,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			
 			?>
 			<div class="wrap">
-				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/theme/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
+				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://netdna.yoast.com/theme/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
 				<h2>Google Analytics for WordPress Configuration</h2>
 				<div class="postbox-container" style="width:70%;">
 					<div class="metabox-holder">	
@@ -340,7 +340,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			global $wp_query;					
 			$options  = get_option('GoogleAnalyticsPP');
 			
-			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
+			if ( !empty($options["uastring"]) && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
 				echo "\n".'<!-- Google Analytics for WordPress | http://yoast.com/wordpress/google-analytics/ -->'."\n";
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");'."\n";
@@ -358,7 +358,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else if ($wp_query->is_search && $wp_query->found_posts == 0) {
-					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.$wp_query->query_vars['s'].'&cat=no-results");'."\n";
+					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.esc_url($wp_query->query_vars['s']).'&cat=no-results");'."\n";
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else {
@@ -366,11 +366,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						/**
 						 * We need to load another script, so we need to close the try / catch, load the script, and open it again.
 						 */
-						echo "\t".'} catch(err) {}'."\n";
-						echo '</script>'."\n";
+						echo "\t} catch(err) {}\n";
+						echo "</script>\n";
 						echo '<script src="'.gapp_plugin_path().'custom_se.js" type="text/javascript"></script>'."\n"; 
 						echo '<script type="text/javascript">'."\n";
-						echo "\t".'try {'."\n";
+						echo "\ttry {\n";
 					}	
 				
 					if ( $options['userv2'] )
@@ -390,21 +390,23 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						echo "\t\t".'pageTracker._setDomainName("'.$options['domain'].'");'."\n";
 					}
 				
-					if ( strpos($_SERVER['HTTP_REFERER'],"images.google") && strpos($_SERVER['HTTP_REFERER'],"&prev") && $options["imagese"] ) {
-						echo "\t\t".'pageTracker._addOrganic("images.google","prev");'."\n";
-						// echo "\t\t".'regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");'."\n";
-						// echo "\t\t".'var match = regex.exec(pageTracker.qa);'."\n";
-						// echo "\t\t".'pageTracker.qa = "http://images.google." + match[1] + unescape(match[2]);'."\n";
+					if ( $options["imagese"] ) {
+						echo "\t\t".'regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");'."\n";
+						echo "\t\tvar match = regex.exec(document.referrer);\n";
+						echo "\t\tif (match != null) {\n";
+						echo "\t\t\t".'pageTracker._addOrganic("images.google." + match[1],"q",true);'."\n";
+						echo "\t\t\t".'pageTracker._setReferrerOverride("http://images.google." + match[1] + unescape(match[2]));'."\n";
+						echo "\t\t}\n";
 					}
 
-					echo "\t\t".'pageTracker._trackPageview();'."\n";
-					echo "\t".'} catch(err) {}'."\n";
-					echo '</script>'."\n";
+					echo "\t\tpageTracker._trackPageview();\n";
+					echo "\t} catch(err) {}\n";
+					echo "</script>";
 				}
 				echo '<!-- End of Google Analytics code -->'."\n";
 			} else if ( $options["uastring"] != "" && current_user_can('edit_users') && !$options["admintracking"] ) {
 				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
-			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
+			} else if ( empty($options["uastring"]) && current_user_can('edit_users') ) {
 				echo "<!-- Google Analytics tracking code not shown because yo haven't entered your UA string yet. -->";
 			}
 		}
@@ -535,10 +537,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$sitedomain = GA_Filter::ga_get_domain(get_bloginfo('url'));
 					if ($target['host'] == $sitedomain['host'])
 						continue;					
+
 					if ($options['domainorurl'] == "domain") {
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$target["host"]."');";
+						$bookmark->link_target .= "\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$target["host"]."');";
 					} else if ($options['domainorurl'] == "url") {
-						$bookmark->link_rel = $bookmark->link_rel."\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$bookmark->link_url."');";
+						$bookmark->link_target .= "\" onclick=\"javascript:pageTracker._trackPageview('".$options['blogrollprefix']."/".$bookmark->link_url."');";
 					}
 				}
 			}

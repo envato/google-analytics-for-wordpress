@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics
 Requires at least: 2.7
 Tested up to: 2.9
-Stable tag: 3.2.4
+Stable tag: 3.2.5
 
 The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
 
@@ -28,6 +28,9 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 3.2.5 =
+* Fix for XSS vulnerability as mentioned [here](http://www.securityfocus.com/archive/1/508211).
 
 = 3.2.4 =
 * Fixed a bug in search tracking introduced with previous version.

@@ -17,11 +17,11 @@ div.inside ul li.rss {
 }
 
 div.inside ul li.email {
-	list-style-image: url(http://cdn.yoast.com/email_sub.png);
+	list-style-image: url(http://netdna.yoast.com/email_sub.png);
 }
 
 div.inside ul li.yoast {
-	list-style-image: url(http://cdn.yoast.com/theme/yoast-16x16.png); 
+	list-style-image: url(http://netdna.yoast.com/theme/yoast-16x16.png); 
 }
 
 .text {
