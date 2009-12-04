@@ -358,7 +358,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else if ($wp_query->is_search && $wp_query->found_posts == 0) {
-					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.$wp_query->query_vars['s'].'&cat=no-results");'."\n";
+					echo "\t\t".'pageTracker._trackPageview("'.get_bloginfo('url').'/?s=no-results: '.rawurlencode($wp_query->query_vars['s']).'&cat=no-results");'."\n";
 					echo "\t".'} catch(err) {}'."\n";
 					echo '</script>'."\n";						
 				} else {
