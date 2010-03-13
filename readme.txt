@@ -35,6 +35,7 @@ This section describes how to install the plugin and get it working.
 * Implemented custom variable tracking to track: 
 	* On the session level: whether the user is logged in or not. 
 	* On the page level: the author of the current post &amp; the category of the current post.
+* Removed Urchin integration as it didn't work and nobody complained, so nobody was using it.
 
 = 3.2.3 =
 * Added 0 result search tracking inspired by [Justin Cutroni's post](http://www.epikone.com/blog/2009/09/08/tracking-ero-result-searches-in-google-analytics/).
