@@ -134,20 +134,27 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		/**
 		 * Create a "plugin like" box.
 		 */
-		function plugin_like() {
+		function plugin_like($hook = '') {
+			if (empty($hook)) {
+				$hook = $this->hook;
+			}
 			$content = '<p>'.__('Why not do any or all of the following:','ystplugin').'</p>';
 			$content .= '<ul>';
 			$content .= '<li><a href="'.$this->homepage.'">'.__('Link to it so other folks can find out about it.','ystplugin').'</a></li>';
-			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$this->hook.'/">'.__('Give it a good rating on WordPress.org.','ystplugin').'</a></li>';
+			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Give it a good rating on WordPress.org.','ystplugin').'</a></li>';
+			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Let other people know that it works with your WordPress setup.','ystplugin').'</a></li>';
 			$content .= '<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=2017947">'.__('Donate a token of your appreciation.','ystplugin').'</a></li>';
 			$content .= '</ul>';
-			$this->postbox($this->hook.'like', 'Like this plugin?', $content);
+			$this->postbox($hook.'like', 'Like this plugin?', $content);
 		}	
 		
 		/**
 		 * Info box with link to the support forums.
 		 */
-		function plugin_support() {
+		function plugin_support($hook = '') {
+			if (empty($hook)) {
+				$hook = $this->hook;
+			}
 			$content = '<p>'.__('If you have any problems with this plugin or good ideas for improvements or new features, please talk about them in the','ystplugin').' <a href="http://wordpress.org/tags/'.$this->hook.'">'.__("Support forums",'ystplugin').'</a>.</p>';
 			$this->postbox($this->hook.'support', 'Need support?', $content);
 		}
