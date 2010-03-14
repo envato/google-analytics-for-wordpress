@@ -585,6 +585,41 @@ function ga_utm_hashtag_redirect() {
 	}
 }
 
+function track_comment_form_head() {
+	if (is_single()) {
+		global $post;
+		if ('open' == $post->comment_status)
+			wp_enqueue_script('jquery');	
+	}
+}
+add_action('wp_print_scripts','track_comment_form_head');
+
+$comment_form_id = '';
+function yoast_get_comment_form_id($args) {
+	global $comment_form_id;
+	$comment_form_id = $args['id_form'];
+	return $args;
+}
+add_filter('comment_form_defaults', 'yoast_get_comment_form_id',99,1);
+
+function yoast_track_comment_form() {
+	global $comment_form_id, $post;
+	$yoast_ga_options = get_option('GoogleAnalyticsPP');
+?>
+<script type="text/javascript" charset="utf-8">
+	jQuery(document).ready(function() {
+		jQuery('#<?php echo $comment_form_id; ?>').submit(function() {
+			_gaq.push(
+				['_setAccount','<?php echo $yoast_ga_options["uastring"]; ?>'],
+				['_trackEvent','comment']
+			);
+		});
+	});	
+</script>
+<?php
+}
+add_action('comment_form_after','yoast_track_comment_form');
+
 function yoast_analytics() {
 	$options	= get_option('GoogleAnalyticsPP');
 	if ($options['position'] == 'manual')
