@@ -51,3 +51,7 @@ div.inside ul li.yoast {
 .side .postbox p, .side .postbox a, .side .postbox a.rsswidget {
 	font-size: 11px;
 }
+
+.button:hover, .button-primary:hover {
+	text-decoration: none;
+}

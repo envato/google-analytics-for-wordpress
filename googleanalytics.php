@@ -10,7 +10,7 @@ Author URI: http://yoast.com/
 License: GPL
 
 */
-	
+
 // Determine the location
 function gapp_plugin_path() {
 	return plugins_url('', __FILE__).'/';
@@ -96,7 +96,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
@@ -126,20 +126,99 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							<form action="" method="post" id="analytics-conf">
 								<?php
 									wp_nonce_field('analyticspp-config');
+									if (isset($options['ga_token']) || isset($_GET['token']) || isset($_GET['switchua']) ) 
+									{
+										if (!isset($options['ga_token']) && !isset($_GET['token'])) {
+											$url = $this->plugin_options_url();
+											if (isset($_GET['switchua']))
+												$url .= '&switchua=1';
+											$query = 'https://www.google.com/accounts/AuthSubRequest?';
+											$query .= http_build_query(
+												array(		
+													'next' => $url,
+													'scope' => 'https://www.google.com/analytics/feeds/',
+													'secure' => 0,
+													'session' => 1,
+													'hd' => 'default'
+												)
+											);
+											$line = 'Please authenticate with Google Analytics to retrieve your tracking code: <a class="button-primary" href="'.$query.'">Click here to authenticate with Google</a>';
+										} else {
+											if (isset($_GET['token']))
+												$token = $_GET['token'];
+											else
+												$token = $options['ga_token'];
+											
+											require_once('xmlparser.php');
+
+											$responses = $options['ga_api_responses'];
+											if (!isset($responses[$token])) {
+												$request = new WP_Http;
+												$api_url = 'https://www.google.com/analytics/feeds/accounts/default';
+												$headers = array( 
+													'Content-Type' => 'application/x-www-form-urlencoded',
+													'Authorization' => 'AuthSub token="'.$token.'"',
+												);
+												$result = $request->request( $api_url , array( 'method' => 'GET', 'body' => '', 'headers' => $headers ) );
+
+												$options['ga_api_responses'][$token] = $result;
+												$options['ga_token'] = $token;
+												update_option('GoogleAnalyticsPP', $options);
+											}
+
+											$arr = yoast_xml2array($responses[$token]['body']);
+											
+											$currentua = '';
+											if (!empty($options['uastring']))
+												$currentua = $options['uastring'];
+											
+											$line = '<input type="hidden" name="ga_token" value="'.$token.'"/>';
+											$line .= 'Please select the correct Analytics profile to track:<br/>';
+											$line .= '<select name="uastring">';
+											$i = 1;												
+											foreach ($arr['feed']['entry'] as $site) {
+												$ua = $site['dxp:property']['3_attr']['value'];
+												$line .= "\t".'<option ';
+												$line .= selected($ua, $currentua, false);
+												$line .= ' value="'.$ua.'">'.$site['title'].'</option>'."\n";
+												$i++;
+											}
+											if ($i == 1 && $try < 5) {
+												$try = 1;
+												if (isset($_GET['try']))
+													$try = $_GET['try']++;
+												$line .= '<script type="text/javascript" charset="utf-8">
+													window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
+												</script>';
+											}
+											$line .= '</select>';
+											
+											$line .= '<br/><br/>Refresh this listing or switch to another account: ';
+
+											$url = $this->plugin_options_url();
+											if (isset($_GET['switchua']))
+												$url .= '&switchua=1';
+											$query = 'https://www.google.com/accounts/AuthSubRequest?';
+											$query .= http_build_query(
+												array(		
+													'next' => $url,
+													'scope' => 'https://www.google.com/analytics/feeds/',
+													'secure' => 0,
+													'session' => 1,
+													'hd' => 'default'
+												)
+											);
+											$line .= '<a class="button" href="'.$query.'">Re-authenticate with Google</a>';
+											
+										}
+									} else {
+										$line = '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><a href="'.$this->plugin_options_url().'&amp;switchua=1">Select another Analytics Profile &raquo;</a>';
+									} 
 									$rows = array();
 									$rows[] = array(
 										'id' => 'uastring',
-										'label' => 'Analytics Account ID',
-										'desc' => '<a href="#" id="explain">What\'s this?</a>',
-										'content' => '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><div id="explanation" style="background: #fff; border: 1px solid #ccc; padding: 5px; display:none;">
-											<strong>Explanation</strong><br/>
-											Find the Account ID, starting with UA- in your account overview, as marked below:<br/>
-											<br/>
-											<img src="'.gapp_plugin_path().'/images/account-id.png" alt="Account ID"/><br/>
-											<br/>
-											Once you have entered your Account ID in the box above your pages will be trackable by Google Analytics.<br/>
-											Still can\'t find it? Watch <a href="http://yoast.com/wordpress/google-analytics/#accountid">this video</a>!
-										</div>'
+										'label' => 'Analytics Profile',
+										'content' => $line
 									);
 									$rows[] = array(
 										'id' => 'position',
@@ -248,6 +327,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				<div class="meta-box-sortables">
 					<?php
 						$this->plugin_like();
+						$this->postbox('donate','Donate $5, $10 or $20 now!','<form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						<input type="hidden" name="cmd" value="_s-xclick">
+						<input type="hidden" name="hosted_button_id" value="FW9FK4EBZ9FVJ">
+						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+						<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+						</form>');
 						$this->plugin_support();
 						$this->news(); 
 					?>

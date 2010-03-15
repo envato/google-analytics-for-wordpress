@@ -143,20 +143,19 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 			$content .= '<li><a href="'.$this->homepage.'">'.__('Link to it so other folks can find out about it.','ystplugin').'</a></li>';
 			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Give it a good rating on WordPress.org.','ystplugin').'</a></li>';
 			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Let other people know that it works with your WordPress setup.','ystplugin').'</a></li>';
-			$content .= '<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=2017947">'.__('Donate a token of your appreciation.','ystplugin').'</a></li>';
 			$content .= '</ul>';
 			$this->postbox($hook.'like', 'Like this plugin?', $content);
 		}	
 		
 		/**
-		 * Info box with link to the support forums.
+		 * Info box with link to the bug tracker.
 		 */
 		function plugin_support($hook = '') {
 			if (empty($hook)) {
 				$hook = $this->hook;
 			}
-			$content = '<p>'.__('If you have any problems with this plugin or good ideas for improvements or new features, please talk about them in the','ystplugin').' <a href="http://wordpress.org/tags/'.$this->hook.'">'.__("Support forums",'ystplugin').'</a>.</p>';
-			$this->postbox($this->hook.'support', 'Need support?', $content);
+			$content = '<p>If you\'ve found a bug in this plugin, please submit it in the <a href="http://yoast.com/mantis/bug_report_page.php">Yoast Bug Tracker</a> with a clear description.</p>';
+			$this->postbox($this->hook.'support', __('Found a bug?','ystplugin'), $content);
 		}
 
 		/**
