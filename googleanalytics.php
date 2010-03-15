@@ -240,13 +240,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'Only adviced for advanced users who know their way around Google Analytics',
 										'content' => $this->checkbox('advancedsettings'),
 									);
-									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows));
+									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
 								
-
-									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
-
-									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
-
 									$rows = array();
 									$rows[] = array(
 										'id' => 'admintracking',
@@ -310,10 +305,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
-									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows));
+									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+
+									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
+
+									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
 								
 								?>
-						<div class="submit"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div>
 					</form>
 					<form action="" method="post">
 						<input type="hidden" name="reset" value="true"/>

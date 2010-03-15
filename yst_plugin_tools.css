@@ -52,6 +52,6 @@ div.inside ul li.yoast {
 	font-size: 11px;
 }
 
-.button:hover, .button-primary:hover {
+div.inside .button:hover, div.inside .button-primary:hover {
 	text-decoration: none;
 }
