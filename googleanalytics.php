@@ -45,14 +45,41 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			
 			add_action('wp_dashboard_setup', array(&$this,'widget_setup'));	
 			add_action('admin_head', array(&$this,'config_page_head'));
+			add_action('admin_head', array(&$this,'warning'));
+			add_action('admin_init', array(&$this,'save_settings'));
 		}
 		
 		function config_page_head() {
 			if ($_GET['page'] == $this->hook) {
+				$options = get_option($this->optionname);
+				if (!empty($options['uastring'])) { 
+					$uastring = $options['uastring'];
+				} else { 
+					$uastring = ''; 
+				}
 				wp_enqueue_script('jquery');
 			?>
-				 <script type="text/javascript" charset="utf-8">
+				 <script type="text/javascript" charset="utf-8">				
+					function makeSublist(parent,child,childVal)
+					{
+						jQuery("body").append("<select style='display:none' id='"+parent+child+"'></select>");
+						jQuery('#'+parent+child).html(jQuery("#"+child+" option"));
+
+						var parentValue = jQuery('#'+parent).attr('value');
+						jQuery('#'+child).html(jQuery("#"+parent+child+" .sub_"+parentValue).clone());
+
+						childVal = (typeof childVal == "undefined")? "" : childVal ;
+						jQuery("#"+child).val(childVal).attr('selected','selected');
+
+						jQuery('#'+parent).change(function(){
+							var parentValue = jQuery('#'+parent).attr('value');
+							jQuery('#'+child).html(jQuery("#"+parent+child+" .sub_"+parentValue).clone());
+							jQuery('#'+child).trigger("change");
+							jQuery('#'+child).focus();
+						});
+					}
 				 	jQuery(document).ready(function(){
+						makeSublist('ga_account', 'uastring_sel', '<?php echo $uastring; ?>');
 						jQuery('#explanation td').css("display","none");
 						jQuery('#advancedsettings').change(function(){
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
@@ -84,15 +111,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 		
-		function config_page() {
+		function save_settings() {
 			$options = get_option('GoogleAnalyticsPP');
-
-			if ( (isset($_POST['reset']) && $_POST['reset'] == "true") || !is_array($options) ) {
-				$this->set_defaults();
-				echo "<div class=\"updated\"><p>Google Analytics settings reset to default.</p></div>\n";
-			}
-
-			if ( isset($_POST['submit']) ) {
+			
+			if ( isset($_POST['reset']) && $_POST['reset'] == "true" ) {
+				$options = $this->set_defaults();
+				$options['msg'] = "<div class=\"updated\"><p>Google Analytics settings reset.</p></div>\n";
+			} elseif ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
@@ -109,13 +134,19 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					else
 						$options[$option_name] = false;
 				}
-
-				update_option('GoogleAnalyticsPP', $options);
-				echo "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
-				echo "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";	
+				
+				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
+				$options['msg'] .= "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";	
 			}
+			update_option('GoogleAnalyticsPP', $options);
+		}
+		
+		function config_page() {
+			$options = get_option('GoogleAnalyticsPP');
 
-			
+			echo $options['msg'];
+			$options['msg'] = '';
+			update_option('GoogleAnalyticsPP', $options);
 			?>
 			<div class="wrap">
 				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://netdna.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
@@ -123,94 +154,115 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				<div class="postbox-container" style="width:65%;">
 					<div class="metabox-holder">	
 						<div class="meta-box-sortables">
-							<form action="" method="post" id="analytics-conf">
+							<form action="<?php echo $this->plugin_options_url(); ?>" method="post" id="analytics-conf">
 								<?php
 									wp_nonce_field('analyticspp-config');
-									if (isset($options['ga_token']) || isset($_GET['token']) || isset($_GET['switchua']) ) 
-									{
-										if (!isset($options['ga_token']) && !isset($_GET['token'])) {
-											$url = $this->plugin_options_url();
-											if (isset($_GET['switchua']))
-												$url .= '&switchua=1';
-											$query = 'https://www.google.com/accounts/AuthSubRequest?';
-											$query .= http_build_query(
-												array(		
-													'next' => $url,
-													'scope' => 'https://www.google.com/analytics/feeds/',
-													'secure' => 0,
-													'session' => 1,
-													'hd' => 'default'
-												)
+									if ( empty($options['uastring']) && empty($options['ga_token']) && !isset($_GET['token']) ) {
+										$url = $this->plugin_options_url();
+										if (isset($_GET['switchua']))
+											$url .= '&switchua=1';
+										$query = 'https://www.google.com/accounts/AuthSubRequest?';
+										$query .= http_build_query(
+											array(		
+												'next' => $url,
+												'scope' => 'https://www.google.com/analytics/feeds/',
+												'secure' => 0,
+												'session' => 1,
+												'hd' => 'default'
+											)
+										);
+										$line = 'Please authenticate with Google Analytics to retrieve your tracking code: <a class="button-primary" href="'.$query.'">Click here to authenticate with Google</a>';
+									} else if(isset($_GET['token']) || (isset($options['ga_token']) && !empty($options['ga_token']))) {
+										if (isset($_GET['token']))
+											$token = $_GET['token'];
+										else
+											$token = $options['ga_token'];
+										
+										require_once('xmlparser.php');
+
+										if (!isset($options['ga_api_responses'][$token])) {
+											$options['ga_api_responses'] = array();
+											$request = new WP_Http;
+											$api_url = 'https://www.google.com/analytics/feeds/accounts/default';
+											$headers = array( 
+												'Content-Type' => 'application/x-www-form-urlencoded',
+												'Authorization' => 'AuthSub token="'.$token.'"',
 											);
-											$line = 'Please authenticate with Google Analytics to retrieve your tracking code: <a class="button-primary" href="'.$query.'">Click here to authenticate with Google</a>';
-										} else {
-											if (isset($_GET['token']))
-												$token = $_GET['token'];
-											else
-												$token = $options['ga_token'];
-											
-											require_once('xmlparser.php');
+											$result = $request->request( $api_url , array( 'method' => 'GET', 'body' => '', 'headers' => $headers ) );
 
-											$responses = $options['ga_api_responses'];
-											if (!isset($responses[$token])) {
-												$request = new WP_Http;
-												$api_url = 'https://www.google.com/analytics/feeds/accounts/default';
-												$headers = array( 
-													'Content-Type' => 'application/x-www-form-urlencoded',
-													'Authorization' => 'AuthSub token="'.$token.'"',
-												);
-												$result = $request->request( $api_url , array( 'method' => 'GET', 'body' => '', 'headers' => $headers ) );
-
-												$options['ga_api_responses'][$token] = $result;
-												$options['ga_token'] = $token;
-												update_option('GoogleAnalyticsPP', $options);
-											}
-
-											$arr = yoast_xml2array($responses[$token]['body']);
-											
-											$currentua = '';
-											if (!empty($options['uastring']))
-												$currentua = $options['uastring'];
-											
-											$line = '<input type="hidden" name="ga_token" value="'.$token.'"/>';
-											$line .= 'Please select the correct Analytics profile to track:<br/>';
-											$line .= '<select name="uastring">';
-											$i = 1;												
-											foreach ($arr['feed']['entry'] as $site) {
-												$ua = $site['dxp:property']['3_attr']['value'];
-												$line .= "\t".'<option ';
-												$line .= selected($ua, $currentua, false);
-												$line .= ' value="'.$ua.'">'.$site['title'].'</option>'."\n";
-												$i++;
-											}
-											if ($i == 1 && $try < 5) {
-												$try = 1;
-												if (isset($_GET['try']))
-													$try = $_GET['try']++;
-												$line .= '<script type="text/javascript" charset="utf-8">
-													window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
-												</script>';
-											}
-											$line .= '</select>';
-											
-											$line .= '<br/><br/>Refresh this listing or switch to another account: ';
-
-											$url = $this->plugin_options_url();
-											if (isset($_GET['switchua']))
-												$url .= '&switchua=1';
-											$query = 'https://www.google.com/accounts/AuthSubRequest?';
-											$query .= http_build_query(
-												array(		
-													'next' => $url,
-													'scope' => 'https://www.google.com/analytics/feeds/',
-													'secure' => 0,
-													'session' => 1,
-													'hd' => 'default'
-												)
-											);
-											$line .= '<a class="button" href="'.$query.'">Re-authenticate with Google</a>';
-											
+											$options['ga_api_responses'][$token] = $result;
+											$options['ga_token'] = $token;
+											update_option('GoogleAnalyticsPP', $options);
 										}
+
+										$arr = yoast_xml2array($options['ga_api_responses'][$token]['body']);
+										
+										$ga_accounts = array();
+										foreach ($arr['feed']['entry'] as $site) {
+											$ua = $site['dxp:property']['3_attr']['value'];
+											$account = $site['dxp:property']['1_attr']['value'];
+											if (!is_array($ga_accounts[$account]))
+												$ga_accounts[$account] = array();
+											$ga_accounts[$account][$site['title']] = $ua;
+										}
+										// echo '<pre>'.print_r($options,1).'</pre>';
+										$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
+										$select1 .= "\t<option></option>\n";
+										$select2 = '<select style="width:150px;" name="uastring" id="uastring_sel">';
+										$i = 1;
+										$currentua = '';
+										if (!empty($options['uastring']))
+											$currentua = $options['uastring'];
+										
+										foreach($ga_accounts as $account => $val) {
+											$accountsel = false;
+											foreach ($val as $title => $ua) {
+												$sel = selected($ua, $currentua, false);
+												if (!empty($sel)) {
+													$accountsel = true;
+													// $select1 = str_replace('value="'.$i.'"','value="'.$i.'" '.$sel,$select1);
+												}
+												$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.'</option>'."\n";
+											}
+											$select1 .= "\t".'<option '.selected($accountsel,true,false).' value="'.$i.'">'.$account.'</option>'."\n";
+											$i++;
+										}
+										$select1 .= '</select>';
+										$select2 .= '</select>';
+																														
+										$line = '<input type="hidden" name="ga_token" value="'.$token.'"/>';
+										$line .= 'Please select the correct Analytics profile to track:<br/>';
+										$line .= '<table class="form_table">';
+										$line .= '<tr><th width="15%">Account:</th><td width="85%">'.$select1.'</td></tr>';
+										$line .= '<tr><th>Profile:</th><td>'.$select2.'</td></tr>';
+										$line .= '</table>';
+
+										$try = 1;
+										if (isset($_GET['try']))
+											$try = $_GET['try'] + 1;
+
+										if ($i == 1 && $try < 4 && isset($_GET['token'])) {
+											$line .= '<script type="text/javascript" charset="utf-8">
+												window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
+											</script>';
+										}
+										
+										$line .= '<br/>Refresh this listing or switch to another account: ';
+
+										$url = $this->plugin_options_url();
+										if (isset($_GET['switchua']))
+											$url .= '&switchua=1';
+										$query = 'https://www.google.com/accounts/AuthSubRequest?';
+										$query .= http_build_query(
+											array(		
+												'next' => $url,
+												'scope' => 'https://www.google.com/analytics/feeds/',
+												'secure' => 0,
+												'session' => 1,
+												'hd' => 'default'
+											)
+										);
+										$line .= '<a class="button" href="'.$query.'">Re-authenticate with Google</a>';
 									} else {
 										$line = '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><a href="'.$this->plugin_options_url().'&amp;switchua=1">Select another Analytics Profile &raquo;</a>';
 									} 
@@ -313,9 +365,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								
 								?>
 					</form>
-					<form action="" method="post">
+					<form action="<?php echo $this->plugin_options_url(); ?>" method="post">
 						<input type="hidden" name="reset" value="true"/>
-						<div class="submit"><input type="submit" value="Reset Default Settings &raquo;" /></div>
+						<div class="submit"><input type="submit" value="Reset All Settings &raquo;" /></div>
 					</form>
 				</div>
 			</div>
@@ -340,37 +392,36 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		</div>
 	</div>
 			<?php
-			if (isset($options['uastring'])) {
-				if ($options['uastring'] == "") {
-					add_action('admin_footer', array(&$this,'warning'));
-				} else {
-					if (isset($_POST['submit'])) {
-						if ($_POST['uastring'] != $options['uastring'] ) {
-							add_action('admin_footer', array(&$this,'success'));
-						}
-					}
-				}
-			} else {
-				add_action('admin_footer', array(&$this,'warning'));
-			}
 		} 
 		
 		function set_defaults() {
-			$options = get_option('GoogleAnalyticsPP');
-			$options['dlextensions'] = 'doc,exe,.js,pdf,ppt,tgz,zip,xls';
-			$options['domainorurl'] = 'domain';
-			$options['async'] = false;
-			$options['extrase'] = false;
-			$options['imagese'] = false;
-			$options['admintracking'] = true;
-			$options['trackoutbound'] = true;
-			$options['advancedsettings'] = false;
-			$options['allowanchor'] = false;				
+			$options = array(
+				'admintracking' 		=> true,
+				'advancedsettings' 		=> false,
+				'allowanchor' 			=> false,
+				'dlextensions' 			=> 'doc,exe,.js,pdf,ppt,tgz,zip,xls',
+				'domainorurl' 			=> 'domain',
+				'ga_token' 				=> '',
+				'ga_api_responses'		=> array(),
+				'extrase' 				=> false,
+				'imagese' 				=> false,
+				'position' 				=> 'footer',
+				'trackadsense'			=> false,
+				'trackoutbound' 		=> true,
+				'trackloggedin' 		=> false,
+				'trackregistration' 	=> false,
+				'rsslinktagging'		=> true,
+				'domain' 				=> '',
+			);
 			update_option('GoogleAnalyticsPP',$options);
+			return $options;
 		}
 		
 		function warning() {
-			echo "<div id='message' class='error'><p><strong>Google Analytics is not active.</strong> You must <a href='plugins.php?page=googleanalytics.php'>enter your UA String</a> for it to work.</p></div>";
+			$options = get_option('GoogleAnalyticsPP');
+			if (!isset($options['uastring']) || empty($options['uastring'])) {
+				echo "<div id='message' class='error'><p><strong>Google Analytics is not active.</strong> You must <a href='".$this->plugin_options_url()."'>select which Analytics Profile to track</a> before it can work.</p></div>";
+			}
 		} // end warning()
 
 	} // end class GA_Admin
