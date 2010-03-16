@@ -47,6 +47,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			add_action('admin_head', array(&$this,'config_page_head'));
 			add_action('admin_head', array(&$this,'warning'));
 			add_action('admin_init', array(&$this,'save_settings'));
+			add_action('switch_theme', array(&$this,'switch_theme'));
 		}
 		
 		function config_page_head() {
@@ -111,10 +112,30 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 		
+		function switch_theme( $theme ) {
+			$options 			= get_option( $this->optionname );
+			$integrated_theme 	= $this->is_integrated_theme( $theme );
+
+			if ( $integrated_theme )
+				$options['position'] = $integrated_theme;
+			else
+				$options['position'] = 'footer';
+
+			update_option( $this->optionname, $options );
+		}
+		
+		function is_integrated_theme() {
+			$theme = get_current_theme();
+			if ( in_array($theme, array("Thesis") ) ) {
+				return $theme;
+			}
+			return false;
+		}
+		
 		function save_settings() {
 			$options = get_option('GoogleAnalyticsPP');
 			
-			if ( isset($_POST['reset']) && $_POST['reset'] == "true" ) {
+			if ( isset($_REQUEST['reset']) && $_REQUEST['reset'] == "true" ) {
 				$options = $this->set_defaults();
 				$options['msg'] = "<div class=\"updated\"><p>Google Analytics settings reset.</p></div>\n";
 			} elseif ( isset($_POST['submit']) ) {
@@ -185,70 +206,81 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											$request = new WP_Http;
 											$api_url = 'https://www.google.com/analytics/feeds/accounts/default';
 											$headers = array( 
-												'Content-Type' => 'application/x-www-form-urlencoded',
+												'Content-Type' 	=> 'application/x-www-form-urlencoded',
 												'Authorization' => 'AuthSub token="'.$token.'"',
 											);
-											$result = $request->request( $api_url , array( 'method' => 'GET', 'body' => '', 'headers' => $headers ) );
-
-											$options['ga_api_responses'][$token] = $result;
-											$options['ga_token'] = $token;
-											update_option('GoogleAnalyticsPP', $options);
-										}
-
-										$arr = yoast_xml2array($options['ga_api_responses'][$token]['body']);
-										
-										$ga_accounts = array();
-										foreach ($arr['feed']['entry'] as $site) {
-											$ua = $site['dxp:property']['3_attr']['value'];
-											$account = $site['dxp:property']['1_attr']['value'];
-											if (!is_array($ga_accounts[$account]))
-												$ga_accounts[$account] = array();
-											$ga_accounts[$account][$site['title']] = $ua;
-										}
-										// echo '<pre>'.print_r($options,1).'</pre>';
-										$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
-										$select1 .= "\t<option></option>\n";
-										$select2 = '<select style="width:150px;" name="uastring" id="uastring_sel">';
-										$i = 1;
-										$currentua = '';
-										if (!empty($options['uastring']))
-											$currentua = $options['uastring'];
-										
-										foreach($ga_accounts as $account => $val) {
-											$accountsel = false;
-											foreach ($val as $title => $ua) {
-												$sel = selected($ua, $currentua, false);
-												if (!empty($sel)) {
-													$accountsel = true;
-													// $select1 = str_replace('value="'.$i.'"','value="'.$i.'" '.$sel,$select1);
-												}
-												$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.'</option>'."\n";
+											$args = array(
+												'method' 		=> 'GET', 
+												'body' 			=> '', 
+												'headers' 		=> $headers,
+												'timeout'		=> 10,
+											);
+											$result = $request->request( $api_url , $args );
+											if (is_array($result) && $result['response']['code'] == 200) {
+												$options['ga_api_responses'][$token] = $result;
+												$options['ga_token'] = $token;
+												update_option('GoogleAnalyticsPP', $options);												
 											}
-											$select1 .= "\t".'<option '.selected($accountsel,true,false).' value="'.$i.'">'.$account.'</option>'."\n";
-											$i++;
 										}
-										$select1 .= '</select>';
-										$select2 .= '</select>';
+
+										if (is_array($options['ga_api_responses'][$token]) && $options['ga_api_responses'][$token]['response']['code'] == 200) {
+											$arr = yoast_xml2array($options['ga_api_responses'][$token]['body']);
+										
+											$ga_accounts = array();
+											foreach ($arr['feed']['entry'] as $site) {
+												$ua = $site['dxp:property']['3_attr']['value'];
+												$account = $site['dxp:property']['1_attr']['value'];
+												if (!isset($ga_accounts[$account]) || !is_array($ga_accounts[$account]))
+													$ga_accounts[$account] = array();
+												$ga_accounts[$account][$site['title']] = $ua;
+											}
+											// echo '<pre>'.print_r($options,1).'</pre>';
+											$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
+											$select1 .= "\t<option></option>\n";
+											$select2 = '<select style="width:150px;" name="uastring" id="uastring_sel">';
+											$i = 1;
+											$currentua = '';
+											if (!empty($options['uastring']))
+												$currentua = $options['uastring'];
+										
+											foreach($ga_accounts as $account => $val) {
+												$accountsel = false;
+												foreach ($val as $title => $ua) {
+													$sel = selected($ua, $currentua, false);
+													if (!empty($sel)) {
+														$accountsel = true;
+														// $select1 = str_replace('value="'.$i.'"','value="'.$i.'" '.$sel,$select1);
+													}
+													$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.'</option>'."\n";
+												}
+												$select1 .= "\t".'<option '.selected($accountsel,true,false).' value="'.$i.'">'.$account.'</option>'."\n";
+												$i++;
+											}
+											$select1 .= '</select>';
+											$select2 .= '</select>';
 																														
-										$line = '<input type="hidden" name="ga_token" value="'.$token.'"/>';
-										$line .= 'Please select the correct Analytics profile to track:<br/>';
-										$line .= '<table class="form_table">';
-										$line .= '<tr><th width="15%">Account:</th><td width="85%">'.$select1.'</td></tr>';
-										$line .= '<tr><th>Profile:</th><td>'.$select2.'</td></tr>';
-										$line .= '</table>';
+											$line = '<input type="hidden" name="ga_token" value="'.$token.'"/>';
+											$line .= 'Please select the correct Analytics profile to track:<br/>';
+											$line .= '<table class="form_table">';
+											$line .= '<tr><th width="15%">Account:</th><td width="85%">'.$select1.'</td></tr>';
+											$line .= '<tr><th>Profile:</th><td>'.$select2.'</td></tr>';
+											$line .= '</table>';
 
-										$try = 1;
-										if (isset($_GET['try']))
-											$try = $_GET['try'] + 1;
+											$try = 1;
+											if (isset($_GET['try']))
+												$try = $_GET['try'] + 1;
 
-										if ($i == 1 && $try < 4 && isset($_GET['token'])) {
-											$line .= '<script type="text/javascript" charset="utf-8">
-												window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
-											</script>';
+											if ($i == 1 && $try < 4 && isset($_GET['token'])) {
+												$line .= '<script type="text/javascript" charset="utf-8">
+													window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
+												</script>';
+											}
+										
+											$line .= '<br/>Refresh this listing or switch to another account: ';
+										} else {
+											$line = 'Unfortunately, an error occurred while connecting to Google, please try again:';
 										}
 										
-										$line .= '<br/>Refresh this listing or switch to another account: ';
-
 										$url = $this->plugin_options_url();
 										if (isset($_GET['switchua']))
 											$url .= '&switchua=1';
@@ -267,19 +299,29 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										$line = '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><a href="'.$this->plugin_options_url().'&amp;switchua=1">Select another Analytics Profile &raquo;</a>';
 									} 
 									$rows = array();
+									$content = '';
 									$rows[] = array(
 										'id' => 'uastring',
 										'label' => 'Analytics Profile',
 										'content' => $line
 									);
-									$rows[] = array(
-										'id' => 'position',
-										'label' => 'Where should the tracking script be placed?',
-										'content' => '<select name="position" id="position">
-											<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
-											<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
-										</select>'
-									);
+									$integrated_theme = $this->is_integrated_theme();
+									if ( !$integrated_theme ) {
+										$rows[] = array(
+											'id' => 'position',
+											'label' => 'Where should the tracking script be placed?',
+											'content' => '<select name="position" id="position">
+												<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
+												<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
+											</select>'
+										);
+									} else {
+										$rows[] = array(
+											'id' => 'position',
+											'label' => 'Script location',
+											'content' => 'Your current theme ('.$integrated_theme.') allows for automatic integration.<input type="hidden" name="position" value="'.$integrated_theme.'"/>',
+										);
+									}
 									$rows[] = array(
 										'id' => 'trackoutbound',
 										'label' => 'Track outbound clicks &amp; downloads',
@@ -357,7 +399,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
-									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+									$this->postbox('advancedgasettings','Advanced Settings',$content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
 
 									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
 
@@ -500,8 +542,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	<!-- Google Analytics for WordPress - async tracking beta | http://yoast.com/wordpress/google-analytics/ -->
 	<script type="text/javascript">
 	var _gaq = _gaq || [];
-<?php
-	if ( $options["imagese"] ) { ?>
+<?php if ( $options["imagese"] ) { ?>
 	regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
 	var match = regex.exec(document.referrer);
 	if (match != null) {
@@ -510,11 +551,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			['_setReferrerOverride','http://images.google.'+match[1] +unescape(match[2])]
 		);
 	}
-	_gaq.push(
-<?php echo $pushstr; ?>
-
-	);
 <?php } ?>
+	_gaq.push( 
+<?php echo $pushstr; ?> 
+	);
 	</script>
 <?php
 	if ( $options["extrase"] )
@@ -784,9 +824,16 @@ if ($options['trackoutbound']) {
 if ($options['trackadsense'])
 	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
 
-if ($options['position'] == 'footer' || $options['position'] == "")
-	add_action('wp_footer', array('GA_Filter','spool_analytics'));	
-	
+switch ($options['position']) {
+	case 'Thesis':
+		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
+		break;
+	case 'footer':
+	default:
+		add_action('wp_footer', array('GA_Filter','spool_analytics'));
+		break;
+}
+
 if ($options['trackregistration'])
 	add_action('login_head', array('GA_Filter','spool_analytics'),20);	
 	
