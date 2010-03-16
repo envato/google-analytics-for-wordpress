@@ -129,6 +129,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			if ( in_array($theme, array("Thesis") ) ) {
 				return $theme;
 			}
+			if ( defined('THEMATICVERSION') ) {
+				return "Thematic";
+			}
 			return false;
 		}
 		
@@ -827,6 +830,9 @@ if ($options['trackadsense'])
 switch ($options['position']) {
 	case 'Thesis':
 		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
+		break;
+	case 'Thematic':
+		add_action('thematic_before', array('GA_Filter','spool_analytics'));
 		break;
 	case 'footer':
 	default:
