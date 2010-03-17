@@ -20,7 +20,7 @@ div.inside a:hover, div.inside a.rsswidget:hover {
 	text-decoration: underline;
 }
 div.inside ul li.rss {
-	list-style-image: url(/wp-includes/images/rss.png);
+	list-style-image: url(images/rss.png);
 }
 
 div.inside ul li.email {

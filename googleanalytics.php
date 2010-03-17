@@ -44,9 +44,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			add_action('admin_print_styles', array(&$this,'config_page_styles'));	
 			
 			add_action('wp_dashboard_setup', array(&$this,'widget_setup'));	
+
 			add_action('admin_head', array(&$this,'config_page_head'));
-			add_action('admin_head', array(&$this,'warning'));
+
+			add_action('admin_footer', array(&$this,'warning'));
+			add_action('admin_footer', array(&$this,'theme_switch_warning'));
+
 			add_action('admin_init', array(&$this,'save_settings'));
+
 			add_action('switch_theme', array(&$this,'switch_theme'));
 		}
 		
@@ -112,36 +117,43 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 		
+		function theme_switch_warning() {
+			$options = get_option($this->optionname);
+			if ($options['theme_updated']) {
+				echo "<div id='message' class='error'><p>You have updated your theme, please check your <a href='".$this->plugin_options_url()."'><strong>Google Analytics settings</strong></a> to make sure Google Analytics can still function correctly.</p></div>";
+			}
+		} 
+
 		function switch_theme( $theme ) {
-			$options 			= get_option( $this->optionname );
-			$integrated_theme 	= $this->is_integrated_theme( $theme );
-
-			if ( $integrated_theme )
-				$options['position'] = $integrated_theme;
-			else
-				$options['position'] = 'footer';
-
+			$options 					= get_option( $this->optionname );
+			$options['theme_updated'] 	= 1;
+			$options['position']		= 'footer';
 			update_option( $this->optionname, $options );
 		}
 		
-		function is_integrated_theme() {
-			$theme = get_current_theme();
+		function is_integrated_theme( $theme = '' ) {
+			if (empty($theme))
+				$theme = get_current_theme();
 			if ( in_array($theme, array("Thesis") ) ) {
 				return $theme;
 			}
+			// require(TEMPLATEPATH.'/functions.php');
 			if ( defined('THEMATICVERSION') ) {
 				return "Thematic";
+			}
+			if ( defined('PARENT_THEME_NAME') && PARENT_THEME_NAME == 'Genesis' ) {
+				return PARENT_THEME_NAME;
 			}
 			return false;
 		}
 		
 		function save_settings() {
-			$options = get_option('GoogleAnalyticsPP');
+			$options = get_option($this->optionname);
 			
-			if ( isset($_REQUEST['reset']) && $_REQUEST['reset'] == "true" ) {
+			if ( isset($_REQUEST['reset']) && $_REQUEST['reset'] == "true" && isset($_REQUEST['plugin']) && $_REQUEST['plugin'] == 'google-analytics-for-wordpress') {
 				$options = $this->set_defaults();
 				$options['msg'] = "<div class=\"updated\"><p>Google Analytics settings reset.</p></div>\n";
-			} elseif ( isset($_POST['submit']) ) {
+			} elseif ( isset($_POST['submit']) && isset($_POST['plugin']) && $_POST['plugin'] == 'google-analytics-for-wordpress') {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
@@ -152,8 +164,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration') as $option_name) {
-					if (isset($_POST[$option_name]))
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration','theme_updated') as $option_name) {
+					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
 						$options[$option_name] = false;
@@ -162,15 +174,15 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
 				$options['msg'] .= "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";	
 			}
-			update_option('GoogleAnalyticsPP', $options);
+			update_option($this->optionname, $options);
 		}
 		
 		function config_page() {
-			$options = get_option('GoogleAnalyticsPP');
+			$options = get_option($this->optionname);
 
 			echo $options['msg'];
 			$options['msg'] = '';
-			update_option('GoogleAnalyticsPP', $options);
+			update_option($this->optionname, $options);
 			?>
 			<div class="wrap">
 				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://netdna.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
@@ -179,6 +191,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					<div class="metabox-holder">	
 						<div class="meta-box-sortables">
 							<form action="<?php echo $this->plugin_options_url(); ?>" method="post" id="analytics-conf">
+								<input type="hidden" name="plugin" value="google-analytics-for-wordpress"/>
 								<?php
 									wp_nonce_field('analyticspp-config');
 									if ( empty($options['uastring']) && empty($options['ga_token']) && !isset($_GET['token']) ) {
@@ -310,19 +323,33 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$integrated_theme = $this->is_integrated_theme();
 									if ( !$integrated_theme ) {
+										$temp_content = '<select name="position" id="position">
+											<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
+											<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
+										</select>';
+										if ($options['theme_updated']) {
+											$temp_content .= '<input type="hidden" name="theme_updated" value="off"/>';
+											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to allow for automatic integration.</p></div>';
+											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
+										}
+										
 										$rows[] = array(
 											'id' => 'position',
 											'label' => 'Where should the tracking script be placed?',
-											'content' => '<select name="position" id="position">
-												<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
-												<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
-											</select>'
+											'content' => $temp_content,
 										);
 									} else {
+										$temp_content = 'Your current theme framework ('.$integrated_theme.') allows for automatic integration.<input type="hidden" name="position" value="'.$integrated_theme.'"/>';
+										if ($options['theme_updated']) {
+											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to allow for automatic integration.</p></div>';
+											$temp_content .= '<input type="hidden" name="theme_updated" value="off"/>';
+											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
+										}
+											
 										$rows[] = array(
 											'id' => 'position',
 											'label' => 'Script location',
-											'content' => 'Your current theme ('.$integrated_theme.') allows for automatic integration.<input type="hidden" name="position" value="'.$integrated_theme.'"/>',
+											'content' => $temp_content,
 										);
 									}
 									$rows[] = array(
@@ -412,6 +439,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					</form>
 					<form action="<?php echo $this->plugin_options_url(); ?>" method="post">
 						<input type="hidden" name="reset" value="true"/>
+						<input type="hidden" name="plugin" value="google-analytics-for-wordpress"/>
 						<div class="submit"><input type="submit" value="Reset All Settings &raquo;" /></div>
 					</form>
 				</div>
@@ -463,7 +491,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		}
 		
 		function warning() {
-			$options = get_option('GoogleAnalyticsPP');
+			$options = get_option($this->optionname);
 			if (!isset($options['uastring']) || empty($options['uastring'])) {
 				echo "<div id='message' class='error'><p><strong>Google Analytics is not active.</strong> You must <a href='".$this->plugin_options_url()."'>select which Analytics Profile to track</a> before it can work.</p></div>";
 			}
@@ -486,7 +514,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function spool_analytics() {	
 			global $wp_query;					
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			
 			$customvarslot = 1;
 			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
@@ -572,6 +600,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	</script>
 	<!-- End of Google Analytics async tracking beta code -->
 <?php
+				echo "<!-- Position: ".$options['position']." ".constant('PARENT_THEME_NAME')."-->";
 			} else if ( $options["uastring"] != "" && current_user_can('edit_users') && !$options["admintracking"] ) {
 				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
 			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
@@ -583,7 +612,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the AdSense parameter code into the page. This'll go into the header per Google's instructions.
 		 */
 		function spool_adsense() {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
@@ -613,7 +642,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 		function ga_parse_link($category, $matches){
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			
 			// Break out immediately if the link is not an http or https link.
 			if (strpos($matches[2],"http") !== 0)
@@ -672,7 +701,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			
 			if (current_user_can('edit_users') && !$options["admintracking"]) {
 				return $text;
@@ -697,7 +726,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
 				$i = 0;
@@ -721,7 +750,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function rsslinktagger($guid) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option($this->optionname);
 			global $wp, $post;
 			if ( is_feed() ) {
 				if ( $options['allowanchor'] ) {
@@ -781,7 +810,7 @@ add_filter('comment_form_defaults', 'yoast_get_comment_form_id',99,1);
 
 function yoast_track_comment_form() {
 	global $comment_form_id, $post;
-	$yoast_ga_options = get_option('GoogleAnalyticsPP');
+	$yoast_ga_options = get_option($this->optionname);
 ?>
 <script type="text/javascript" charset="utf-8">
 	jQuery(document).ready(function() {
@@ -798,7 +827,7 @@ function yoast_track_comment_form() {
 add_action('comment_form_after','yoast_track_comment_form');
 
 function yoast_analytics() {
-	$options	= get_option('GoogleAnalyticsPP');
+	$options	= get_option($this->optionname);
 	if ($options['position'] == 'manual')
 		GA_Filter::spool_analytics();
 	else
@@ -828,11 +857,14 @@ if ($options['trackadsense'])
 	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
 
 switch ($options['position']) {
-	case 'Thesis':
-		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
+	case 'Genesis':
+		add_action('genesis_before', array('GA_Filter','spool_analytics'));
 		break;
 	case 'Thematic':
 		add_action('thematic_before', array('GA_Filter','spool_analytics'));
+		break;
+	case 'Thesis':
+		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
 		break;
 	case 'footer':
 	default:
