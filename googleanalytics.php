@@ -90,8 +90,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						jQuery('#advancedsettings').change(function(){
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
 								jQuery('#advancedgasettings').css("display","block");
+								jQuery('#customvarsettings').css("display","block");
 							} else {
 								jQuery('#advancedgasettings').css("display","none");
+								jQuery('#customvarsettings').css("display","none");
 							}
 						}).change();
 						jQuery('#extrase').change(function(){
@@ -171,7 +173,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'trackloggedin', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration','theme_updated') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -373,17 +375,41 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
 								
+								
+									$rows = array();
+									$pre_content = '<p>Google Analytics allows you to save up to 5 custom variables on each page, and this plugin helps you make the most use of these! Check which custom variables you\'d like the plugin to save for you below. Please note that these will only be saved when they are actually available.</p>';
+									$rows[] = array(
+										'id' => 'cv_loggedin',
+										'label' => 'Logged in Users',
+										'desc' => 'Allows you to easily remove logged in users from your reports',
+										'content' =>  $this->checkbox('cv_loggedin'),
+									);
+									$rows[] = array(
+										'id' => 'cv_authorname',
+										'label' => 'Author Name',
+										'desc' => 'Allows you to see pageviews per author',
+										'content' =>  $this->checkbox('cv_authorname'),
+									);
+									$rows[] = array(
+										'id' => 'cv_category',
+										'label' => 'Category',
+										'desc' => 'Allows you to see pageviews per category, works best when each post is in only one category',
+										'content' =>  $this->checkbox('cv_category'),
+									);
+									$rows[] = array(
+										'id' => 'cv_year',
+										'label' => 'Publication year',
+										'desc' => 'Allows you to see pageviews per year of publication, showing you if your old posts still get traffic',
+										'content' =>  $this->checkbox('cv_year'),
+									);
+									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+									
 									$rows = array();
 									$rows[] = array(
 										'id' => 'admintracking',
 										'label' => 'Track the administrator too',
 										'desc' => 'Not recommended, as this would schew your statistics.',
 										'content' =>  $this->checkbox('admintracking'),
-									);
-									$rows[] = array(
-										'id' => 'trackloggedin',
-										'label' => 'Segment logged in users',
-										'content' =>  $this->checkbox('trackloggedin'),
 									);
 									$rows[] = array(
 										'id' => 'dlextensions',
@@ -482,6 +508,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'admintracking' 		=> true,
 				'advancedsettings' 		=> false,
 				'allowanchor' 			=> false,
+				'cv_loggedin'			=> false,
+				'cv_authorname'			=> false,
+				'cv_category'			=> false,
+				'cv_year'				=> false,
 				'dlextensions' 			=> 'doc,exe,.js,pdf,ppt,tgz,zip,xls',
 				'domainorurl' 			=> 'domain',
 				'ga_token' 				=> '',
@@ -492,7 +522,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'position' 				=> 'footer',
 				'trackadsense'			=> false,
 				'trackoutbound' 		=> true,
-				'trackloggedin' 		=> false,
 				'trackregistration' 	=> false,
 				'rsslinktagging'		=> true,
 				'domain' 				=> '',
@@ -535,13 +564,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				if ( $options['allowanchor'] )
 					$push[] = "'_setAllowAnchor','true'";
 
-				if ( $options['trackloggedin'] && is_user_logged_in() ) {
+				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
 					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
-					$customvarslot++;
-				}
-				
-				if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'],'tbs=frim:1') !== false) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'social-search','1',2";
 					$customvarslot++;
 				}
 				
@@ -551,18 +575,23 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$push[] = "'_setDomainName','".$options['domain']."'";
 				}
 				
-				if ( is_single() ) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(html_entity_decode(get_the_author())))."'";
-					$customvarslot++;
-					$cats = get_the_category();
-					$push[] = "'_setCustomVar',".$customvarslot.",'category','".str_replace(" ","-",strtolower(html_entity_decode($cats[0]->name)))."'";
-					$customvarslot++;
-				} else if ( is_page() ) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(get_the_author()))."'";
-					$customvarslot++;
-					$push[] = "'_setCustomVar',".$customvarslot.",'page','1'";
-					$customvarslot++;
+				if ( is_singular() ) {
+					if ( $options['cv_authorname'] ) {
+						$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(html_entity_decode(get_the_author())))."'";
+						$customvarslot++;
+					}
 				}
+				if ( is_single() ) {
+					if ( $options['cv_category'] ) {
+						$cats = get_the_category();
+						$push[] = "'_setCustomVar',".$customvarslot.",'category','".str_replace(" ","-",strtolower(html_entity_decode($cats[0]->name)))."'";
+						$customvarslot++;
+					}
+					if ( $options['cv_year'] ) {
+						$push[] = "'_setCustomVar',".$customvarslot.",'year','".the_date('Y','','',false)."'";
+						$customvarslot++;
+					}
+				} 
 
 				if ( is_404() ) {
 					$push[] = "'_trackPageview','/404.html?page=' + document.location.pathname + document.location.search + '&from=' + document.referrer'";
