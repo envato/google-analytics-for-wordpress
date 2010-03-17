@@ -146,7 +146,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			if ( in_array($theme, array("Thesis") ) ) {
 				return $theme;
 			}
-			// require(TEMPLATEPATH.'/functions.php');
 			if ( defined('THEMATICVERSION') ) {
 				return "Thematic";
 			}
@@ -259,7 +258,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 													$ga_accounts[$account] = array();
 												$ga_accounts[$account][$site['title']] = $ua;
 											}
-											// echo '<pre>'.print_r($options,1).'</pre>';
+
 											$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
 											$select1 .= "\t<option></option>\n";
 											$select2 = '<select style="width:150px;" name="uastring" id="uastring_sel">';
@@ -553,7 +552,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {	
-			global $wp_query;					
+			global $wp_query;
+			// echo '<!--'.print_r($wp_query,1).'-->';
 			$options  = get_option('GoogleAnalyticsPP');
 			
 			$customvarslot = 1;
@@ -563,21 +563,21 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 				if ( $options['allowanchor'] )
 					$push[] = "'_setAllowAnchor','true'";
-
-				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
-					$customvarslot++;
-				}
 				
 				if ( isset($options['domain']) && $options['domain'] != "" ) {
 					if (substr($options['domain'],0,1) != ".")
 						$options['domain'] = ".".$options['domain'];
 					$push[] = "'_setDomainName','".$options['domain']."'";
 				}
+
+				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
+					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
+					$customvarslot++;
+				}
 				
 				if ( is_singular() ) {
 					if ( $options['cv_authorname'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(html_entity_decode(get_the_author())))."'";
+						$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(html_entity_decode(get_the_author_meta('display_name',$wp_query->post->post_author))))."'";
 						$customvarslot++;
 					}
 				}
@@ -588,7 +588,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$customvarslot++;
 					}
 					if ( $options['cv_year'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'year','".the_date('Y','','',false)."'";
+						$push[] = "'_setCustomVar',".$customvarslot.",'year','".substr($wp_query->post->post_date,0,4)."'";
 						$customvarslot++;
 					}
 				} 
@@ -903,6 +903,9 @@ if ($options['trackadsense'])
 	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
 
 switch ($options['position']) {
+	case 'manual':
+		// No need to insert here, bail NOW.
+		break;
 	case 'Genesis':
 		add_action('genesis_before', array('GA_Filter','spool_analytics'));
 		break;
