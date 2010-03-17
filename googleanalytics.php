@@ -658,7 +658,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the AdSense parameter code into the page. This'll go into the header per Google's instructions.
 		 */
 		function spool_adsense() {
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
@@ -747,7 +747,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			if (current_user_can('edit_users') && !$options["admintracking"]) {
 				return $text;
@@ -772,7 +772,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
 				$i = 0;
@@ -796,7 +796,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function rsslinktagger($guid) {
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			global $wp, $post;
 			if ( is_feed() ) {
 				if ( $options['allowanchor'] ) {
@@ -856,7 +856,7 @@ add_filter('comment_form_defaults', 'yoast_get_comment_form_id',99,1);
 
 function yoast_track_comment_form() {
 	global $comment_form_id, $post;
-	$yoast_ga_options = get_option($this->optionname);
+	$yoast_ga_options = get_option('GoogleAnalyticsPP');
 ?>
 <script type="text/javascript" charset="utf-8">
 	jQuery(document).ready(function() {
@@ -873,7 +873,7 @@ function yoast_track_comment_form() {
 add_action('comment_form_after','yoast_track_comment_form');
 
 function yoast_analytics() {
-	$options	= get_option($this->optionname);
+	$options	= get_option('GoogleAnalyticsPP');
 	if ($options['position'] == 'manual')
 		GA_Filter::spool_analytics();
 	else
