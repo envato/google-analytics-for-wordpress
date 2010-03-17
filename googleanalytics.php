@@ -94,6 +94,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								jQuery('#advancedgasettings').css("display","none");
 							}
 						}).change();
+						jQuery('#extrase').change(function(){
+							if ((jQuery('#extrase').attr('checked')) == true)  {
+								jQuery('#extrasebox').css("display","block");
+							} else {
+								jQuery('#extrasebox').css("display","none");
+							}
+						}).change();
 						jQuery('#explain').click(function(){
 							if ((jQuery('#explanation').css("display")) == "block")  {
 								jQuery('#explanation').css("display","none");
@@ -157,7 +164,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
@@ -406,7 +413,10 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'extrase',
 										'label' => 'Track extra Search Engines',
-										'content' => $this->checkbox('extrase'),
+										'content' => $this->checkbox('extrase').'<div id="extrasebox">
+											You can provide a custom URL to the extra search engines file if you want:
+											<input type="text" name="extraseurl" size="30" value="'.$options['extraseurl'].'"/>
+										</div>',
 									);
 									$rows[] = array(
 										'id' => 'imagese',
@@ -477,6 +487,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'ga_token' 				=> '',
 				'ga_api_responses'		=> array(),
 				'extrase' 				=> false,
+				'extraseurl'			=> '',
 				'imagese' 				=> false,
 				'position' 				=> 'footer',
 				'trackadsense'			=> false,
@@ -514,7 +525,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function spool_analytics() {	
 			global $wp_query;					
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			$customvarslot = 1;
 			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
@@ -588,8 +599,15 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	);
 	</script>
 <?php
-	if ( $options["extrase"] )
-		echo '<script src="'.gapp_plugin_path().'custom_se_async.js" type="text/javascript"></script>'."\n"; 
+	if ( $options["extrase"] ) {
+		if ( !empty($options["extraseurl"]) ) {
+			$url = $options["extraseurl"];
+		} else {
+			$url = gapp_plugin_path().'custom_se_async.js';
+		}
+		echo '<script src="'.$url.'" type="text/javascript"></script>'."\n"; 
+	}
+		
 ?>
 	<script type="text/javascript">
 	(function() {
@@ -600,7 +618,6 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	</script>
 	<!-- End of Google Analytics async tracking beta code -->
 <?php
-				echo "<!-- Position: ".$options['position']." ".constant('PARENT_THEME_NAME')."-->";
 			} else if ( $options["uastring"] != "" && current_user_can('edit_users') && !$options["admintracking"] ) {
 				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
 			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
@@ -642,7 +659,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 		function ga_parse_link($category, $matches){
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-			$options  = get_option($this->optionname);
+			$options  = get_option('GoogleAnalyticsPP');
 			
 			// Break out immediately if the link is not an http or https link.
 			if (strpos($matches[2],"http") !== 0)
