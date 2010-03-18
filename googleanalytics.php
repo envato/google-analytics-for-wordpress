@@ -152,6 +152,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			if ( defined('PARENT_THEME_NAME') && PARENT_THEME_NAME == 'Genesis' ) {
 				return PARENT_THEME_NAME;
 			}
+			if ( defined('HEADWAYVERSION') ) {
+				return "Headway";
+			}
 			return false;
 		}
 		
@@ -588,7 +591,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$customvarslot++;
 					}
 					if ( $options['cv_year'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'year','".substr($wp_query->post->post_date,0,4)."'";
+						$push[] = "'_setCustomVar',".$customvarslot.",'year','".get_the_time('Y')."'";
 						$customvarslot++;
 					}
 				} 
@@ -908,6 +911,9 @@ switch ($options['position']) {
 		break;
 	case 'Genesis':
 		add_action('genesis_before', array('GA_Filter','spool_analytics'));
+		break;
+	case 'Headway':
+		add_action('headway_before_everything', array('GA_Filter','spool_analytics'));
 		break;
 	case 'Thematic':
 		add_action('thematic_before', array('GA_Filter','spool_analytics'));

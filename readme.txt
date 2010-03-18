@@ -16,7 +16,7 @@ In the options panel for the plugin, you can determine the prefixes to use for t
 
 * [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/).
 * Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
-* Check out the authors [WordPress Hosting](http://yoast.com/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
+* Check out the authors [WordPress Hosting](http://yoast.com/articles/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
 
 == Installation ==
 
@@ -30,11 +30,20 @@ This section describes how to install the plugin and get it working.
 == Changelog ==
 
 = 4.0 =
-* Switched to the new asynchronous event tracking model
-* Switched link tracking to an event tracking model, because of this change removed 5 settings from the settings panel that were no longer needed
-* Implemented custom variable tracking to track: 
-	* On the session level: whether the user is logged in or not. 
-	* On the page level: the author of the current post &amp; the category of the current post.
+* Switched to the new asynchronous tracking script.
+* Now using the Google Analytics API to easily select the profile you want to track analytics for.
+* Switched link tracking to an event tracking model, because of this change removed 5 settings from the settings panel that were no longer needed.
+* Implemented custom variable tracking that allows you to track: 
+	* On the session level: 
+		* Whether the user is logged in or not. 
+	* On the page level: 
+		* The author of the current post
+		* The category of the current post
+		* The year of publication of the current post
+* Integrated with major theme frameworks: Genesis, Thematic, Thesis.
+* Added option for manual tracking script placement if your theme is not set up for automatic integration.
+* Added warning &amp; check when switching themes to make sure Google Analytics is still tracking properly.
+* Tracking comments automatically when using the new contact_form() function from WordPress 3.0
 
 = 3.2.3 =
 * Added 0 result search tracking inspired by [Justin Cutroni's post](http://www.epikone.com/blog/2009/09/08/tracking-ero-result-searches-in-google-analytics/).
