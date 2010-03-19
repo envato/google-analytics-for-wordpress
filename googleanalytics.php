@@ -103,13 +103,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								jQuery('#extrasebox').css("display","none");
 							}
 						}).change();
-						jQuery('#outboundpageview').change(function(){
-							if ((jQuery('#outboundpageview').attr('checked')) == true)  {
-								jQuery('#downloadspageview_row').css("display","none");
-							} else {
-								jQuery('#downloadspageview_row').css("display","table-row");
-							}
-						}).change();
 					});
 				 </script>
 			<?php
@@ -531,6 +524,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'extraseurl'			=> '',
 				'imagese' 				=> false,
 				'outboundpageview'		=> false,
+				'downloadspageview'		=> false,
 				'position' 				=> 'footer',
 				'trackadsense'			=> false,
 				'trackoutbound' 		=> true,
@@ -681,7 +675,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 		function ga_get_tracking_link($prefix, $target) {
 			$options  = get_option('GoogleAnalyticsPP');
-			if ( $options['outboundpageview'] || ( $prefix == 'download' && $options['downloadspageview'] ) ) {
+			if ( 
+				( $prefix != 'download' && $options['outboundpageview'] ) || 
+				( $prefix == 'download' && $options['downloadspageview'] ) ) 
+			{
 				$prefix = '/yoast-ga/'.$prefix;
 				$pushstr = "['_trackPageview','".$prefix."/".$target."']";
 			} else {
