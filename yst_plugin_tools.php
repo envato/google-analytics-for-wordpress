@@ -116,7 +116,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		function form_table($rows) {
 			$content = '<table class="form-table">';
 			foreach ($rows as $row) {
-				$content .= '<tr><th valign="top" scrope="row">';
+				$content .= '<tr id="'.$row['id'].'_row"><th valign="top" scrope="row">';
 				if (isset($row['id']) && $row['id'] != '')
 					$content .= '<label for="'.$row['id'].'">'.$row['label'].':</label>';
 				else

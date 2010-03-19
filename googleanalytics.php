@@ -103,13 +103,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								jQuery('#extrasebox').css("display","none");
 							}
 						}).change();
-						jQuery('#explain').click(function(){
-							if ((jQuery('#explanation').css("display")) == "block")  {
-								jQuery('#explanation').css("display","none");
+						jQuery('#outboundpageview').change(function(){
+							if ((jQuery('#outboundpageview').attr('checked')) == true)  {
+								jQuery('#downloadspageview_row').css("display","none");
 							} else {
-								jQuery('#explanation').css("display","block");
+								jQuery('#downloadspageview_row').css("display","table-row");
 							}
-						});
+						}).change();
 					});
 				 </script>
 			<?php
@@ -171,7 +171,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year', 'outboundpageview') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year', 'outboundpageview', 'downloadspageview') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -415,6 +415,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'label' => 'Track outbound clicks as pageviews',
 										'desc' => 'Not recommended, as this would schew your statistics.',
 										'content' =>  $this->checkbox('outboundpageview'),
+									);
+									$rows[] = array(
+										'id' => 'downloadspageview',
+										'label' => 'Track downloads as pageviews',
+										'desc' => 'Not recommended, as this would schew your statistics, but it does make it possible to track downloads as goals.',
+										'content' =>  $this->checkbox('downloadspageview'),
 									);
 									$rows[] = array(
 										'id' => 'dlextensions',
@@ -673,13 +679,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}		
 
-		function ga_tracking_link($prefix, $target) {
+		function ga_get_tracking_link($prefix, $target) {
 			$options  = get_option('GoogleAnalyticsPP');
-			if ( $options['outboundpageview'] )
-				$pushstr = "['_trackPageview','/yoast-ga-outbound/".$prefix."/".$target."']";
-			else
+			if ( $options['outboundpageview'] || ( $prefix == 'download' && $options['downloadspageview'] ) ) {
+				$prefix = '/yoast-ga/'.$prefix;
+				$pushstr = "['_trackPageview','".$prefix."/".$target."']";
+			} else {
 				$pushstr = "['_trackEvent','".$prefix."','".$target."']";
-
+			}
 			return "javascript:_gaq.push(".$pushstr.");";
 		}
 		/* Create an array which contians:
@@ -715,18 +722,18 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$extension = substr($matches[3],-3);
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target ) {
-				if ( $target["domain"] != $origin["domain"] ){
+				if ( in_array($extension, $dlextensions) ) {
+					$file = str_replace($origin["domain"],"",$matches[3]);
+					$file = str_replace('www.',"",$file);
+					$trackBit = GA_Filter::ga_get_tracking_link('download', $file);
+				} else if ( $target["domain"] != $origin["domain"] ){
 					if ($options['domainorurl'] == "domain") {
 						$url = $target["host"];
 					} else if ($options['domainorurl'] == "url") {
 						$url = $matches[3]; 
 					}
-					$trackBit = GA_Filter::ga_tracking_link($category, $url);
-				} else if ( in_array($extension, $dlextensions) && $target["domain"] == $origin["domain"] ) {
-					$file = str_replace($origin["domain"],"",$matches[3]);
-					$file = str_replace('www.',"",$file);
-					$trackBit = GA_Filter::ga_tracking_link('download', $file);
-				}				
+					$trackBit = GA_Filter::ga_get_tracking_link($category, $url);
+				} 				
 			} 
 			if ($trackBit != "") {
 				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
@@ -779,7 +786,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$url = $target["host"];
 				else
 					$url = $matches[2];
-				$trackBit = 'onclick="'.GA_Filter::ga_tracking_link('outbound-commentauthor', $url).'"';
+				$trackBit = 'onclick="'.GA_Filter::ga_get_tracking_link('outbound-commentauthor', $url).'"';
 			} 
 			return $matches[1] . "\"" . $matches[2] . "\" " . $trackBit ." ". $matches[3];    
 		}
@@ -798,7 +805,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$url = $target["host"];
 					else
 						$url = $bookmarks[$i]->link_url;
-					$trackBit = '" onclick="'.GA_Filter::ga_tracking_link('outbound-blogroll', $url).'"';
+					$trackBit = '" onclick="'.GA_Filter::ga_get_tracking_link('outbound-blogroll', $url).'"';
 					$bookmarks[$i]->link_target .= $trackBit;
 					$i++;
 				}
