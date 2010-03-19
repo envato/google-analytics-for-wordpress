@@ -332,6 +332,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									if ( !$integrated_theme ) {
 										$temp_content = '<select name="position" id="position">
 											<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
+											<option value="header" '.selected($options['position'],'header',false).'>In the header</option>
 											<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
 										</select>';
 										if ($options['theme_updated']) {
@@ -916,6 +917,9 @@ switch ($options['position']) {
 		break;
 	case 'Thesis':
 		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
+		break;
+	case 'header':
+		add_action('wp_head', array('GA_Filter','spool_analytics'));
 		break;
 	case 'footer':
 	default:
