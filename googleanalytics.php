@@ -516,7 +516,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'cv_authorname'			=> false,
 				'cv_category'			=> false,
 				'cv_year'				=> false,
-				'dlextensions' 			=> 'doc,exe,.js,pdf,ppt,tgz,zip,xls',
+				'dlextensions' 			=> 'doc,exe,js,pdf,ppt,tgz,zip,xls',
 				'domainorurl' 			=> 'domain',
 				'ga_token' 				=> '',
 				'ga_api_responses'		=> array(),
@@ -716,7 +716,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				$target = GA_Filter::ga_get_domain($matches[3]);
 				
 			$trackBit = "";
-			$extension = substr($matches[3],-3);
+			$extension = substr(strrchr($matches[3], '.'), 1);
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target ) {
 				if ( in_array($extension, $dlextensions) ) {
