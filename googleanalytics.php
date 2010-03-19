@@ -117,17 +117,17 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		}
 				
 		function checkbox($id) {
-			$options = get_option($this->optionname);
+			$options = get_option( $this->optionname );
 			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/>';
 		}
 
 		function textinput($id) {
-			$options = get_option($this->optionname);
+			$options = get_option( $this->optionname );
 			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 		
 		function theme_switch_warning() {
-			$options = get_option($this->optionname);
+			$options = get_option( $this->optionname );
 			if ($options['theme_updated']) {
 				echo "<div id='message' class='error'><p>You have updated your theme, please check your <a href='".$this->plugin_options_url()."'><strong>Google Analytics settings</strong></a> to make sure Google Analytics can still function correctly.</p></div>";
 			}
@@ -141,25 +141,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		}
 		
 		function is_integrated_theme( $theme = '' ) {
-			if (empty($theme))
+			if ( empty( $theme ) )
 				$theme = get_current_theme();
-			if ( in_array($theme, array("Thesis") ) ) {
+			if ( in_array( $theme, array( 'Thesis' ) ) )
 				return $theme;
-			}
-			if ( defined('THEMATICVERSION') ) {
-				return "Thematic";
-			}
-			if ( defined('PARENT_THEME_NAME') && PARENT_THEME_NAME == 'Genesis' ) {
+			if ( defined( 'THEMATICVERSION' ) )
+				return 'Thematic';
+			if ( defined( 'HEADWAYVERSION' ) )
+				return 'Headway';
+			if ( defined( 'PARENT_THEME_NAME' ) && PARENT_THEME_NAME == 'Genesis' )
 				return PARENT_THEME_NAME;
-			}
-			if ( defined('HEADWAYVERSION') ) {
-				return "Headway";
-			}
 			return false;
 		}
 		
 		function save_settings() {
-			$options = get_option($this->optionname);
+			$options = get_option( $this->optionname );
 			
 			if ( isset($_REQUEST['reset']) && $_REQUEST['reset'] == "true" && isset($_REQUEST['plugin']) && $_REQUEST['plugin'] == 'google-analytics-for-wordpress') {
 				$options = $this->set_defaults();
@@ -340,7 +336,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										</select>';
 										if ($options['theme_updated']) {
 											$temp_content .= '<input type="hidden" name="theme_updated" value="off"/>';
-											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to allow for automatic integration.</p></div>';
+											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to make sure Google Analytics gets loaded properly.</p></div>';
 											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
 										}
 										
