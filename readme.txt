@@ -30,20 +30,25 @@ This section describes how to install the plugin and get it working.
 == Changelog ==
 
 = 4.0 =
-* Switched to the new asynchronous tracking script.
+* Switched to the new [asynchronous tracking script](http://analytics.blogspot.com/2009/12/google-analytics-launches-asynchronous.html).
 * Now using the Google Analytics API to easily select the profile you want to track analytics for.
-* Switched link tracking to an event tracking model, because of this change removed 5 settings from the settings panel that were no longer needed.
+* Switched link tracking to an event tracking model. Because of this change removed 5 settings from the settings panel that were no longer needed.
+* Plugin now replaces manually tagged links with new tags to prevent using the wrong link tracker.
 * Implemented custom variable tracking that allows you to track: 
 	* On the session level: 
 		* Whether the user is logged in or not. 
-	* On the page level: 
+	* On the post / page level: 
 		* The author of the current post
-		* The category of the current post
+		* The category of the current post (for posts only)
 		* The year of publication of the current post
-* Integrated with major theme frameworks: Genesis, Thematic, Thesis.
-* Added option for manual tracking script placement if your theme is not set up for automatic integration.
-* Added warning &amp; check when switching themes to make sure Google Analytics is still tracking properly.
-* Tracking comments automatically when using the new contact_form() function from WordPress 3.0
+* Various script placement improvements:
+	* Integrated with major theme frameworks: Genesis, Headway, Thematic, Thesis to automatically place script directly after opening &lt;body&gt; tag.
+	* Added option for manual tracking script placement if your theme is not set up for automatic integration.
+	* Restored option to put script in header.
+	* Added warning &amp; check when switching themes to make sure Google Analytics is still tracking properly.
+* Tracking comments automatically when using the new contact_form() function from WordPress 3.0.
+* Improved inline documentation.
+* Ofcourse also various bug fixes.
 
 = 3.2.3 =
 * Added 0 result search tracking inspired by [Justin Cutroni's post](http://www.epikone.com/blog/2009/09/08/tracking-ero-result-searches-in-google-analytics/).

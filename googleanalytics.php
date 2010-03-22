@@ -374,7 +374,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								
 								
 									$rows = array();
-									$pre_content = '<p>Google Analytics allows you to save up to 5 custom variables on each page, and this plugin helps you make the most use of these! Check which custom variables you\'d like the plugin to save for you below. Please note that these will only be saved when they are actually available.</p>';
+									$pre_content = '<p>Google Analytics allows you to save up to 5 custom variables on each page, and this plugin helps you make the most use of these! Check which custom variables you\'d like the plugin to save for you below. Please note that these will only be saved when they are actually available.</p><p>If you want to start using these custom variables, go to Visitors &raquo; Custom Variables in your Analytics reports.</p>';
 									$rows[] = array(
 										'id' => 'cv_loggedin',
 										'label' => 'Logged in Users',
@@ -723,7 +723,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				
 			$trackBit = "";
 			$extension = substr(strrchr($matches[3], '.'), 1);
-			$dlextensions = split(",",$options['dlextensions']);
+			$dlextensions = split(",",str_replace('.','',$options['dlextensions']));
 			if ( $target ) {
 				if ( in_array($extension, $dlextensions) ) {
 					$file = $matches[3];
