@@ -86,7 +86,30 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					}
 				 	jQuery(document).ready(function(){
 						makeSublist('ga_account', 'uastring_sel', '<?php echo $uastring; ?>');
-						jQuery('#explanation td').css("display","none");
+						jQuery('#position').change(function(){
+							if (jQuery('#position').val() == 'header')  {
+								jQuery('#position_header').css("display","block");
+								jQuery('#position_footer').css("display","none");
+								jQuery('#position_manual').css("display","none");
+							} else if (jQuery('#position').val() == 'footer') {
+								jQuery('#position_header').css("display","none");
+								jQuery('#position_footer').css("display","block");
+								jQuery('#position_manual').css("display","none");
+							} else {
+								jQuery('#position_header').css("display","none");
+								jQuery('#position_footer').css("display","none");
+								jQuery('#position_manual').css("display","block");								
+							}
+						}).change();
+						jQuery('#switchtomanual').change(function() {
+							if ((jQuery('#switchtomanual').attr('checked')) == true)  {
+								jQuery('#uastring_manual').css('display','block');
+								jQuery('#uastring_automatic').css('display','none');
+							} else {
+								jQuery('#uastring_manual').css('display','none');
+								jQuery('#uastring_automatic').css('display','block');								
+							}
+						}).change();
 						jQuery('#advancedsettings').change(function(){
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
 								jQuery('#advancedgasettings').css("display","block");
@@ -164,7 +187,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year', 'outboundpageview', 'downloadspageview') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -313,12 +336,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										$line .= '<a class="button" href="'.$query.'">Re-authenticate with Google</a>';
 									} else {
 										$line = '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><a href="'.$this->plugin_options_url().'&amp;switchua=1">Select another Analytics Profile &raquo;</a>';
-									} 
+									}
+									$line = '<div id="uastring_automatic">'.$line.'</div><div style="display:none;" id="uastring_manual">Manually enter your UA code: <input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/></div>';
 									$rows = array();
 									$content = '';
 									$rows[] = array(
 										'id' => 'uastring',
 										'label' => 'Analytics Profile',
+										'desc' => '<input type="checkbox" name="manual_uastring" '.checked($options['manual_uastring'], true, false).' id="switchtomanual"/> <label for="switchtomanual">Manually enter your UA code</label>',
 										'content' => $line
 									);
 									$integrated_theme = $this->is_integrated_theme();
@@ -334,13 +359,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
 										}
 										
-										$desc = '';
-										if ($options['position'] == 'footer') {
-											$desc = 'Placing the script in the header gives the best results, but might leed to issues with IE6 &amp; 7 when the HTML in the &lt;head&gt; area is not valid, because of that this plugin defaults to footer. If you\'re certain your HTML is valid, please do set the position to header for better tracking.';
-										}
+										$desc = '<div id="position_header">While the header is by far the best spot to place the tracking code, it does sometimes cause issues. You should make very sure that all the tags in your head section are properly closed. For more info <a href="http://yoast.com/wordpress/google-analytics/manual-placement/">read this page</a>.</div>';
+										
+										$desc .= '<div id="position_manual"><a href="http://yoast.com/wordpress/google-analytics/manual-placement/">Follow the instructions here</a> to choose the location for your tracking code manually.</div>';
+										$desc .= '<div id="position_footer">Placing the tracking code in the header gives the best results, but might leed to issues with IE6 &amp; 7 when the HTML in the &lt;head&gt; area is not valid, because of that this plugin defaults to footer. If you\'re certain your HTML is valid, please do set the position to header for better tracking. You could also insert the tracking code manually, be sure to follow <a href="http://yoast.com/wordpress/google-analytics/manual-placement/">the instructions on how to do that</a>.</div> ';
+
 										$rows[] = array(
 											'id' => 'position',
-											'label' => 'Where should the tracking script be placed?',
+											'label' => 'Where should the tracking code be placed?',
 											'desc' => $desc,
 											'content' => $temp_content,
 										);
@@ -354,7 +380,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											
 										$rows[] = array(
 											'id' => 'position',
-											'label' => 'Script location',
+											'label' => 'Tracking code location',
 											'content' => $temp_content,
 										);
 									}
@@ -461,7 +487,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'rsslinktagging',
 										'label' => 'Tag links in RSS feed with campaign variables?',
-										'desc' => 'Do not use this feature if you use FeedBurner, as FeedBurner does this automatically, and better than this plugin can, check <a href="http://www.google.com/support/feedburner/bin/answer.py?hl=en&amp;answer=165769">this help page</a> for info on how to enable that tracking in FeedBurner.',
+										'desc' => 'Do not use this feature if you use FeedBurner, as FeedBurner can do this automatically, and better than this plugin can. Check <a href="http://www.google.com/support/feedburner/bin/answer.py?hl=en&amp;answer=165769">this help page</a> for info on how to enable this feature in FeedBurner.',
 										'content' => $this->checkbox('rsslinktagging'),
 									);
 									$rows[] = array(
@@ -472,7 +498,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'allowanchor',
 										'label' => 'Use # instead of ? for Campaign tracking?',
-										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking script, and makes RSS link tagging use a # as well.',
+										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking code, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
 									$this->postbox('advancedgasettings','Advanced Settings',$content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
