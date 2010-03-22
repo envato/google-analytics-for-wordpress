@@ -532,7 +532,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'rsslinktagging'		=> true,
 				'domain' 				=> '',
 			);
-			update_option('GoogleAnalyticsPP',$options);
+			update_option($this->optionname,$options);
 			return $options;
 		}
 		
@@ -673,7 +673,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}		
 
-		function ga_get_tracking_link($prefix, $target) {
+		function ga_get_tracking_link($prefix, $target, $jsprefix = 'javascript:') {
 			$options  = get_option('GoogleAnalyticsPP');
 			if ( 
 				( $prefix != 'download' && $options['outboundpageview'] ) || 
@@ -684,7 +684,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			} else {
 				$pushstr = "['_trackEvent','".$prefix."','".$target."']";
 			}
-			return "javascript:_gaq.push(".$pushstr.");";
+			return $jsprefix."_gaq.push(".$pushstr.");";
 		}
 		/* Create an array which contians:
 		 * "domain" e.g. boakes.org
@@ -729,14 +729,19 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					} else if ($options['domainorurl'] == "url") {
 						$url = $matches[3]; 
 					}
-					$trackBit = GA_Filter::ga_get_tracking_link($category, $url);
+					$trackBit = GA_Filter::ga_get_tracking_link($category, $url,'');
 				} 				
 			} 
 			if ($trackBit != "") {
 				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
-					$matches[4] = preg_replace('/onclick=[\'\"](.*?)[\'\"]/i', 'onclick="' . $trackBit .' $1"', $matches[4]);
+					// Check for manually tagged outbound clicks, and replace them with the tracking of choice.
+					if (preg_match('/.*_track(Pageview|Event).*/i', $matches[4]) > 0) {
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*;)?[a-zA-Z0-9]+\._track(Pageview|Event)\([^\)]+\)(;)?(.*)?[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2$5"', $matches[4]);
+					} else {
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*?)[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2"', $matches[4]);
+					}
 				} else {
-					$matches[4] = 'onclick="' . $trackBit . '"' . $matches[4];
+					$matches[4] = 'onclick="javascript:' . $trackBit . '"' . $matches[4];
 				}				
 			}
 			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
