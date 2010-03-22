@@ -115,17 +115,28 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		 */
 		function form_table($rows) {
 			$content = '<table class="form-table">';
+			$i = 1;
 			foreach ($rows as $row) {
-				$content .= '<tr id="'.$row['id'].'_row"><th valign="top" scrope="row">';
+				$class = '';
+				if ($i > 1) {
+					$class .= 'yst_row';
+				}
+				if ($i % 2 == 0) {
+					$class .= ' even';
+				}
+				$content .= '<tr id="'.$row['id'].'_row" class="'.$class.'"><th valign="top" scrope="row">';
 				if (isset($row['id']) && $row['id'] != '')
 					$content .= '<label for="'.$row['id'].'">'.$row['label'].':</label>';
 				else
 					$content .= $row['label'];
-				if (isset($row['desc']) && $row['desc'] != '')
-					$content .= '<br/><small>'.$row['desc'].'</small>';
 				$content .= '</th><td valign="top">';
 				$content .= $row['content'];
 				$content .= '</td></tr>'; 
+				if ( isset($row['desc']) && !empty($row['desc']) ) {
+					$content .= '<tr class="'.$class.'"><td colspan="2" class="yst_desc"><small>'.$row['desc'].'</small></td></tr>';
+				}
+					
+				$i++;
 			}
 			$content .= '</table>';
 			return $content;

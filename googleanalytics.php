@@ -334,9 +334,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
 										}
 										
+										$desc = '';
+										if ($options['position'] == 'footer') {
+											$desc = 'Placing the script in the header gives the best results, but might leed to issues with IE6 &amp; 7 when the HTML in the &lt;head&gt; area is not valid, because of that this plugin defaults to footer. If you\'re certain your HTML is valid, please do set the position to header for better tracking.';
+										}
 										$rows[] = array(
 											'id' => 'position',
 											'label' => 'Where should the tracking script be placed?',
+											'desc' => $desc,
 											'content' => $temp_content,
 										);
 									} else {
@@ -356,7 +361,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'trackoutbound',
 										'label' => 'Track outbound clicks &amp; downloads',
-										'desc' => '',
+										'desc' => 'Clicks &amp; downloads will be tracked as events, you can find these under Content &raquo; Event Tracking in your Google Analytics reports.',
 										'content' => $this->checkbox('trackoutbound'),
 									);
 									$rows[] = array(
@@ -373,25 +378,25 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'cv_loggedin',
 										'label' => 'Logged in Users',
-										'desc' => 'Allows you to easily remove logged in users from your reports',
+										'desc' => 'Allows you to easily remove logged in users from your reports.',
 										'content' =>  $this->checkbox('cv_loggedin'),
 									);
 									$rows[] = array(
 										'id' => 'cv_authorname',
 										'label' => 'Author Name',
-										'desc' => 'Allows you to see pageviews per author',
+										'desc' => 'Allows you to see pageviews per author.',
 										'content' =>  $this->checkbox('cv_authorname'),
 									);
 									$rows[] = array(
 										'id' => 'cv_category',
 										'label' => 'Category',
-										'desc' => 'Allows you to see pageviews per category, works best when each post is in only one category',
+										'desc' => 'Allows you to see pageviews per category, works best when each post is in only one category.',
 										'content' =>  $this->checkbox('cv_category'),
 									);
 									$rows[] = array(
 										'id' => 'cv_year',
 										'label' => 'Publication year',
-										'desc' => 'Allows you to see pageviews per year of publication, showing you if your old posts still get traffic',
+										'desc' => 'Allows you to see pageviews per year of publication, showing you if your old posts still get traffic.',
 										'content' =>  $this->checkbox('cv_year'),
 									);
 									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
@@ -406,7 +411,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'outboundpageview',
 										'label' => 'Track outbound clicks as pageviews',
-										'desc' => 'Not recommended, as this would schew your statistics.',
+										'desc' => 'You do not need to enable this to enable outbound click tracking, this changes the default behavior of tracking clicks as events to tracking them as pageviews. This is therefore not recommended, as this would schew your statistics, but <em>is</em> sometimes necessary when you need to set outbound clicks as goals.',
 										'content' =>  $this->checkbox('outboundpageview'),
 									);
 									$rows[] = array(
@@ -455,7 +460,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$rows[] = array(
 										'id' => 'rsslinktagging',
-										'label' => 'Tag links in RSS feed with campaign variables',
+										'label' => 'Tag links in RSS feed with campaign variables?',
+										'desc' => 'Do not use this feature if you use FeedBurner, as FeedBurner does this automatically, and better than this plugin can, check <a href="http://www.google.com/support/feedburner/bin/answer.py?hl=en&amp;answer=165769">this help page</a> for info on how to enable that tracking in FeedBurner.',
 										'content' => $this->checkbox('rsslinktagging'),
 									);
 									$rows[] = array(
@@ -720,9 +726,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$dlextensions = split(",",$options['dlextensions']);
 			if ( $target ) {
 				if ( in_array($extension, $dlextensions) ) {
-					$file = str_replace($origin["domain"],"",$matches[3]);
-					$file = str_replace('www.',"",$file);
-					$trackBit = GA_Filter::ga_get_tracking_link('download', $file);
+					$file = $matches[3];
+					$trackBit = GA_Filter::ga_get_tracking_link('download', $file,'');
 				} else if ( $target["domain"] != $origin["domain"] ){
 					if ($options['domainorurl'] == "domain") {
 						$url = $target["host"];
