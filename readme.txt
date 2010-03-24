@@ -48,7 +48,7 @@ This section describes how to install the plugin and get it working.
 	* Added warning &amp; check when switching themes to make sure Google Analytics is still tracking properly.
 * Tracking comments automatically when using the new contact_form() function from WordPress 3.0.
 * Improved inline documentation.
-* Added WP E-Commerce integration to automatically track transactions with Google Analytics ecommerce tracking.
+* Added WP E-Commerce and Shopp plugin integration to automatically track transactions with Google Analytics ecommerce tracking.
 * Ofcourse also various bug fixes.
 
 = 3.2.3 =

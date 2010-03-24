@@ -195,7 +195,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -530,7 +530,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking code, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
-									$this->postbox('advancedgasettings','Advanced Settings',$content.$this->form_table($rows).$this->save_button());
+									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).$this->save_button());
 
 									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
 										$pre_content = 'This plugin can automatically tag your Gravity Forms to track form submissions as either events or pageviews';
@@ -560,6 +560,18 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											'content' => $this->checkbox('wpec_tracking'),
 										);
 										$this->postbox('wpecommerce','WordPress e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
+									}
+
+									global $Shopp;
+									if ( isset($Shopp) ) {
+										$pre_content = 'The Shopp e-Commerce plugin has been detected. This plugin can automatically add transaction tracking for you. To do that, <a href="http://www.google.com/support/googleanalytics/bin/answer.py?hl=en&amp;answer=55528">enable e-commerce for your reports in Google Analytics</a> and then check the box below.';
+										$rows = array();
+										$rows[] = array(
+											'id' => 'shopp_tracking',
+											'label' => 'Enable transaction tracking',
+											'content' => $this->checkbox('shopp_tracking'),
+										);
+										$this->postbox('shoppecommerce','Shopp e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									}
 								?>
 					</form>
@@ -737,6 +749,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				if ( defined('WPSC_VERSION') && $options['wpec_tracking'] )
 					$push = GA_Filter::wpec_transaction_tracking($push);
 				
+				if ($options['shopp_tracking']) {
+					global $Shopp;
+					if ( isset($Shopp) )
+						$push = GA_Filter::shopp_transaction_tracking($push);					
+				}
+					
 				$push = apply_filters('yoast-ga-push',$push);
 
 				$pushstr = "";
@@ -1011,6 +1029,39 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 			$push[] = "'_trackTrans'";
 
+			return $push;
+		}
+		
+		function shopp_transaction_tracking( $push ) {
+			global $Shopp;
+			// Only process if we're in the checkout process (receipt page)
+			if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) return;
+			// Only process if we have valid order data
+			if (!isset($Shopp->Cart->data->Purchase)) return;
+			if (empty($Shopp->Cart->data->Purchase->id)) return;
+
+			$Purchase = $Shopp->Cart->data->Purchase;
+			$push[] = "'_addTrans',"
+						."'".$Purchase->id."',"		// Order ID
+						."'".strtolower(urlencode(str_replace('---','-',str_replace(' ','-',get_bloginfo('name')))))."'," // Store
+						."'".number_format($Purchase->total,2)."'," 	// Total price
+						."'".number_format($Purchase->tax,2)."',"		// Tax
+						."'".number_format($Purchase->shipping,2)."',"	// Shipping
+						."'".$Purchase->city."',"						// City
+						."'".$Purchase->state."',"						// State
+						."'.$Purchase->country.'";						// Country
+
+			foreach ($Purchase->purchased as $item) {
+				$sku = empty($item->sku) ? 'PID-'.$item->product.str_pad($item->price,4,'0',STR_PAD_LEFT) : $item->sku;
+				$push[] = 	"'_addItem',"
+							."'".$Purchase->id."',"
+							."'".$sku."',"
+							."'".$item->name."',"
+							."'".$item->optionlabel."',"
+							."'".number_format($item->unitprice,2)."',"
+							."'".$item->quantity."'";
+			}
+			$push[] = "'_trackTrans'";
 			return $push;
 		}
 		
