@@ -128,6 +128,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								jQuery('#extrasebox').css("display","none");
 							}
 						}).change();
+						jQuery('#customvarsettings :input').change(function() {
+							if (jQuery("#customvarsettings :input:checked").size() > 5) {
+								alert('The maximum number of allowed custom variables in Google Analytics is 5, please unselect one of the other custom variables before selecting this one.')
+								jQuery(this).attr('checked', false);
+							};
+						});
 					});
 				 </script>
 			<?php
