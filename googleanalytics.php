@@ -33,7 +33,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		var $ozhicon	= 'images/chart_curve.png';
 		var $optionname = 'GoogleAnalyticsPP';
 		var $homepage	= 'http://yoast.com/wordpress/google-analytics/';
-		
+		var $toc		= '';
 
 		function GA_Admin() {
 			add_action( 'admin_menu', array(&$this, 'register_settings_page') );
@@ -114,9 +114,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
 								jQuery('#advancedgasettings').css("display","block");
 								jQuery('#customvarsettings').css("display","block");
+								jQuery('#toc').css("display","block");
 							} else {
 								jQuery('#advancedgasettings').css("display","none");
 								jQuery('#customvarsettings').css("display","none");
+								jQuery('#toc').css("display","none");
 							}
 						}).change();
 						jQuery('#extrase').change(function(){
@@ -204,9 +206,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			update_option($this->optionname, $options);
 		}
 		
+		function save_button() {
+			return '<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>';
+		}
+		
 		function config_page() {
 			$options = get_option($this->optionname);
-
 			echo $options['msg'];
 			$options['msg'] = '';
 			update_option($this->optionname, $options);
@@ -370,7 +375,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 										$rows[] = array(
 											'id' => 'position',
-											'label' => 'Where should the tracking code be placed?',
+											'label' => 'Where should the tracking code be placed',
 											'desc' => $desc,
 											'content' => $temp_content,
 										);
@@ -400,9 +405,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'Only adviced for advanced users who know their way around Google Analytics',
 										'content' => $this->checkbox('advancedsettings'),
 									);
-									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows).$this->save_button());
 								
-								
+									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
+									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
+																	
 									$rows = array();
 									$pre_content = '<p>Google Analytics allows you to save up to 5 custom variables on each page, and this plugin helps you make the most use of these! Check which custom variables you\'d like the plugin to save for you below. Please note that these will only be saved when they are actually available.</p><p>If you want to start using these custom variables, go to Visitors &raquo; Custom Variables in your Analytics reports.</p>';
 									$rows[] = array(
@@ -441,7 +448,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'Allows you to see pageviews per year of publication, showing you if your old posts still get traffic.',
 										'content' =>  $this->checkbox('cv_year'),
 									);
-									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									
 									$rows = array();
 									$rows[] = array(
@@ -502,7 +509,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$rows[] = array(
 										'id' => 'rsslinktagging',
-										'label' => 'Tag links in RSS feed with campaign variables?',
+										'label' => 'Tag links in RSS feed with campaign variables',
 										'desc' => 'Do not use this feature if you use FeedBurner, as FeedBurner can do this automatically, and better than this plugin can. Check <a href="http://www.google.com/support/feedburner/bin/answer.py?hl=en&amp;answer=165769">this help page</a> for info on how to enable this feature in FeedBurner.',
 										'content' => $this->checkbox('rsslinktagging'),
 									);
@@ -513,16 +520,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$rows[] = array(
 										'id' => 'allowanchor',
-										'label' => 'Use # instead of ? for Campaign tracking?',
+										'label' => 'Use # instead of ? for Campaign tracking',
 										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking code, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
-									$this->postbox('advancedgasettings','Advanced Settings',$content.$this->form_table($rows).'<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>');
+									$this->postbox('advancedgasettings','Advanced Settings',$content.$this->form_table($rows).$this->save_button());
 
-									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
-
-									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
-									
 									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
 										$pre_content = 'This plugin can automatically tag your Gravity Forms to track form submissions as either events or pageviews';
 										$rows = array();
@@ -539,7 +542,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											<option value="pageviews" '.selected($options['gfsubmiteventpv'],'pageviews',false).'>Pageviews</option>
 											</select>',
 										);
-										$this->postbox('gravityforms','Gravity Forms Settings',$pre_content.$this->form_table($rows));
+										$this->postbox('gravityforms','Gravity Forms Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									}
 									
 								?>
@@ -556,6 +559,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<div class="metabox-holder">	
 				<div class="meta-box-sortables">
 					<?php
+						$this->postbox('toc','List of Modules','<ul>'.$this->toc.'</ul>');
 						$this->plugin_like();
 						$this->postbox('donate','Donate $5, $10 or $20 now!','<form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
@@ -669,7 +673,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						if ( $options['cv_all_categories'] ) {
 							$i = 0;
 							$catsstr = '';
-							foreach (get_the_category() as $cat) {
+							foreach ( (array) get_the_category() as $cat ) {
 								if ($i > 0)
 									$catsstr .= ' ';
 								$catsstr .= $cat->slug;
@@ -682,7 +686,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					if ( $options['cv_tags'] ) {
 						$i = 0;
 						$tagsstr = '';
-						foreach ( get_the_tags() as $tag ) {
+						foreach ( (array) get_the_tags() as $tag ) {
 							if ($i > 0)
 								$tagsstr .= ' ';
 							$tagsstr .= $tag->slug;
@@ -994,19 +998,28 @@ function yoast_track_comment_form() {
 add_action('comment_form_after','yoast_track_comment_form');
 
 function gfform_tag($button_input, $form) {
-	echo '<!--'.print_r($form,1).'-->';
-	echo '<!--'.$button_input.'-->';
 	$options = get_option('GoogleAnalyticsPP');
 	if (isset($options['taggfsubmit']) && $options['taggfsubmit']) {
-		$content = 'onclick="javascript:_gaq.push(';
-		if ($options['gfsubmiteventpv'] == 'event') {
-			$content .= "['_trackEvent','gf_form_submit','".urlencode(strtolower($form['title']));
+		$title = urlencode(str_replace(' ','-',strtolower($form['title'])));
+		if ($options['gfsubmiteventpv'] == 'events') {
+			$pv .= "['_trackEvent','gf_form_submit','".$title."']";
 		} else {
-			$content .= "['_trackPageview','/yoast-ga/gf-form-submit/".urlencode(strtolower($form['title']));
+			$pv .= "['_trackPageview','/yoast-ga/gf-form-submit/".$title."']";
 		}
-		$content .= ']);"';
+		// Since Gravity Forms uses jQuery, we can safely assume jQuery is present.
+		$content = '<script type="text/javascript" charset="utf-8">
+		function trackFormSubmit() {
+			try {
+				_gaq.push('.$pv.');
+				setTimeout(\'return true;\', 100);
+			}catch(err){}
+		}								
+		jQuery(document).ready(function(){
+			jQuery("#gform_'.$form['id'].'").bind("submit", trackFormSubmit);
+		});
+		</script>';
 	}
-	return str_replace("type='submit'", "type='submit' ".$content, $button_input);
+	return $button_input.$content;
 }
 add_filter('gform_submit_button','gfform_tag',10,2);
 

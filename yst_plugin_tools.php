@@ -107,6 +107,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				</div>
 			</div>
 		<?php
+			$this->toc .= '<li><a href="#'.$id.'">'.$title.'</a></li>';
 		}	
 
 
@@ -124,7 +125,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				if ($i % 2 == 0) {
 					$class .= ' even';
 				}
-				$content .= '<tr id="'.$row['id'].'_row" class="'.$class.'"><th valign="top" scrope="row">';
+				$content .= '<tr class="'.$row['id'].'_row '.$class.'"><th valign="top" scrope="row">';
 				if (isset($row['id']) && $row['id'] != '')
 					$content .= '<label for="'.$row['id'].'">'.$row['label'].':</label>';
 				else
@@ -133,7 +134,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				$content .= $row['content'];
 				$content .= '</td></tr>'; 
 				if ( isset($row['desc']) && !empty($row['desc']) ) {
-					$content .= '<tr class="'.$class.'"><td colspan="2" class="yst_desc"><small>'.$row['desc'].'</small></td></tr>';
+					$content .= '<tr class="'.$row['id'].'_row '.$class.'"><td colspan="2" class="yst_desc"><small>'.$row['desc'].'</small></td></tr>';
 				}
 					
 				$i++;
