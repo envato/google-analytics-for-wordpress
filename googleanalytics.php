@@ -544,7 +544,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									
 								?>
 					</form>
-					<form action="<?php echo $this->plugin_options_url(); ?>" method="post">
+					<form action="<?php echo $this->plugin_options_url(); ?>" method="post" onsubmit="javascript:return(confirm('Do you really want to reset all settings?'));">
 						<input type="hidden" name="reset" value="true"/>
 						<input type="hidden" name="plugin" value="google-analytics-for-wordpress"/>
 						<div class="submit"><input type="submit" value="Reset All Settings &raquo;" /></div>
