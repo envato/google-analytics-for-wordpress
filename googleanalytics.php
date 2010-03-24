@@ -240,7 +240,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 												'hd' => 'default'
 											)
 										);
-										$line = 'Please authenticate with Google Analytics to retrieve your tracking code: <a class="button-primary" href="'.$query.'">Click here to authenticate with Google</a>';
+										$line = 'Please authenticate with Google Analytics to retrieve your tracking code:<br/><br/> <a class="button-primary" href="'.$query.'">Click here to authenticate with Google</a><br/><br/><strong>Note</strong>: if you have multiple Google accounts, you\'ll want to switch to the right account first, since Google doesn\'t let you switch accounts on the authentication screen.';
 									} else if(isset($_GET['token']) || (isset($options['ga_token']) && !empty($options['ga_token']))) {
 										if (isset($_GET['token']))
 											$token = $_GET['token'];
