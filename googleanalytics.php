@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress
+Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
 Version: 4.0
@@ -195,7 +195,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -551,6 +551,16 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										$this->postbox('gravityforms','Gravity Forms Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									}
 									
+									if ( defined('WPSC_VERSION') ) {
+										$pre_content = 'The WordPress e-Commerce plugin has been detected. This plugin can automatically add transaction tracking for you. To do that, <a href="http://www.google.com/support/googleanalytics/bin/answer.py?hl=en&amp;answer=55528">enable e-commerce for your reports in Google Analytics</a> and then check the box below.';
+										$rows = array();
+										$rows[] = array(
+											'id' => 'wpec_tracking',
+											'label' => 'Enable transaction tracking',
+											'content' => $this->checkbox('wpec_tracking'),
+										);
+										$this->postbox('wpecommerce','WordPress e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
+									}
 								?>
 					</form>
 					<form action="<?php echo $this->plugin_options_url(); ?>" method="post" onsubmit="javascript:return(confirm('Do you really want to reset all settings?'));">
@@ -719,6 +729,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				} else {
 					$push[] = "'_trackPageview'";
 				}
+
+				if ( defined('WPSC_VERSION') && $options['wpec_tracking'] )
+					$push = GA_Filter::wpec_transaction_tracking($push);
+				
+				$push = apply_filters('yoast-ga-push',$push);
 
 				$pushstr = "";
 				foreach ($push as $key) {
@@ -939,6 +954,60 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				}
 				return $guid . $delimiter . 'utm_source=rss&amp;utm_medium=rss&amp;utm_campaign='.urlencode($post->post_name);
 			}
+		}
+		
+		function wpec_transaction_tracking( $push ) {
+			global $wpdb, $purchlogs, $cart_log_id;
+			if( !isset( $cart_log_id ) || empty($cart_log_id) )
+				return $push;
+
+			$city = $wpdb->get_var ("SELECT tf.value
+		                               FROM ".WPSC_TABLE_SUBMITED_FORM_DATA." tf
+		                          LEFT JOIN ".WPSC_TABLE_CHECKOUT_FORMS." cf
+		                                 ON cf.id = tf.form_id
+		                              WHERE cf.type = 'city'
+		                                AND log_id = ".$cart_log_id );
+
+			$country = $wpdb->get_var ("SELECT tf.value
+		                                  FROM ".WPSC_TABLE_SUBMITED_FORM_DATA." tf
+		                             LEFT JOIN ".WPSC_TABLE_CHECKOUT_FORMS." cf
+		                                    ON cf.id = tf.form_id
+		                                 WHERE cf.type = 'country'
+		                                   AND log_id = ".$cart_log_id );
+
+			$cart_items = $wpdb->get_results ("SELECT * FROM ".WPSC_TABLE_CART_CONTENTS." WHERE purchaseid = ".$cart_log_id, ARRAY_A);
+
+			$total_shipping = $purchlogs->allpurchaselogs[0]->base_shipping;	
+			$total_tax 		= 0;
+			foreach ( $cart_items as $item ) {
+				$total_shipping += $item['pnp'];
+				$total_tax		+= $item['tax_charged'];
+			}
+
+			$push[] = "'_addTrans','".$cart_log_id."',"															// Order ID
+			."'".strtolower(urlencode(str_replace('---','-',str_replace(' ','-',get_bloginfo('name')))))."',"	// Store name
+			."'".nzshpcrt_currency_display($purchlogs->allpurchaselogs[0]->totalprice,1,true,false,true)."',"	// Total price
+			."'".nzshpcrt_currency_display($total_tax,1,true,false,true)."',"									// Tax
+			."'".nzshpcrt_currency_display($total_shipping,1,true,false,true)."',"								// Shipping
+			."'".$city."',"																						// City
+			."'',"																								// State
+			."'".$country."'";																					// Country
+
+			foreach( $cart_items as $item ) {
+				$item['sku'] = $wpdb->get_var( "SELECT meta_value FROM ".WPSC_TABLE_PRODUCTMETA." WHERE meta_key = 'sku' AND product_id = '".$item['prodid']."' LIMIT 1" );
+
+				$item['category'] = $wpdb->get_var( "SELECT pc.name FROM ".WPSC_TABLE_PRODUCT_CATEGORIES." pc LEFT JOIN ".WPSC_TABLE_ITEM_CATEGORY_ASSOC." ca ON pc.id = ca.category_id WHERE pc.group_id = '1' AND ca.product_id = '".$item['prodid']."'" );	
+				$push[] = "'_addItem',"
+				."'".$cart_log_id."',"			// Order ID
+				."'".$item['sku']."',"			// Item SKU
+				."'".$item['name']."',"			// Item Name
+				."'".$item['category']."',"		// Item Category
+				."'".$item['price']."',"		// Item Price
+				."'".$item['quantity']."'";		// Item Quantity
+			}
+			$push[] = "'_trackTrans'";
+
+			return $push;
 		}
 		
 	} // class GA_Filter
