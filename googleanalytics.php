@@ -695,6 +695,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 								$catsstr .= $cat->slug;
 								$i++;
 							}
+							// Max 64 chars for value and label combined, hence 64 - 10 
+							$catsstr = substr($catsstr, 0, 54);
 							$push[] = "'_setCustomVar',".$customvarslot.",'categories','".$catsstr."'";
 							$customvarslot++;
 						}
@@ -708,6 +710,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 							$tagsstr .= $tag->slug;
 							$i++;
 						}
+						// Max 64 chars for value and label combined, hence 64 - 4
+						$tagsstr = substr($tagsstr, 0, 60);
 						$push[] = "'_setCustomVar',".$customvarslot.",'tags','".$tagsstr."'";
 						$customvarslot++;
 					}
