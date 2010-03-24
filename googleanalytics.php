@@ -188,7 +188,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
@@ -479,6 +479,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'id' => 'dlextensions',
 										'label' => 'Extensions of files to track as downloads',
 										'content' => $this->textinput('dlextensions'),
+									);
+									$rows[] = array(
+										'id' => 'trackprefix',
+										'label' => 'Prefix to use in Analytics before the tracked pageviews',
+										'desc' => 'This prefix is used before all pageviews, they are then segmented automatically after that. If nothing is entered here, <code>/yoast-ga/</code> is used.',
+										'content' => $this->textinput('trackprefix'),
 									);
 									$rows[] = array(
 										'id' => 'domainorurl',
@@ -822,13 +828,18 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 		}		
 
+		function ga_get_tracking_prefix() {
+			$options  = get_option('GoogleAnalyticsPP');
+			return (empty($options['trackprefix'])) ? '/yoast-ga/' : $options['trackprefix'];
+		}
+		
 		function ga_get_tracking_link($prefix, $target, $jsprefix = 'javascript:') {
 			$options  = get_option('GoogleAnalyticsPP');
 			if ( 
 				( $prefix != 'download' && $options['outboundpageview'] ) || 
 				( $prefix == 'download' && $options['downloadspageview'] ) ) 
 			{
-				$prefix = '/yoast-ga/'.$prefix;
+				$prefix = GA_Filter::ga_get_tracking_prefix().$prefix;
 				$pushstr = "['_trackPageview','".$prefix."/".$target."']";
 			} else {
 				$pushstr = "['_trackEvent','".$prefix."','".$target."']";
@@ -1134,7 +1145,7 @@ function gfform_tag($button_input, $form) {
 		if ($options['gfsubmiteventpv'] == 'events') {
 			$pv .= "['_trackEvent','gf_form_submit','".$title."']";
 		} else {
-			$pv .= "['_trackPageview','/yoast-ga/gf-form-submit/".$title."']";
+			$pv .= "['_trackPageview','".GA_Filter::ga_get_tracking_prefix()."gf-form-submit/".$title."']";
 		}
 		// Since Gravity Forms uses jQuery, we can safely assume jQuery is present.
 		$content = '<script type="text/javascript" charset="utf-8">
