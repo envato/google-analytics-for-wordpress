@@ -180,18 +180,22 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring') as $option_name) {
+				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
 						$options[$option_name] = false;
+				}
+
+				if (isset($_POST['manual_uastring']) && isset($_POST['uastring_man'])) {
+					$options['uastring'] = $_POST['uastring_man'];
 				}
 				
 				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
@@ -337,7 +341,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									} else {
 										$line = '<input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/><br/><a href="'.$this->plugin_options_url().'&amp;switchua=1">Select another Analytics Profile &raquo;</a>';
 									}
-									$line = '<div id="uastring_automatic">'.$line.'</div><div style="display:none;" id="uastring_manual">Manually enter your UA code: <input id="uastring" name="uastring" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/></div>';
+									$line = '<div id="uastring_automatic">'.$line.'</div><div style="display:none;" id="uastring_manual">Manually enter your UA code: <input id="uastring" name="uastring_man" type="text" size="20" maxlength="40" value="'.$options['uastring'].'"/></div>';
 									$rows = array();
 									$content = '';
 									$rows[] = array(
@@ -415,9 +419,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$rows[] = array(
 										'id' => 'cv_category',
-										'label' => 'Category',
+										'label' => 'Single Category',
 										'desc' => 'Allows you to see pageviews per category, works best when each post is in only one category.',
 										'content' =>  $this->checkbox('cv_category'),
+									);
+									$rows[] = array(
+										'id' => 'cv_all_categories',
+										'label' => 'All Categories',
+										'desc' => 'Allows you to see pageviews per category using advanced segments, should be used when you use multiple categories per post.',
+										'content' =>  $this->checkbox('cv_all_categories'),
+									);
+									$rows[] = array(
+										'id' => 'cv_tags',
+										'label' => 'Tags',
+										'desc' => 'Allows you to see pageviews per tags using advanced segments.',
+										'content' =>  $this->checkbox('cv_tags'),
 									);
 									$rows[] = array(
 										'id' => 'cv_year',
@@ -506,7 +522,26 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
 
 									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
-								
+									
+									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
+										$pre_content = 'This plugin can automatically tag your Gravity Forms to track form submissions as either events or pageviews';
+										$rows = array();
+										$rows[] = array(
+											'id' => 'taggfsubmit',
+											'label' => 'Tag Gravity Forms',
+											'content' => $this->checkbox('taggfsubmit'),
+										);
+										$rows[] = array(
+											'id' => 'gfsubmiteventpv',
+											'label' => 'Tag Gravity Forms as',
+											'content' => '<select name="gfsubmiteventpv">
+											<option value="events" '.selected($options['gfsubmiteventpv'],'events',false).'>Events</option>
+											<option value="pageviews" '.selected($options['gfsubmiteventpv'],'pageviews',false).'>Pageviews</option>
+											</select>',
+										);
+										$this->postbox('gravityforms','Gravity Forms Settings',$pre_content.$this->form_table($rows));
+									}
+									
 								?>
 					</form>
 					<form action="<?php echo $this->plugin_options_url(); ?>" method="post">
@@ -547,6 +582,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'cv_loggedin'			=> false,
 				'cv_authorname'			=> false,
 				'cv_category'			=> false,
+				'cv_all_categories'		=> false,
+				'cv_tags'				=> false,
 				'cv_year'				=> false,
 				'dlextensions' 			=> 'doc,exe,js,pdf,ppt,tgz,zip,xls',
 				'domainorurl' 			=> 'domain',
@@ -587,6 +624,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 if ( ! class_exists( 'GA_Filter' ) ) {
 	class GA_Filter {
 
+		/**
+		 * Cleans the variable to make it ready for storing in Google Analytics
+		 */
+		function ga_store_clean($val) {
+			return str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val))));
+		}
 		/*
 		 * Insert the tracking code into the page
 		 */
@@ -609,21 +652,43 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$push[] = "'_setDomainName','".$options['domain']."'";
 				}
 
-				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
-					$customvarslot++;
-				}
-				
 				if ( is_singular() ) {
 					if ( $options['cv_authorname'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'author','".str_replace(" ","-",strtolower(html_entity_decode(get_the_author_meta('display_name',$wp_query->post->post_author))))."'";
+						$push[] = "'_setCustomVar',".$customvarslot.",'author','".GA_Filter::ga_store_clean(get_the_author_meta('display_name',$wp_query->post->post_author))."'";
 						$customvarslot++;
 					}
 				}
+				
 				if ( is_single() ) {
-					if ( $options['cv_category'] ) {
-						$cats = get_the_category();
-						$push[] = "'_setCustomVar',".$customvarslot.",'category','".str_replace(" ","-",strtolower(html_entity_decode($cats[0]->name)))."'";
+					if ( $options['cv_category'] || $options['cv_all_categories'] ) {
+						if ( $options['cv_category'] ) {
+							$cats = get_the_category();
+							$push[] = "'_setCustomVar',".$customvarslot.",'category','".$cats[0]->slug."'";
+							$customvarslot++;
+						}
+						if ( $options['cv_all_categories'] ) {
+							$i = 0;
+							$catsstr = '';
+							foreach (get_the_category() as $cat) {
+								if ($i > 0)
+									$catsstr .= ' ';
+								$catsstr .= $cat->slug;
+								$i++;
+							}
+							$push[] = "'_setCustomVar',".$customvarslot.",'categories','".$catsstr."'";
+							$customvarslot++;
+						}
+					}
+					if ( $options['cv_tags'] ) {
+						$i = 0;
+						$tagsstr = '';
+						foreach ( get_the_tags() as $tag ) {
+							if ($i > 0)
+								$tagsstr .= ' ';
+							$tagsstr .= $tag->slug;
+							$i++;
+						}
+						$push[] = "'_setCustomVar',".$customvarslot.",'tags','".$tagsstr."'";
 						$customvarslot++;
 					}
 					if ( $options['cv_year'] ) {
@@ -631,7 +696,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$customvarslot++;
 					}
 				} 
-
+				
+				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
+					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
+					$customvarslot++;
+				}
+				
 				if ( is_404() ) {
 					$push[] = "'_trackPageview','/404.html?page=' + document.location.pathname + document.location.search + '&from=' + document.referrer'";
 				} else if ($wp_query->is_search && $wp_query->found_posts == 0) {
@@ -922,6 +992,23 @@ function yoast_track_comment_form() {
 <?php
 }
 add_action('comment_form_after','yoast_track_comment_form');
+
+function gfform_tag($button_input, $form) {
+	echo '<!--'.print_r($form,1).'-->';
+	echo '<!--'.$button_input.'-->';
+	$options = get_option('GoogleAnalyticsPP');
+	if (isset($options['taggfsubmit']) && $options['taggfsubmit']) {
+		$content = 'onclick="javascript:_gaq.push(';
+		if ($options['gfsubmiteventpv'] == 'event') {
+			$content .= "['_trackEvent','gf_form_submit','".urlencode(strtolower($form['title']));
+		} else {
+			$content .= "['_trackPageview','/yoast-ga/gf-form-submit/".urlencode(strtolower($form['title']));
+		}
+		$content .= ']);"';
+	}
+	return str_replace("type='submit'", "type='submit' ".$content, $button_input);
+}
+add_filter('gform_submit_button','gfform_tag',10,2);
 
 function yoast_analytics() {
 	$options	= get_option('GoogleAnalyticsPP');
