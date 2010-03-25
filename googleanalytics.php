@@ -303,7 +303,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 													$sel = selected($ua, $currentua, false);
 													if (!empty($sel)) {
 														$accountsel = true;
-														// $select1 = str_replace('value="'.$i.'"','value="'.$i.'" '.$sel,$select1);
 													}
 													$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.'</option>'."\n";
 												}
@@ -558,7 +557,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									}
 									
 									if ( defined('WPSC_VERSION') ) {
-										$pre_content = 'The WordPress e-Commerce plugin has been detected. This plugin can automatically add transaction tracking for you. To do that, <a href="http://www.google.com/support/googleanalytics/bin/answer.py?hl=en&amp;answer=55528">enable e-commerce for your reports in Google Analytics</a> and then check the box below.';
+										$pre_content = 'The WordPress e-Commerce plugin has been detected. This plugin can automatically add transaction tracking for you. To do that, <a href="http://yoast.com/wordpress/google-analytics/enable-ecommerce/">enable e-commerce for your reports in Google Analytics</a> and then check the box below.';
 										$rows = array();
 										$rows[] = array(
 											'id' => 'wpec_tracking',
@@ -593,7 +592,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<div class="metabox-holder">	
 				<div class="meta-box-sortables">
 					<?php
-						$this->postbox('toc','List of Modules','<ul>'.$this->toc.'</ul>');
+						$this->postbox('toc','List of Available Modules','<ul>'.$this->toc.'</ul>');
 						$this->plugin_like();
 						$this->postbox('donate','Donate $5, $10 or $20 now!','<form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
@@ -665,7 +664,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		/**
 		 * Cleans the variable to make it ready for storing in Google Analytics
 		 */
-		function ga_store_clean($val) {
+		function ga_str_clean($val) {
 			return str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val))));
 		}
 		/*
@@ -692,7 +691,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 				if ( is_singular() ) {
 					if ( $options['cv_authorname'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'author','".GA_Filter::ga_store_clean(get_the_author_meta('display_name',$wp_query->post->post_author))."'";
+						$push[] = "'_setCustomVar',".$customvarslot.",'author','".GA_Filter::ga_str_clean(get_the_author_meta('display_name',$wp_query->post->post_author))."'";
 						$customvarslot++;
 					}
 				}
@@ -1018,7 +1017,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 
 			$push[] = "'_addTrans','".$cart_log_id."',"															// Order ID
-			."'".strtolower(urlencode(str_replace('---','-',str_replace(' ','-',get_bloginfo('name')))))."',"	// Store name
+			."'".GA_Filter::ga_str_clean(get_bloginfo('name'))."',"											// Store name
 			."'".nzshpcrt_currency_display($purchlogs->allpurchaselogs[0]->totalprice,1,true,false,true)."',"	// Total price
 			."'".nzshpcrt_currency_display($total_tax,1,true,false,true)."',"									// Tax
 			."'".nzshpcrt_currency_display($total_shipping,1,true,false,true)."',"								// Shipping
@@ -1053,14 +1052,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 			$Purchase = $Shopp->Cart->data->Purchase;
 			$push[] = "'_addTrans',"
-						."'".$Purchase->id."',"		// Order ID
-						."'".strtolower(urlencode(str_replace('---','-',str_replace(' ','-',get_bloginfo('name')))))."'," // Store
-						."'".number_format($Purchase->total,2)."'," 	// Total price
-						."'".number_format($Purchase->tax,2)."',"		// Tax
-						."'".number_format($Purchase->shipping,2)."',"	// Shipping
-						."'".$Purchase->city."',"						// City
-						."'".$Purchase->state."',"						// State
-						."'.$Purchase->country.'";						// Country
+						."'".$Purchase->id."',"										// Order ID
+						."'".GA_Filter::ga_str_clean(get_bloginfo('name'))."'," 	// Store
+						."'".number_format($Purchase->total,2)."'," 				// Total price
+						."'".number_format($Purchase->tax,2)."',"					// Tax
+						."'".number_format($Purchase->shipping,2)."',"				// Shipping
+						."'".$Purchase->city."',"									// City
+						."'".$Purchase->state."',"									// State
+						."'.$Purchase->country.'";									// Country
 
 			foreach ($Purchase->purchased as $item) {
 				$sku = empty($item->sku) ? 'PID-'.$item->product.str_pad($item->price,4,'0',STR_PAD_LEFT) : $item->sku;
@@ -1138,31 +1137,20 @@ function yoast_track_comment_form() {
 }
 add_action('comment_form_after','yoast_track_comment_form');
 
-function gfform_tag($button_input, $form) {
+function gfform_tag( $form_string, $form ) {
 	$options = get_option('GoogleAnalyticsPP');
-	if (isset($options['taggfsubmit']) && $options['taggfsubmit']) {
-		$title = urlencode(str_replace(' ','-',strtolower($form['title'])));
+	if ( isset( $options['taggfsubmit'] ) && $options['taggfsubmit'] ) {
+		$title = GA_Filter::ga_str_clean( $form['title'] );
 		if ($options['gfsubmiteventpv'] == 'events') {
-			$pv .= "['_trackEvent','gf_form_submit','".$title."']";
+			$pv = "['_trackEvent','gf_form_submit','".$title."']";
 		} else {
-			$pv .= "['_trackPageview','".GA_Filter::ga_get_tracking_prefix()."gf-form-submit/".$title."']";
+			$pv = "['_trackPageview','".GA_Filter::ga_get_tracking_prefix()."gf-form-submit/".$title."']";
 		}
-		// Since Gravity Forms uses jQuery, we can safely assume jQuery is present.
-		$content = '<script type="text/javascript" charset="utf-8">
-		function trackFormSubmit() {
-			try {
-				_gaq.push('.$pv.');
-				setTimeout(\'return true;\', 100);
-			}catch(err){}
-		}								
-		jQuery(document).ready(function(){
-			jQuery("#gform_'.$form['id'].'").bind("submit", trackFormSubmit);
-		});
-		</script>';
+		$content = 'onsubmit="_gaq.push('.$pv.');"';
 	}
-	return $button_input.$content;
+	return str_replace( 'action=', $content.' action=', $form_string );
 }
-add_filter('gform_submit_button','gfform_tag',10,2);
+add_filter('gform_form_tag','gfform_tag',10,2);
 
 function yoast_analytics() {
 	$options	= get_option('GoogleAnalyticsPP');
