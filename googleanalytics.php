@@ -959,8 +959,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				while ( $i < count($bookmarks) ) {
 					$target = GA_Filter::ga_get_domain($bookmarks[$i]->link_url);
 					$sitedomain = GA_Filter::ga_get_domain(get_bloginfo('url'));
-					if ($target['host'] == $sitedomain['host'])
-						continue;					
+					if ($target['host'] == $sitedomain['host']) {
+						$i++;
+						continue;
+					}
 					if ($options['domainorurl'] == "domain")
 						$url = $target["host"];
 					else
@@ -1045,10 +1047,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function shopp_transaction_tracking( $push ) {
 			global $Shopp;
 			// Only process if we're in the checkout process (receipt page)
-			if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) return;
+			if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) 
+				return $push;
 			// Only process if we have valid order data
-			if (!isset($Shopp->Cart->data->Purchase)) return;
-			if (empty($Shopp->Cart->data->Purchase->id)) return;
+			if (!isset($Shopp->Cart->data->Purchase) || empty($Shopp->Cart->data->Purchase->id)) 
+				return $push;
 
 			$Purchase = $Shopp->Cart->data->Purchase;
 			$push[] = "'_addTrans',"
