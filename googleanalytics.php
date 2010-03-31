@@ -742,6 +742,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
 					$customvarslot++;
 				}
+
+				$push = apply_filters('yoast-ga-custom-vars',$push, $customvarslot);
 				
 				if ( is_404() ) {
 					$push[] = "'_trackPageview','/404.html?page=' + document.location.pathname + document.location.search + '&from=' + document.referrer'";
