@@ -254,6 +254,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											$token = $options['ga_token'];
 										
 										require_once('xmlparser.php');
+										if (file_exists(ABSPATH.'wp-includes/class-http.php'))
+											require_once(ABSPATH.'wp-includes/class-http.php');
 
 										if (!isset($options['ga_api_responses'][$token])) {
 											$options['ga_api_responses'] = array();
