@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 4.0
+Version: 4.0.1
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -24,14 +24,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 
 	require_once('yst_plugin_tools.php');
 	
-	class GA_Admin extends Yoast_Plugin_Admin {
+	class GA_Admin extends Yoast_GA_Plugin_Admin {
 
 		var $hook 		= 'google-analytics-for-wordpress';
 		var $filename	= 'google-analytics-for-wordpress/googleanalytics.php';
 		var $longname	= 'Google Analytics Configuration';
 		var $shortname	= 'Google Analytics';
 		var $ozhicon	= 'images/chart_curve.png';
-		var $optionname = 'GoogleAnalyticsPP';
+		var $optionname = 'Yoast_Google_Analytics';
 		var $homepage	= 'http://yoast.com/wordpress/google-analytics/';
 		var $toc		= '';
 
@@ -56,7 +56,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		}
 		
 		function config_page_head() {
-			if ($_GET['page'] == $this->hook) {
+			if (isset($_GET['page']) && $_GET['page'] == $this->hook) {
 				$options = get_option($this->optionname);
 				if (!empty($options['uastring'])) { 
 					$uastring = $options['uastring'];
@@ -64,6 +64,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$uastring = ''; 
 				}
 				wp_enqueue_script('jquery');
+				
 			?>
 				 <script type="text/javascript" charset="utf-8">				
 					function makeSublist(parent,child,childVal)
@@ -89,15 +90,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						jQuery('#position').change(function(){
 							if (jQuery('#position').val() == 'header')  {
 								jQuery('#position_header').css("display","block");
-								jQuery('#position_footer').css("display","none");
-								jQuery('#position_manual').css("display","none");
-							} else if (jQuery('#position').val() == 'footer') {
-								jQuery('#position_header').css("display","none");
-								jQuery('#position_footer').css("display","block");
 								jQuery('#position_manual').css("display","none");
 							} else {
 								jQuery('#position_header').css("display","none");
-								jQuery('#position_footer').css("display","none");
 								jQuery('#position_manual').css("display","block");								
 							}
 						}).change();
@@ -140,16 +135,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			}
 		}
 				
-		function checkbox($id) {
-			$options = get_option( $this->optionname );
-			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/>';
-		}
-
-		function textinput($id) {
-			$options = get_option( $this->optionname );
-			return '<input type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
-		}
-		
 		function theme_switch_warning() {
 			$options = get_option( $this->optionname );
 			if ($options['theme_updated']) {
@@ -160,22 +145,17 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function switch_theme( $theme ) {
 			$options 					= get_option( $this->optionname );
 			$options['theme_updated'] 	= 1;
-			$options['position']		= 'footer';
+			$options['position']		= 'header';
 			update_option( $this->optionname, $options );
 		}
 		
-		function is_integrated_theme( $theme = '' ) {
-			if ( empty( $theme ) )
-				$theme = get_current_theme();
-			if ( in_array( $theme, array( 'Thesis' ) ) )
-				return $theme;
-			if ( defined( 'THEMATICVERSION' ) )
-				return 'Thematic';
-			if ( defined( 'HEADWAYVERSION' ) )
-				return 'Headway';
-			if ( defined( 'PARENT_THEME_NAME' ) && PARENT_THEME_NAME == 'Genesis' )
-				return PARENT_THEME_NAME;
-			return false;
+		function toc( $modules ) {
+			$output = '<ul>';
+			foreach ($modules as $module => $key) {
+				$output .= '<li><a href="#'.$key.'">'.$module.'</a></li>';
+			}
+			$output .= '</ul>';
+			return $output;
 		}
 		
 		function save_settings() {
@@ -188,14 +168,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'imagese', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -223,7 +203,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			update_option($this->optionname, $options);
 			?>
 			<div class="wrap">
-				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://netdna.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
+				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
 				<h2>Google Analytics for WordPress Configuration</h2>
 				<div class="postbox-container" style="width:65%;">
 					<div class="metabox-holder">	
@@ -275,7 +255,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											if (is_array($result) && $result['response']['code'] == 200) {
 												$options['ga_api_responses'][$token] = $result;
 												$options['ga_token'] = $token;
-												update_option('GoogleAnalyticsPP', $options);												
+												update_option('Yoast_Google_Analytics', $options);												
 											}
 										}
 
@@ -283,12 +263,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											$arr = yoast_xml2array($options['ga_api_responses'][$token]['body']);
 										
 											$ga_accounts = array();
-											foreach ($arr['feed']['entry'] as $site) {
-												$ua = $site['dxp:property']['3_attr']['value'];
-												$account = $site['dxp:property']['1_attr']['value'];
+											if (isset($arr['feed']['entry'][0])) {
+												foreach ($arr['feed']['entry'] as $site) {
+													$ua = $site['dxp:property']['3_attr']['value'];
+													$account = $site['dxp:property']['1_attr']['value'];
+													if (!isset($ga_accounts[$account]) || !is_array($ga_accounts[$account]))
+														$ga_accounts[$account] = array();
+													$ga_accounts[$account][$site['title']] = $ua;
+												}
+											} else {
+												$ua = $arr['feed']['entry']['dxp:property']['3_attr']['value'];
+												$account = $arr['feed']['entry']['dxp:property']['1_attr']['value'];
+												$title = $arr['feed']['entry']['title'];
 												if (!isset($ga_accounts[$account]) || !is_array($ga_accounts[$account]))
 													$ga_accounts[$account] = array();
-												$ga_accounts[$account][$site['title']] = $ua;
+												$ga_accounts[$account][$title] = $ua;
 											}
 
 											$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
@@ -362,44 +351,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => '<input type="checkbox" name="manual_uastring" '.checked($options['manual_uastring'], true, false).' id="switchtomanual"/> <label for="switchtomanual">Manually enter your UA code</label>',
 										'content' => $line
 									);
-									$integrated_theme = $this->is_integrated_theme();
-									if ( !$integrated_theme ) {
-										$temp_content = '<select name="position" id="position">
-											<option value="footer" '.selected($options['position'],'footer',false).'>In the footer (default)</option>
-											<option value="header" '.selected($options['position'],'header',false).'>In the header</option>
-											<option value="manual" '.selected($options['position'],'manual',false).'>Insert manually</option>
-										</select>';
-										if ($options['theme_updated']) {
+									$temp_content = $this->select('position', array('header' => 'In the header (default)', 'manual' => 'Insert manually'));
+									if ($options['theme_updated'] && $options['position'] == 'manual') {
 											$temp_content .= '<input type="hidden" name="theme_updated" value="off"/>';
-											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to make sure Google Analytics gets loaded properly.</p></div>';
+											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> You switched your theme, please make sure your Google Analytics tracking is still ok. Save your settings to make sure Google Analytics gets loaded properly.</p></div>';
 											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
-										}
-										
-										$desc = '<div id="position_header">While the header is by far the best spot to place the tracking code, it does sometimes cause issues. You should make very sure that all the tags in your head section are properly closed. For more info <a href="http://yoast.com/wordpress/google-analytics/manual-placement/">read this page</a>.</div>';
-										
-										$desc .= '<div id="position_manual"><a href="http://yoast.com/wordpress/google-analytics/manual-placement/">Follow the instructions here</a> to choose the location for your tracking code manually.</div>';
-										$desc .= '<div id="position_footer">Placing the tracking code in the header gives the best results, but might leed to issues with IE6 &amp; 7 when the HTML in the &lt;head&gt; area is not valid, because of that this plugin defaults to footer. If you\'re certain your HTML is valid, please do set the position to header for better tracking. You could also insert the tracking code manually, be sure to follow <a href="http://yoast.com/wordpress/google-analytics/manual-placement/">the instructions on how to do that</a>.</div> ';
-
-										$rows[] = array(
-											'id' => 'position',
-											'label' => 'Where should the tracking code be placed',
-											'desc' => $desc,
-											'content' => $temp_content,
-										);
-									} else {
-										$temp_content = 'Your current theme framework ('.$integrated_theme.') allows for automatic integration.<input type="hidden" name="position" value="'.$integrated_theme.'"/>';
-										if ($options['theme_updated']) {
-											echo '<div id="message" class="updated" style="background-color:lightgreen;border-color:green;"><p><strong>Notice:</strong> Your Google Analytics can be adjusted: save your settings to allow for automatic integration.</p></div>';
-											$temp_content .= '<input type="hidden" name="theme_updated" value="off"/>';
-											remove_action('admin_footer', array(&$this,'theme_switch_warning'));
-										}
-											
-										$rows[] = array(
-											'id' => 'position',
-											'label' => 'Tracking code location',
-											'content' => $temp_content,
-										);
 									}
+									$desc = '<div id="position_header">The header is by far the best spot to place the tracking code. If you\'d rather place the code manually, switch to manual placement. For more info <a href="http://yoast.com/wordpress/google-analytics/manual-placement/">read this page</a>.</div>';
+									$desc .= '<div id="position_manual"><a href="http://yoast.com/wordpress/google-analytics/manual-placement/">Follow the instructions here</a> to choose the location for your tracking code manually.</div>';
+
+									$rows[] = array(
+										'id' => 'position',
+										'label' => 'Where should the tracking code be placed',
+										'desc' => $desc,
+										'content' => $temp_content,
+									);
 									$rows[] = array(
 										'id' => 'trackoutbound',
 										'label' => 'Track outbound clicks &amp; downloads',
@@ -414,15 +380,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									);
 									$this->postbox('gasettings','Google Analytics Settings',$this->form_table($rows).$this->save_button());
 								
-									$content = "<p><a href='http://www.google.com/analytics/authorized_consultants.html'><img src='".plugins_url('google-analytics-for-wordpress')."/images/GAAC-logo.gif' class='alignright' style='margin-left:10px;' alt='Google Analytics Authorized Consultant'/></a>If you're serious about making money with your site, you're probably serious about your analytics too (and if you're not, you should be!). If you think you're not getting the best out of your Google Analytics, you might want to hire serious help too. OrangeValley is a <a href='http://www.google.com/analytics/authorized_consultants.html'>Google Analytics Authorized Consultant</a> and can help you get the most out of your site and marketing.</p><p><a href='http://yoast.com/hire-me/'>Contact us today to start a conversation about how we can help you!</a></p>";
-									$this->postbox('gagaac',__('Google Analytics Support', 'ywawp'), $content);
-																	
 									$rows = array();
 									$pre_content = '<p>Google Analytics allows you to save up to 5 custom variables on each page, and this plugin helps you make the most use of these! Check which custom variables you\'d like the plugin to save for you below. Please note that these will only be saved when they are actually available.</p><p>If you want to start using these custom variables, go to Visitors &raquo; Custom Variables in your Analytics reports.</p>';
 									$rows[] = array(
 										'id' => 'cv_loggedin',
 										'label' => 'Logged in Users',
-										'desc' => 'Allows you to easily remove logged in users from your reports.',
+										'desc' => 'Allows you to easily remove logged in users from your reports, or to segment by different user roles. The users primary role will be logged.',
 										'content' =>  $this->checkbox('cv_loggedin'),
 									);
 									$rows[] = array(
@@ -455,14 +418,27 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'Allows you to see pageviews per year of publication, showing you if your old posts still get traffic.',
 										'content' =>  $this->checkbox('cv_year'),
 									);
+									$rows[] = array(
+										'id' => 'cv_post_type',
+										'label' => 'Post type',
+										'desc' => 'Allows you to see pageviews per post type, especially useful if you use multiple custom post types.',
+										'content' =>  $this->checkbox('cv_post_type'),
+									);
 									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									
 									$rows = array();
 									$rows[] = array(
-										'id' => 'admintracking',
-										'label' => 'Track the administrator too',
-										'desc' => 'Not recommended, as this would schew your statistics.',
-										'content' =>  $this->checkbox('admintracking'),
+										'id' => 'ignore_userlevel',
+										'label' => 'Ignore users',
+										'desc' => 'Users of the role you select and higher will be ignored, so if you select Editor, all Editors and Administrators will be ignored.',
+										'content' => $this->select('ignore_userlevel', array(
+											'11' => 'Ignore no-one',
+											'8' => 'Administrator',
+											'5' => 'Editor',
+											'2' => 'Author', 
+											'1' => 'Contributor', 
+											'0' => 'Subscriber', 
+										)),
 									);
 									$rows[] = array(
 										'id' => 'outboundpageview',
@@ -490,10 +466,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'domainorurl',
 										'label' => 'Track full URL of outbound clicks or just the domain',
-										'content' => '<select name="domainorurl" id="domainorurl">
-											<option value="domain"'.selected($options['domainorurl'],'domain',false).'>Just the domain</option>
-											<option value="url"'.selected($options['domainorurl'],'url',false).'>Track the complete URL</option>
-										</select>',
+										'content' => $this->select('domainorurl', array(
+														'domain' => 'Just the domain',
+														'url' => 'Track the complete URL',
+													)
+												),
 									);
 									$rows[] = array(
 										'id' => 'domain',
@@ -516,11 +493,6 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										</div>',
 									);
 									$rows[] = array(
-										'id' => 'imagese',
-										'label' => 'Track Google Image Search as a Search Engine',
-										'content' => $this->checkbox('imagese'),
-									);
-									$rows[] = array(
 										'id' => 'rsslinktagging',
 										'label' => 'Tag links in RSS feed with campaign variables',
 										'desc' => 'Do not use this feature if you use FeedBurner, as FeedBurner can do this automatically, and better than this plugin can. Check <a href="http://www.google.com/support/feedburner/bin/answer.py?hl=en&amp;answer=165769">this help page</a> for info on how to enable this feature in FeedBurner.',
@@ -537,9 +509,17 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking code, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
+									$rows[] = array(
+										'id' => 'allowlinker',
+										'label' => 'Add <code>_setAllowLinker</code>',
+										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setAllowLinker">setAllowLinker</a> call to your tracking code,  allowing you to use <code>_link</code> and related functions.',
+										'content' => $this->checkbox('allowlinker'),
+									);
 									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).$this->save_button());
 
-									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
+									$modules = array();
+									
+/*									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
 										$pre_content = 'This plugin can automatically tag your Gravity Forms to track form submissions as either events or pageviews';
 										$rows = array();
 										$rows[] = array(
@@ -556,8 +536,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											</select>',
 										);
 										$this->postbox('gravityforms','Gravity Forms Settings',$pre_content.$this->form_table($rows).$this->save_button());
+										$modules['Gravity Forms'] = 'gravityforms';
 									}
-									
+									*/
 									if ( defined('WPSC_VERSION') ) {
 										$pre_content = 'The WordPress e-Commerce plugin has been detected. This plugin can automatically add transaction tracking for you. To do that, <a href="http://yoast.com/wordpress/google-analytics/enable-ecommerce/">enable e-commerce for your reports in Google Analytics</a> and then check the box below.';
 										$rows = array();
@@ -567,6 +548,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											'content' => $this->checkbox('wpec_tracking'),
 										);
 										$this->postbox('wpecommerce','WordPress e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
+										$modules['WordPress e-Commerce'] = 'wpecommerce';
 									}
 
 									global $Shopp;
@@ -579,6 +561,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											'content' => $this->checkbox('shopp_tracking'),
 										);
 										$this->postbox('shoppecommerce','Shopp e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
+										$modules['Shopp'] = 'shoppecommerce';
 									}
 								?>
 					</form>
@@ -594,7 +577,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<div class="metabox-holder">	
 				<div class="meta-box-sortables">
 					<?php
-						$this->postbox('toc','List of Available Modules','<ul>'.$this->toc.'</ul>');
+						if ( count($modules) > 0 )
+							$this->postbox('toc','List of Available Modules',$this->toc($modules));
 						$this->plugin_like();
 						$this->postbox('donate','Donate $5, $10 or $20 now!','<form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
@@ -615,22 +599,23 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		
 		function set_defaults() {
 			$options = array(
-				'admintracking' 		=> true,
 				'advancedsettings' 		=> false,
 				'allowanchor' 			=> false,
+				'allowlinker' 			=> false,
 				'cv_loggedin'			=> false,
 				'cv_authorname'			=> false,
 				'cv_category'			=> false,
 				'cv_all_categories'		=> false,
 				'cv_tags'				=> false,
 				'cv_year'				=> false,
+				'cv_post_type'			=> false,
 				'dlextensions' 			=> 'doc,exe,js,pdf,ppt,tgz,zip,xls',
 				'domainorurl' 			=> 'domain',
 				'ga_token' 				=> '',
 				'ga_api_responses'		=> array(),
 				'extrase' 				=> false,
 				'extraseurl'			=> '',
-				'imagese' 				=> false,
+				'ignore_userlevel'		=> '11',
 				'outboundpageview'		=> false,
 				'downloadspageview'		=> false,
 				'position' 				=> 'footer',
@@ -667,39 +652,76 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Cleans the variable to make it ready for storing in Google Analytics
 		 */
 		function ga_str_clean($val) {
-			return str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val))));
+			return remove_accents(str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val)))));
 		}
 		/*
 		 * Insert the tracking code into the page
 		 */
 		function spool_analytics() {	
-			global $wp_query;
+			global $wp_query, $current_user;
 			// echo '<!--'.print_r($wp_query,1).'-->';
-			$options  = get_option('GoogleAnalyticsPP');
+			// echo '<!--'.print_r($current_user,1).'-->';
+
+			$options  = get_option('Yoast_Google_Analytics');
 			
+			/**
+			 * The order of custom variables is very, very important: custom vars should always take up the same slot to make analysis easy.
+			 */
 			$customvarslot = 1;
-			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) { 
+			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) { 
 				$push = array();
-				$push[] = "'_setAccount','".$options["uastring"]."'";
 
 				if ( $options['allowanchor'] )
-					$push[] = "'_setAllowAnchor','true'";
+					$push[] = "'_setAllowAnchor',true";
+
+				if ( $options['allowlinker'] )
+					$push[] = "'_setAllowLinker',true";
 				
 				if ( isset($options['domain']) && $options['domain'] != "" ) {
-					if (substr($options['domain'],0,1) != ".")
+					// should allow for a 'none' domain too!
+					if (substr($options['domain'],0,1) != "." && $options['domain'] != 'none')
 						$options['domain'] = ".".$options['domain'];
 					$push[] = "'_setDomainName','".$options['domain']."'";
 				}
 
-				if ( is_singular() ) {
+				if ( $options['cv_loggedin'] ) {
+					if ( $current_user->ID != 0 )
+						$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','".$current_user->roles[0]."',1";
+					// Customvar slot needs to be upped even when the user is not logged in, to make sure the variables below are always in the same slot.
+					$customvarslot++;
+				} 
+
+				if ( is_singular() && !is_home() ) {
+					if ( $options['cv_post_type'] ) {
+						$post_type = get_post_type();
+						if ( $post_type ) {
+							$push[] = "'_setCustomVar',".$customvarslot.",'post_type','".$post_type."'";
+							$customvarslot++;						
+						}
+					}
 					if ( $options['cv_authorname'] ) {
 						$push[] = "'_setCustomVar',".$customvarslot.",'author','".GA_Filter::ga_str_clean(get_the_author_meta('display_name',$wp_query->post->post_author))."'";
 						$customvarslot++;
 					}
-				}
-				
-				if ( is_single() ) {
-					if ( $options['cv_category'] || $options['cv_all_categories'] ) {
+					if ( $options['cv_tags'] ) {
+						$i = 0;
+						$tagsstr = '';
+						foreach ( (array) get_the_tags() as $tag ) {
+							if ($i > 0)
+								$tagsstr .= ' ';
+							$tagsstr .= $tag->slug;
+							$i++;
+						}
+						// Max 64 chars for value and label combined, hence 64 - 4
+						$tagsstr = substr($tagsstr, 0, 60);
+						$push[] = "'_setCustomVar',".$customvarslot.",'tags','".$tagsstr."'";
+						$customvarslot++;
+					}
+					if ( is_single() ) {
+						if ( $options['cv_year'] ) {
+							$push[] = "'_setCustomVar',".$customvarslot.",'year','".get_the_time('Y')."'";
+							$customvarslot++;
+						}
 						if ( $options['cv_category'] ) {
 							$cats = get_the_category();
 							$push[] = "'_setCustomVar',".$customvarslot.",'category','".$cats[0]->slug."'";
@@ -720,40 +742,30 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 							$customvarslot++;
 						}
 					}
-					if ( $options['cv_tags'] ) {
-						$i = 0;
-						$tagsstr = '';
-						foreach ( (array) get_the_tags() as $tag ) {
-							if ($i > 0)
-								$tagsstr .= ' ';
-							$tagsstr .= $tag->slug;
-							$i++;
-						}
-						// Max 64 chars for value and label combined, hence 64 - 4
-						$tagsstr = substr($tagsstr, 0, 60);
-						$push[] = "'_setCustomVar',".$customvarslot.",'tags','".$tagsstr."'";
-						$customvarslot++;
-					}
-					if ( $options['cv_year'] ) {
-						$push[] = "'_setCustomVar',".$customvarslot.",'year','".get_the_time('Y')."'";
-						$customvarslot++;
-					}
 				} 
-				
-				if ( $options['cv_loggedin'] && is_user_logged_in() ) {
-					$push[] = "'_setCustomVar',".$customvarslot.",'logged-in','1',1";
-					$customvarslot++;
-				}
 
 				$push = apply_filters('yoast-ga-custom-vars',$push, $customvarslot);
+
+				$push = apply_filters('yoast-ga-push-before-pageview',$push);
 				
 				if ( is_404() ) {
-					$push[] = "'_trackPageview','/404.html?page=' + document.location.pathname + document.location.search + '&from=' + document.referrer'";
-				} else if ($wp_query->is_search && $wp_query->found_posts == 0) {
-					$push[] = "'_trackPageview','".get_bloginfo('url')."/?s=no-results:".rawurlencode($wp_query->query_vars['s'])."&cat=no-results'";
+					$push[] = "'_trackPageview','/404.html?page=' + document.location.pathname + document.location.search + '&from=' + document.referrer";
+				} else if ($wp_query->is_search) {
+					$pushstr = "'_trackPageview','".get_bloginfo('url')."/?s=";
+					if ($wp_query->found_posts == 0) {
+						$push[] = $pushstr."no-results:".rawurlencode($wp_query->query_vars['s'])."&cat=no-results'";
+					} else if ($wp_query->found_posts == 1) {
+						$push[] = $pushstr.rawurlencode($wp_query->query_vars['s'])."&cat=1-result'";
+					} else if ($wp_query->found_posts > 1 && $wp_query->found_posts < 6) {
+						$push[] = $pushstr.rawurlencode($wp_query->query_vars['s'])."&cat=2-5-results'";
+					} else {
+						$push[] = $pushstr.rawurlencode($wp_query->query_vars['s'])."&cat=plus-5-results'";
+					}
 				} else {
 					$push[] = "'_trackPageview'";
 				}
+
+				$push = apply_filters('yoast-ga-push-after-pageview',$push);
 
 				if ( defined('WPSC_VERSION') && $options['wpec_tracking'] )
 					$push = GA_Filter::wpec_transaction_tracking($push);
@@ -763,35 +775,22 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					if ( isset($Shopp) )
 						$push = GA_Filter::shopp_transaction_tracking($push);					
 				}
-					
-				$push = apply_filters('yoast-ga-push',$push);
-
+				
 				$pushstr = "";
 				foreach ($push as $key) {
 					if (!empty($pushstr))
-						$pushstr .= ",\n";
+						$pushstr .= ",";
 
-					$pushstr .= "\t\t[".$key."]";
+					$pushstr .= "[".$key."]";
 				}
 
 				?>
-	<!-- Google Analytics for WordPress - async tracking beta | http://yoast.com/wordpress/google-analytics/ -->
-	<script type="text/javascript">
+				
+	<!-- Google Analytics for WordPress by Yoast v4.0 | http://yoast.com/wordpress/google-analytics/ -->
+	<script type="text/javascript">//<![CDATA[
 	var _gaq = _gaq || [];
-<?php if ( $options["imagese"] ) { ?>
-	regex = new RegExp("images.google.([^\/]+).*&prev=([^&]+)");
-	var match = regex.exec(document.referrer);
-	if (match != null) {
-		_gaq.push(
-			['_addOrganic', 'images.google.'+match[1], 'q', true],
-			['_setReferrerOverride','http://images.google.'+match[1] +unescape(match[2])]
-		);
-	}
-<?php } ?>
-	_gaq.push( 
-<?php echo $pushstr; ?> 
-	);
-	</script>
+	_gaq.push(['_setAccount','<?php echo $options["uastring"]; ?>']);
+	_gaq.push(<?php echo $pushstr; ?>);
 <?php
 	if ( $options["extrase"] ) {
 		if ( !empty($options["extraseurl"]) ) {
@@ -799,23 +798,21 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		} else {
 			$url = gapp_plugin_path().'custom_se_async.js';
 		}
-		echo '<script src="'.$url.'" type="text/javascript"></script>'."\n"; 
+		echo '</script><script src="'.$url.'" type="text/javascript"></script>'."\n".'<script type="text/javascript">'; 
 	}
-		
-?>
-	<script type="text/javascript">
-	(function() {
+
+?>	(function() {
 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-		(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 	})();
-	</script>
-	<!-- End of Google Analytics async tracking beta code -->
+	//]]></script>
+	<!-- End of Google Analytics for WordPress by Yoast v4.0 -->
 <?php
-			} else if ( $options["uastring"] != "" && current_user_can('edit_users') && !$options["admintracking"] ) {
-				echo "<!-- Google Analytics tracking code not shown because admin tracking is disabled -->";
+			} else if ( $options["uastring"] != "" ) {
+				echo "<!-- Google Analytics tracking code not shown because users over level ".$options["ignore_userlevel"]." are ignored -->\n";
 			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
-				echo "<!-- Google Analytics tracking code not shown because yo haven't entered your UA string yet. -->";
+				echo "<!-- Google Analytics tracking code not shown because yo haven't chosen a Google Analytics account yet. -->\n";
 			}
 		}
 
@@ -823,7 +820,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Insert the AdSense parameter code into the page. This'll go into the header per Google's instructions.
 		 */
 		function spool_adsense() {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
@@ -832,12 +829,12 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}		
 
 		function ga_get_tracking_prefix() {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			return (empty($options['trackprefix'])) ? '/yoast-ga/' : $options['trackprefix'];
 		}
 		
 		function ga_get_tracking_link($prefix, $target, $jsprefix = 'javascript:') {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			if ( 
 				( $prefix != 'download' && $options['outboundpageview'] ) || 
 				( $prefix == 'download' && $options['downloadspageview'] ) ) 
@@ -870,7 +867,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 		function ga_parse_link($category, $matches){
 			$origin = GA_Filter::ga_get_domain($_SERVER["HTTP_HOST"]);
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			
 			// Break out immediately if the link is not an http or https link.
 			if (strpos($matches[2],"http") !== 0)
@@ -934,7 +931,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 
 			if (current_user_can('edit_users') && !$options["admintracking"]) {
 				return $text;
@@ -956,7 +953,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			
 			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
 				$i = 0;
@@ -971,7 +968,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$url = $target["host"];
 					else
 						$url = $bookmarks[$i]->link_url;
-					$trackBit = '" onclick="'.GA_Filter::ga_get_tracking_link('outbound-blogroll', $url).'"';
+					$trackBit = '" onclick="'.GA_Filter::ga_get_tracking_link('outbound-blogroll', $url);
 					$bookmarks[$i]->link_target .= $trackBit;
 					$i++;
 				}
@@ -980,7 +977,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function rsslinktagger($guid) {
-			$options  = get_option('GoogleAnalyticsPP');
+			$options  = get_option('Yoast_Google_Analytics');
 			global $wp, $post;
 			if ( is_feed() ) {
 				if ( $options['allowanchor'] ) {
@@ -1087,8 +1084,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 
 /**
  * If setAllowAnchor is set to true, GA ignores all links tagged "normally", so we redirect all "normally" tagged URL's
- * to one tagged with a hash. Needs some work as it also needs to do that when the first utm_ var is actually not the
- * first GET variable in the URL.
+ * to one tagged with a hash. 
  */
 function ga_utm_hashtag_redirect() {
 	if (isset($_SERVER['REQUEST_URI'])) {
@@ -1128,7 +1124,7 @@ add_filter('comment_form_defaults', 'yoast_get_comment_form_id',99,1);
 
 function yoast_track_comment_form() {
 	global $comment_form_id, $post;
-	$yoast_ga_options = get_option('GoogleAnalyticsPP');
+	$yoast_ga_options = get_option('Yoast_Google_Analytics');
 ?>
 <script type="text/javascript" charset="utf-8">
 	jQuery(document).ready(function() {
@@ -1143,9 +1139,9 @@ function yoast_track_comment_form() {
 <?php
 }
 add_action('comment_form_after','yoast_track_comment_form');
-
-function gfform_tag( $form_string, $form ) {
-	$options = get_option('GoogleAnalyticsPP');
+/*
+function gfform_tag() {
+	$options = get_option('Yoast_Google_Analytics');
 	if ( isset( $options['taggfsubmit'] ) && $options['taggfsubmit'] ) {
 		$title = GA_Filter::ga_str_clean( $form['title'] );
 		if ($options['gfsubmiteventpv'] == 'events') {
@@ -1153,22 +1149,31 @@ function gfform_tag( $form_string, $form ) {
 		} else {
 			$pv = "['_trackPageview','".GA_Filter::ga_get_tracking_prefix()."gf-form-submit/".$title."']";
 		}
-		$content = 'onsubmit="_gaq.push('.$pv.');"';
 	}
-	return str_replace( 'action=', $content.' action=', $form_string );
+	wp_enqueue_script('jquery');
+	?>
+	<script type="text/javascript" charset="utf-8">
+		jQuery(document).ready(function() {
+			jQuery('.gform_wrapper form').submit(function() {
+				_gaq.push(<?php echo $pv; ?>);
+			});
+		});
+	</script>
+	<?php
 }
-add_filter('gform_form_tag','gfform_tag',10,2);
+add_action('wp_footer','gfform_tag',10);
+*/
 
 function yoast_analytics() {
-	$options	= get_option('GoogleAnalyticsPP');
+	$options	= get_option('Yoast_Google_Analytics');
 	if ($options['position'] == 'manual')
 		GA_Filter::spool_analytics();
 	else
-		echo '<!-- Please set Google Analytics position to "manual" in the settings -->';
+		echo '<!-- Please set Google Analytics position to "manual" in the settings, or remove this call to yoast_analytics(); -->';
 }
 
 $gaf 		= new GA_Filter();
-$options	= get_option('GoogleAnalyticsPP');
+$options	= get_option('Yoast_Google_Analytics');
 
 if (!is_array($options))
 	$ga_admin->set_defaults();
@@ -1187,30 +1192,15 @@ if ($options['trackoutbound']) {
 }
 
 if ($options['trackadsense'])
-	add_action('wp_head', array('GA_Filter','spool_adsense'),10);	
+	add_action('wp_head', array('GA_Filter','spool_adsense'),1);	
 
 switch ($options['position']) {
 	case 'manual':
 		// No need to insert here, bail NOW.
 		break;
-	case 'Genesis':
-		add_action('genesis_before', array('GA_Filter','spool_analytics'));
-		break;
-	case 'Headway':
-		add_action('headway_before_everything', array('GA_Filter','spool_analytics'));
-		break;
-	case 'Thematic':
-		add_action('thematic_before', array('GA_Filter','spool_analytics'));
-		break;
-	case 'Thesis':
-		add_action('thesis_hook_before_html', array('GA_Filter','spool_analytics'));
-		break;
 	case 'header':
-		add_action('wp_head', array('GA_Filter','spool_analytics'));
-		break;
-	case 'footer':
 	default:
-		add_action('wp_footer', array('GA_Filter','spool_analytics'));
+		add_action('wp_head', array('GA_Filter','spool_analytics'),2);
 		break;
 }
 

@@ -1,21 +1,23 @@
 === Google Analytics for WordPress ===
 Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
-Tags: analytics, google analytics, statistics
+Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 3.2.5
+Stable tag: 4.0.1
 
-The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
+The Google Analytics for WordPress plugin allows you to track your blog easily. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allows you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
 == Description ==
 
-The Google Analytics for WordPress plugin automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It also allows you to track AdSense clicks, add extra search engines, track image search queries and it will even work together with Urchin.
+The Google Analytics for WordPress plugin allows you to track your blog easily. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allows you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
-In the options panel for the plugin, you can determine the prefixes to use for the different kinds of outbound links and downloads it tracks.
+For the full list of features, check out the [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/) homepage.
 
-* [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/).
+NOTE WHEN UPGRADING TO VERSION 4.0: you'll have to reconfigure the plugin so it can fully support all the new features!
+
 * Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
+* Want to increase traffic to your WordPress blog? Check out the [WordPress SEO](http://yoast.com/articles/wordpress-seo/) Guide!
 * Check out the authors [WordPress Hosting](http://yoast.com/articles/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
 
 == Installation ==
@@ -29,27 +31,20 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.0.1 =
+* Fix for when you have only 1 site in a specific Analytics profile.
+
 = 4.0 =
-* Switched to the new [asynchronous tracking script](http://analytics.blogspot.com/2009/12/google-analytics-launches-asynchronous.html).
-* Now using the Google Analytics API to easily select the profile you want to track analytics for.
-* Switched link tracking to an event tracking model. Because of this change removed 5 settings from the settings panel that were no longer needed.
-* Plugin now replaces manually tagged links with new tags to prevent using the wrong link tracker.
-* Implemented custom variable tracking that allows you to track: 
-	* On the session level: 
-		* Whether the user is logged in or not. 
-	* On the post / page level: 
-		* The author of the current post
-		* The category of the current post (for posts only)
-		* The year of publication of the current post
-* Various script placement improvements:
-	* Integrated with major theme frameworks: Genesis, Headway, Thematic, Thesis to automatically place script directly after opening &lt;body&gt; tag.
-	* Added option for manual tracking script placement if your theme is not set up for automatic integration.
-	* Restored option to put script in header.
-	* Added warning &amp; check when switching themes to make sure Google Analytics is still tracking properly.
-* Tracking comments automatically when using the new contact_form() function from WordPress 3.0.
-* Improved inline documentation.
-* Added WP E-Commerce and Shopp plugin integration to automatically track transactions with Google Analytics ecommerce tracking.
-* Ofcourse also various bug fixes.
+* NOTE WHEN UPGRADING: you'll have to reconfigure the plugin so it can fully support all the new features!
+* Complete rewrite of the codebase
+* Switched to the new asynchronous event tracking model
+* Switched link tracking to an event tracking model, because of this change removed 5 settings from the settings panel that were no longer needed
+* Implemented custom variable tracking to track: 
+	* On the session level: whether the user is logged in or not. 
+	* On the page level: the current posts's author, category, tags, year of publication and post type.
+* Added Google Analytics API integration, so you can easily select a site to track.
+* E-Commerce integration, tracking transactions, support for WP E-Commerce and Shopp.
+* Much much more: check out [the release post](http://yoast.com/google-analytics-wordpress-v4/).
 
 = 3.2.3 =
 * Added 0 result search tracking inspired by [Justin Cutroni's post](http://www.epikone.com/blog/2009/09/08/tracking-ero-result-searches-in-google-analytics/).

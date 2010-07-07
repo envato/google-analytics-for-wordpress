@@ -41,7 +41,7 @@ div.inside ul li.yoast {
 	list-style-image: url(images/yoast-16x16.png); 
 }
 
-.text {
+.text, .select {
 	width: 250px;
 }
 
