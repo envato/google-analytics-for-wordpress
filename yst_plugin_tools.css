@@ -1,6 +1,16 @@
-small {
-	font-weight:normal;
+td.yst_desc {
+	font-weight: normal;
+	font-size: 12px;
+	line-height: 12px;
 	color:#777;	
+}
+
+tr.yst_row {
+	padding: 5px 0 0 0;
+	margin: 5px 0 0 0;
+}
+tr.yst_row.even {
+	background-color: #f6f6f6;
 }
 
 div.inside ul {
@@ -31,7 +41,7 @@ div.inside ul li.yoast {
 	list-style-image: url(images/yoast-16x16.png); 
 }
 
-.text {
+.text, .select {
 	width: 250px;
 }
 
@@ -54,4 +64,8 @@ div.inside ul li.yoast {
 
 div.inside .button:hover, div.inside .button-primary:hover {
 	text-decoration: none;
+}
+
+.button, .button-primary {
+	margin-top: 10px;
 }
