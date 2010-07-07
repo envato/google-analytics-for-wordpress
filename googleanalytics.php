@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 4.0
+Version: 4.0.1
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -64,6 +64,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$uastring = ''; 
 				}
 				wp_enqueue_script('jquery');
+				
 			?>
 				 <script type="text/javascript" charset="utf-8">				
 					function makeSublist(parent,child,childVal)
@@ -262,12 +263,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 											$arr = yoast_xml2array($options['ga_api_responses'][$token]['body']);
 										
 											$ga_accounts = array();
-											foreach ($arr['feed']['entry'] as $site) {
-												$ua = $site['dxp:property']['3_attr']['value'];
-												$account = $site['dxp:property']['1_attr']['value'];
+											if (isset($arr['feed']['entry'][0])) {
+												foreach ($arr['feed']['entry'] as $site) {
+													$ua = $site['dxp:property']['3_attr']['value'];
+													$account = $site['dxp:property']['1_attr']['value'];
+													if (!isset($ga_accounts[$account]) || !is_array($ga_accounts[$account]))
+														$ga_accounts[$account] = array();
+													$ga_accounts[$account][$site['title']] = $ua;
+												}
+											} else {
+												$ua = $arr['feed']['entry']['dxp:property']['3_attr']['value'];
+												$account = $arr['feed']['entry']['dxp:property']['1_attr']['value'];
+												$title = $arr['feed']['entry']['title'];
 												if (!isset($ga_accounts[$account]) || !is_array($ga_accounts[$account]))
 													$ga_accounts[$account] = array();
-												$ga_accounts[$account][$site['title']] = $ua;
+												$ga_accounts[$account][$title] = $ua;
 											}
 
 											$select1 = '<select style="width:150px;" name="ga_account" id="ga_account">';
