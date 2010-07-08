@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 4.0.1
+Version: 4.0.2
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -109,10 +109,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
 								jQuery('#advancedgasettings').css("display","block");
 								jQuery('#customvarsettings').css("display","block");
+								jQuery('#internallinktracking').css("display","block");
 								jQuery('#toc').css("display","block");
 							} else {
 								jQuery('#advancedgasettings').css("display","none");
 								jQuery('#customvarsettings').css("display","none");
+								jQuery('#internallinktracking').css("display","none");
 								jQuery('#toc').css("display","none");
 							}
 						}).change();
@@ -168,14 +170,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -506,17 +508,40 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'allowanchor',
 										'label' => 'Use # instead of ? for Campaign tracking',
-										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">setAllowAnchor</a> call to your tracking code, and makes RSS link tagging use a # as well.',
+										'desc' => 'This adds a <code><a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">_setAllowAnchor</a></code> call to your tracking code, and makes RSS link tagging use a # as well.',
 										'content' => $this->checkbox('allowanchor'),
 									);
 									$rows[] = array(
 										'id' => 'allowlinker',
 										'label' => 'Add <code>_setAllowLinker</code>',
-										'desc' => 'This adds a <a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setAllowLinker">setAllowLinker</a> call to your tracking code,  allowing you to use <code>_link</code> and related functions.',
+										'desc' => 'This adds a <code><a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setAllowLinker">_setAllowLinker</a></code> call to your tracking code,  allowing you to use <code>_link</code> and related functions.',
 										'content' => $this->checkbox('allowlinker'),
 									);
+									$rows[] = array(
+										'id' => 'anonymizeip',
+										'label' => 'Anonymize IP\'s',
+										'desc' => 'This adds <code><a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApi_gat.html#_gat._anonymizeIp">_anonymizeIp</a></code>, telling Google Analytics to anonymize the information sent by the tracker objects by removing the last octet of the IP address prior to its storage.',
+										'content' => $this->checkbox('anonymizeip'),
+									);
+									
 									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).$this->save_button());
 
+									$rows = array();
+									$rows[] = array(
+										'id' => 'internallink',
+										'label' => 'Internal links to track as outbound',
+										'desc' => 'If you want to track all internal links that begin with <code>/out/</code>, enter <code>/out/</code> in the box above. If you have multiple prefixes you can separate them with comma\'s: <code>/out/,/recommends/</code>',
+										'content' => $this->textinput('internallink'),
+									);
+									$rows[] = array(
+										'id' => 'internallinklabel',
+										'label' => 'Label to use',
+										'desc' => 'The label to use for these links, this will be added to where the click came from, so if the label is "aff", the label for a click from the content of an article becomes "outbound-article-aff".',
+										'content' => $this->textinput('internallinklabel'),
+									);
+
+									$this->postbox('internallinktracking','Internal Links to Track as Outbound',$this->form_table($rows).$this->save_button());
+									
 									$modules = array();
 									
 /*									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
@@ -677,6 +702,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				if ( $options['allowlinker'] )
 					$push[] = "'_setAllowLinker',true";
 				
+				if ( $options['anonymizeip'] )
+					$push[] = "'_anonymizeIp'";
+					
 				if ( isset($options['domain']) && $options['domain'] != "" ) {
 					// should allow for a 'none' domain too!
 					if (substr($options['domain'],0,1) != "." && $options['domain'] != 'none')
@@ -821,7 +849,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function spool_adsense() {
 			$options  = get_option('Yoast_Google_Analytics');
-			if ( $options["uastring"] != "" && (!current_user_can('edit_users') || $options["admintracking"]) && !is_preview() ) {
+			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
 				echo '</script>'."\n";
@@ -846,10 +874,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			}
 			return $jsprefix."_gaq.push(".$pushstr.");";
 		}
-		/* Create an array which contians:
-		 * "domain" e.g. boakes.org
-		 * "host" e.g. store.boakes.org
-		 */
+		
 		function ga_get_domain($uri){
 			$hostPattern = "/^(http:\/\/)?([^\/]+)/i";
 			$domainPatternUS = "/[^\.\/]+\.[^\.\/]+$/";
@@ -870,18 +895,21 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			$options  = get_option('Yoast_Google_Analytics');
 			
 			// Break out immediately if the link is not an http or https link.
-			if (strpos($matches[2],"http") !== 0)
+			if (strpos($matches[2],"http") !== 0) {
 				$target = false;
-			else
+			} else if ((strpos($matches[2],"mailto") === 0)) {
+				$target = 'email';
+			} else {
 				$target = GA_Filter::ga_get_domain($matches[3]);
-				
+			}
 			$trackBit = "";
 			$extension = substr(strrchr($matches[3], '.'), 1);
 			$dlextensions = split(",",str_replace('.','',$options['dlextensions']));
 			if ( $target ) {
-				if ( in_array($extension, $dlextensions) ) {
-					$file = $matches[3];
-					$trackBit = GA_Filter::ga_get_tracking_link('download', $file,'');
+				if ( $target == 'email' ) {
+					$trackBit = GA_Filter::ga_get_tracking_link('mailto', str_replace('mailto:','',$matches[3]),'');
+				} else if ( in_array($extension, $dlextensions) ) {
+					$trackBit = GA_Filter::ga_get_tracking_link('download', $matches[3],'');
 				} else if ( $target["domain"] != $origin["domain"] ){
 					if ($options['domainorurl'] == "domain") {
 						$url = $target["host"];
@@ -889,7 +917,18 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 						$url = $matches[3]; 
 					}
 					$trackBit = GA_Filter::ga_get_tracking_link($category, $url,'');
-				} 				
+				} else if ( $target["domain"] == $origin["domain"] && isset($options['internallink']) && $options['internallink'] != '') {
+					$url = preg_replace('|'.$origin["host"].'|','',$matches[3]);
+					$extintlinks = explode(',',$options['internallink']);
+					foreach ($extintlinks as $link) {
+						if (preg_match('|^'.trim($link).'|', $url, $match)) {
+							$label = $options['internallinklabel'];
+							if ($label == '')
+								$label = 'int';
+							$trackBit = GA_Filter::ga_get_tracking_link($category.'-'.$label, $url,'');
+						}						
+					}
+				}
 			} 
 			if ($trackBit != "") {
 				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
@@ -914,7 +953,26 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			return GA_Filter::ga_parse_link('outbound-comment',$matches);
 		}
 
+		function ga_parse_widget_link($matches){
+			return GA_Filter::ga_parse_link('outbound-widget',$matches);
+		}
+
+		function widget_content($text) {
+			global $current_user;
+			$options  = get_option('Yoast_Google_Analytics');
+			if ($current_user->user_level >= $options["ignore_userlevel"])
+				return $text;
+			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
+			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_widget_link'),$text);
+			return $text;
+		}
+		
 		function the_content($text) {
+			global $current_user;
+			$options  = get_option('Yoast_Google_Analytics');
+			if ($current_user->user_level >= $options["ignore_userlevel"])
+				return $text;
+
 			if (!is_feed()) {
 				static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
 				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_article_link'),$text);				
@@ -923,6 +981,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_text($text) {
+			global $current_user;
+			$options  = get_option('Yoast_Google_Analytics');
+			if ($current_user->user_level >= $options["ignore_userlevel"])
+				return $text;
+
 			if (!is_feed()) {
 				static $anchorPattern = '/<a (.*?)href="(.*?)\/\/(.*?)"(.*?)>(.*?)<\/a>/i';
 				$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_comment_link'),$text);
@@ -931,11 +994,11 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 
 		function comment_author_link($text) {
+			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-
-			if (current_user_can('edit_users') && !$options["admintracking"]) {
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
-			}
+
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
 			preg_match($anchorPattern, $text, $matches);
 			if ($matches[2] == "") return $text;
@@ -953,25 +1016,26 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		}
 		
 		function bookmarks($bookmarks) {
+			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
+			if ($current_user->user_level >= $options["ignore_userlevel"])
+				return $bookmarks;
 			
-			if (!is_admin() && (!current_user_can('edit_users') || $options['admintracking'] ) ) {
-				$i = 0;
-				while ( $i < count($bookmarks) ) {
-					$target = GA_Filter::ga_get_domain($bookmarks[$i]->link_url);
-					$sitedomain = GA_Filter::ga_get_domain(get_bloginfo('url'));
-					if ($target['host'] == $sitedomain['host']) {
-						$i++;
-						continue;
-					}
-					if ($options['domainorurl'] == "domain")
-						$url = $target["host"];
-					else
-						$url = $bookmarks[$i]->link_url;
-					$trackBit = '" onclick="'.GA_Filter::ga_get_tracking_link('outbound-blogroll', $url);
-					$bookmarks[$i]->link_target .= $trackBit;
+			$i = 0;
+			while ( $i < count($bookmarks) ) {
+				$target = GA_Filter::ga_get_domain($bookmarks[$i]->link_url);
+				$sitedomain = GA_Filter::ga_get_domain(get_bloginfo('url'));
+				if ($target['host'] == $sitedomain['host']) {
 					$i++;
+					continue;
 				}
+				if ($options['domainorurl'] == "domain")
+					$url = $target["host"];
+				else
+					$url = $bookmarks[$i]->link_url;
+				$trackBit = '" onclick="'.GA_Filter::ga_get_tracking_link('outbound-blogroll', $url);
+				$bookmarks[$i]->link_target .= $trackBit;
+				$i++;
 			}
 			return $bookmarks;
 		}
@@ -1164,6 +1228,21 @@ function gfform_tag() {
 add_action('wp_footer','gfform_tag',10);
 */
 
+function yoast_sanitize_relative_links($content) {
+    $blogurl = get_bloginfo('url');
+    if (substr($blogurl, -1) == "/") {
+        $blogurl = substr($blogurl, 0, strlen($blogurl));
+    }
+    $content = preg_replace("/<a([^>]*) href=('|\")\/([^\"']*)('|\")/", "<a\${1} href=\"" .$blogurl ."/" ."\${3}\"", $content);
+
+	if (is_singular()) {
+		$content = preg_replace("/<a([^>]*) href=('|\")#([^\"']*)('|\")/", "<a\${1} href=\"" .get_permalink()."#" ."\${3}\"", $content);
+    }
+    return $content;
+}
+add_filter('the_content', 'yoast_sanitize_relative_links', 98);
+add_filter('widget_text', 'yoast_sanitize_relative_links', 98);
+
 function yoast_analytics() {
 	$options	= get_option('Yoast_Google_Analytics');
 	if ($options['position'] == 'manual')
@@ -1175,8 +1254,19 @@ function yoast_analytics() {
 $gaf 		= new GA_Filter();
 $options	= get_option('Yoast_Google_Analytics');
 
-if (!is_array($options))
-	$ga_admin->set_defaults();
+if (!is_array($options)) {
+	$options = get_option('GoogleAnalyticsPP');
+	if (!is_array($options)) {
+		$ga_admin->set_defaults();
+	} else {
+		delete_option('GoogleAnalyticsPP');
+		if ($options['admintracking']) {
+			$options["ignore_userlevel"] = '8';
+			unset($options['admintracking']);
+		}
+		update_option('Yoast_Google_Analytics', $options);
+	}
+}
 
 if ( $options['allowanchor'] ) {
 	add_action('init','ga_utm_hashtag_redirect',1);
@@ -1185,6 +1275,7 @@ if ( $options['allowanchor'] ) {
 if ($options['trackoutbound']) {
 	// filters alter the existing content
 	add_filter('the_content', array('GA_Filter','the_content'), 99);
+	add_filter('widget_text', array('GA_Filter','widget_content'), 99);
 	add_filter('the_excerpt', array('GA_Filter','the_content'), 99);
 	add_filter('comment_text', array('GA_Filter','comment_text'), 99);
 	add_filter('get_bookmarks', array('GA_Filter','bookmarks'), 99);

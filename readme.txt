@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 4.0.1
+Stable tag: 4.0.2
 
 The Google Analytics for WordPress plugin allows you to track your blog easily. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allows you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
@@ -13,8 +13,6 @@ The Google Analytics for WordPress plugin allows you to track your blog easily. 
 The Google Analytics for WordPress plugin allows you to track your blog easily. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allows you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
 For the full list of features, check out the [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/) homepage.
-
-NOTE WHEN UPGRADING TO VERSION 4.0: you'll have to reconfigure the plugin so it can fully support all the new features!
 
 * Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
 * Want to increase traffic to your WordPress blog? Check out the [WordPress SEO](http://yoast.com/articles/wordpress-seo/) Guide!
@@ -30,6 +28,17 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 4.0.2 =
+* Old settings from versions below 4.0 are now properly sanitized and inherited (slaps forehead about simplicity of fix).
+* New features in this release: 
+	* Link sanitization added: relative links will be rewritten to absolute, so /out/ becomes http://example.com/out/ and is tracked properly.
+	* Added a feature to track and label internal links as outbound clicks, for instance /out/ links.
+	* Added tracking for mailto: links.
+	* Added a filter for text-widgets, all links in those widgets are now tagged too.
+	* Added support for [_anonymizeIp](http://code.google.com/apis/analytics/docs/gaJS/gaJSApi_gat.html#_gat._anonymizeIp).
+* Bugs fixed in this release:
+	* Made sure all content filters don't run when the current user is ignored because of his user level.
 
 = 4.0.1 =
 * Fix for when you have only 1 site in a specific Analytics profile.
@@ -162,17 +171,9 @@ For some more info, see the screenshot under Screenshots.
 
 No. You can not. It will break tracking.
 
-= How do I check the image search stats and keywords after installing this plugin? =
-
-Check out this <a href="http://yoast.com/wordpress/google-analytics/how-to-check-your-image-search-stats-and-keywords/">tutorial on checking your image search stats and keywords</a>.
-
 = How do I check my outbound link and download stats? =
 
 Check out this <a href="http://yoast.com/wordpress/google-analytics/checking-your-outbound-click-stats/">tutorial on checking your outbound click stats</a>.
-
-= I want the image search keywords in one big overview... =
-
-Create a <a href="http://yoast.com/wordpress/google-analytics/creating-a-google-analytics-filter-for-image-search/">Google Analytics filter for image search</a>.
 
 == Screenshots ==
 
