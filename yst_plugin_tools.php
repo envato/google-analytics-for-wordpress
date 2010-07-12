@@ -5,8 +5,8 @@
  * Version 0.2
  */
 
-if (!class_exists('Yoast_Plugin_Admin')) {
-	class Yoast_Plugin_Admin {
+if (!class_exists('Yoast_GA_Plugin_Admin')) {
+	class Yoast_GA_Plugin_Admin {
 
 		var $hook 		= '';
 		var $filename	= '';
@@ -15,9 +15,9 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		var $ozhicon	= '';
 		var $optionname = '';
 		var $homepage	= '';
-		var $accesslvl	= 'manage_options';
+		var $accesslvl	= 'edit_users';
 		
-		function Yoast_Plugin_Admin() {
+		function Yoast_GA_Plugin_Admin() {
 			add_action( 'admin_menu', array(&$this, 'register_settings_page') );
 			add_filter( 'plugin_action_links', array(&$this, 'add_action_link'), 10, 2 );
 			add_filter( 'ozh_adminmenu_icon', array(&$this, 'add_ozh_adminmenu_icon' ) );				
@@ -81,19 +81,37 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		/**
 		 * Create a Checkbox input field
 		 */
-		function checkbox($id, $label) {
-			$options = get_option($this->optionname);
-			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/> <label for="'.$id.'">'.$label.'</label><br/>';
+		function checkbox($id) {
+			$options = get_option( $this->optionname );
+			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/>';
 		}
-		
+
 		/**
 		 * Create a Text input field
 		 */
-		function textinput($id, $label) {
-			$options = get_option($this->optionname);
-			return '<label for="'.$id.'">'.$label.':</label><br/><input size="45" type="text" id="'.$id.'" name="'.$id.'" value="'.$options[$id].'"/><br/><br/>';
+		function textinput($id) {
+			$options = get_option( $this->optionname );
+			return '<input class="text" type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
 		}
 
+		/**
+		 * Create a dropdown field
+		 */
+		function select($id, $options, $multiple = false) {
+			$opt = get_option($this->optionname);
+			$output = '<select class="select" name="'.$id.'" id="'.$id.'">';
+			foreach ($options as $val => $name) {
+				$sel = '';
+				if ($opt[$id] == $val)
+					$sel = ' selected="selected"';
+				if ($name == '')
+					$name = $val;
+				$output .= '<option value="'.$val.'"'.$sel.'>'.$name.'</option>';
+			}
+			$output .= '</select>';
+			return $output;
+		}
+		
 		/**
 		 * Create a potbox widget
 		 */
@@ -107,7 +125,6 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				</div>
 			</div>
 		<?php
-			$this->toc .= '<li><a href="#'.$id.'">'.$title.'</a></li>';
 		}	
 
 
@@ -125,7 +142,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				if ($i % 2 == 0) {
 					$class .= ' even';
 				}
-				$content .= '<tr class="'.$row['id'].'_row '.$class.'"><th valign="top" scrope="row">';
+				$content .= '<tr id="'.$row['id'].'_row" class="'.$class.'"><th valign="top" scrope="row">';
 				if (isset($row['id']) && $row['id'] != '')
 					$content .= '<label for="'.$row['id'].'">'.$row['label'].':</label>';
 				else
@@ -134,7 +151,7 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 				$content .= $row['content'];
 				$content .= '</td></tr>'; 
 				if ( isset($row['desc']) && !empty($row['desc']) ) {
-					$content .= '<tr class="'.$row['id'].'_row '.$class.'"><td colspan="2" class="yst_desc"><small>'.$row['desc'].'</small></td></tr>';
+					$content .= '<tr class="'.$class.'"><td colspan="2" class="yst_desc"><small>'.$row['desc'].'</small></td></tr>';
 				}
 					
 				$i++;
@@ -174,21 +191,23 @@ if (!class_exists('Yoast_Plugin_Admin')) {
 		 * Box with latest news from Yoast.com
 		 */
 		function news() {
-			require_once(ABSPATH.WPINC.'/rss.php');  
-			if ( $rss = fetch_rss( 'http://feeds2.feedburner.com/joostdevalk' ) ) {
-				$content = '<ul>';
-				$rss->items = array_slice( $rss->items, 0, 3 );
-				foreach ( (array) $rss->items as $item ) {
-					$content .= '<li class="yoast">';
-					$content .= '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
-					$content .= '</li>';
-				}
-				$content .= '<li class="rss"><a href="http://yoast.com/feed/">Subscribe with RSS</a></li>';
-				$content .= '<li class="email"><a href="http://yoast.com/email-blog-updates/">Subscribe by email</a></li>';
-				$this->postbox('yoastlatest', 'Latest news from Yoast', $content);
+			include_once(ABSPATH . WPINC . '/feed.php');
+			$rss = fetch_feed('http://feeds.feedburner.com/joostdevalk');
+			$rss_items = $rss->get_items( 0, $rss->get_item_quantity(5) );
+			$content = '<ul>';
+			if ( !$rss_items ) {
+			    $content .= '<li class="yoast">no news items, feed might be broken...</li>';
 			} else {
-				$this->postbox('yoastlatest', 'Latest news from Yoast', 'Nothing to say...');
-			}
+			    foreach ( $rss_items as $item ) {
+					$content .= '<li class="yoast">';
+					$content .= '<a class="rsswidget" href="'.esc_url( $item->get_permalink(), $protocolls=null, 'display' ).'">'. htmlentities($item->get_title()) .'</a> ';
+					$content .= '</li>';
+			    }
+			}						
+			$content .= '<li class="rss"><a href="http://yoast.com/feed/">Subscribe with RSS</a></li>';
+			$content .= '<li class="email"><a href="http://yoast.com/email-blog-updates/">Subscribe by email</a></li>';
+			$content .= '</ul>';
+			$this->postbox('yoastlatest', 'Latest news from Yoast', $content);
 		}
 
 		function text_limit( $text, $limit, $finish = ' [&hellip;]') {
