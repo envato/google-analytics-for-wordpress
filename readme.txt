@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 4.0.2
+Stable tag: 4.0.3
 
 The Google Analytics for WordPress plugin allows you to track your blog easily. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allows you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
@@ -28,6 +28,14 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 4.0.3 =
+* New features in this release: 
+	* Added versioning to the options array, to allow for easy addition of options.
+	* Added an option to enable comment form tracking (as this loads jQuery), defaults to on.
+* Bugs fixed:
+	* If you upgraded from before 4.0 to 4.0.2 you might have an empty value for ignore_userlevel in some edge cases, this is now fixed.
+	* Custom search engines were loaded after trackPageview, this was wrong as shown [by these docs](http://code.google.com/intl/sr/apis/analytics/docs/tracking/asyncMigrationExamples.html#SearchEngines), now fixed.
 
 = 4.0.2 =
 * Old settings from versions below 4.0 are now properly sanitized and inherited (slaps forehead about simplicity of fix).

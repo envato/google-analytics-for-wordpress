@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
+Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v403
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 4.0.2
+Version: 4.0.3
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -36,6 +36,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		var $toc		= '';
 
 		function GA_Admin() {
+			$this->upgrade();
+			
 			add_action( 'admin_menu', array(&$this, 'register_settings_page') );
 			add_filter( 'plugin_action_links', array(&$this, 'add_action_link'), 10, 2 );
 			add_filter( 'ozh_adminmenu_icon', array(&$this, 'add_ozh_adminmenu_icon' ) );				
@@ -177,7 +179,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -198,11 +200,25 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			return '<div class="alignright"><input type="submit" class="button-primary" name="submit" value="Update Google Analytics Settings &raquo;" /></div><br class="clear"/>';
 		}
 		
+		function upgrade() {
+			$options = get_option($this->optionname);
+			if ($options['version'] == '') {
+				if ( !isset($options['trackcommentform']) || $options['trackcommentform'] == '')
+					$options['trackcommentform'] = true;
+				if ( !isset($options['ignore_userlevel']) || $options['ignore_userlevel'] == '')
+					$options['ignore_userlevel'] = 11;
+					
+				$options['version'] = '4.0.2';
+			}
+			update_option($this->optionname, $options);
+		}
+
 		function config_page() {
 			$options = get_option($this->optionname);
 			echo $options['msg'];
 			$options['msg'] = '';
 			update_option($this->optionname, $options);
+			
 			?>
 			<div class="wrap">
 				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
@@ -506,6 +522,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'content' => $this->checkbox('trackregistration'),
 									);
 									$rows[] = array(
+										'id' => 'trackcommentform',
+										'label' => 'Add tracking to the comment forms',
+										'content' => $this->checkbox('trackcommentform'),
+									);
+									$rows[] = array(
 										'id' => 'allowanchor',
 										'label' => 'Use # instead of ? for Campaign tracking',
 										'desc' => 'This adds a <code><a href="http://code.google.com/apis/analytics/docs/gaJSApiCampaignTracking.html#_gat.GA_Tracker_._setAllowAnchor">_setAllowAnchor</a></code> call to your tracking code, and makes RSS link tagging use a # as well.',
@@ -644,6 +665,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				'outboundpageview'		=> false,
 				'downloadspageview'		=> false,
 				'position' 				=> 'footer',
+				'trackcommentform'		=> true,
 				'trackadsense'			=> false,
 				'trackoutbound' 		=> true,
 				'trackregistration' 	=> false,
@@ -693,7 +715,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			 * The order of custom variables is very, very important: custom vars should always take up the same slot to make analysis easy.
 			 */
 			$customvarslot = 1;
-			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) { 
+			if ( $options["uastring"] != "" && !( is_numeric($options["ignore_userlevel"]) || $current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) { 
 				$push = array();
 
 				if ( $options['allowanchor'] )
@@ -818,7 +840,6 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	<script type="text/javascript">//<![CDATA[
 	var _gaq = _gaq || [];
 	_gaq.push(['_setAccount','<?php echo $options["uastring"]; ?>']);
-	_gaq.push(<?php echo $pushstr; ?>);
 <?php
 	if ( $options["extrase"] ) {
 		if ( !empty($options["extraseurl"]) ) {
@@ -829,7 +850,9 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		echo '</script><script src="'.$url.'" type="text/javascript"></script>'."\n".'<script type="text/javascript">'; 
 	}
 
-?>	(function() {
+?>
+	_gaq.push(<?php echo $pushstr; ?>);
+	(function() {
 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
@@ -849,7 +872,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function spool_adsense() {
 			$options  = get_option('Yoast_Google_Analytics');
-			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) {
+			if ( $options["uastring"] != "" && !(is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
 				echo '</script>'."\n";
@@ -960,7 +983,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function widget_content($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if ($current_user->user_level >= $options["ignore_userlevel"])
+			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
 			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_widget_link'),$text);
@@ -970,7 +993,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function the_content($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if ($current_user->user_level >= $options["ignore_userlevel"])
+			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 			if (!is_feed()) {
@@ -983,7 +1006,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function comment_text($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if ($current_user->user_level >= $options["ignore_userlevel"])
+			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 			if (!is_feed()) {
@@ -996,7 +1019,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function comment_author_link($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if ($current_user->user_level >= $options["ignore_userlevel"])
+			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
@@ -1018,7 +1041,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function bookmarks($bookmarks) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if ($current_user->user_level >= $options["ignore_userlevel"])
+			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
 				return $bookmarks;
 			
 			$i = 0;
@@ -1263,6 +1286,8 @@ if (!is_array($options)) {
 		if ($options['admintracking']) {
 			$options["ignore_userlevel"] = '8';
 			unset($options['admintracking']);
+		} else {
+			$options["ignore_userlevel"] = '11';
 		}
 		update_option('Yoast_Google_Analytics', $options);
 	}
