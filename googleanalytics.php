@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v403
+Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
 Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
 Author: Joost de Valk
-Version: 4.0.3
+Version: 4.0.4
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -202,13 +202,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		
 		function upgrade() {
 			$options = get_option($this->optionname);
-			if ($options['version'] == '') {
+			if ($options['version'] != '4.0.4') {
 				if ( !isset($options['trackcommentform']) || $options['trackcommentform'] == '')
 					$options['trackcommentform'] = true;
 				if ( !isset($options['ignore_userlevel']) || $options['ignore_userlevel'] == '')
 					$options['ignore_userlevel'] = 11;
 					
-				$options['version'] = '4.0.2';
+				$options['version'] = '4.0.4';
 			}
 			update_option($this->optionname, $options);
 		}
@@ -715,7 +715,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 			 * The order of custom variables is very, very important: custom vars should always take up the same slot to make analysis easy.
 			 */
 			$customvarslot = 1;
-			if ( $options["uastring"] != "" && !( is_numeric($options["ignore_userlevel"]) || $current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) { 
+			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) { 
 				$push = array();
 
 				if ( $options['allowanchor'] )
@@ -872,7 +872,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 */
 		function spool_adsense() {
 			$options  = get_option('Yoast_Google_Analytics');
-			if ( $options["uastring"] != "" && !(is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) {
+			if ( $options["uastring"] != "" && !($current_user->user_level >= $options["ignore_userlevel"]) && !is_preview() ) {
 				echo '<script type="text/javascript">'."\n";
 				echo "\t".'window.google_analytics_uacct = "'.$options["uastring"].'";'."\n"; 
 				echo '</script>'."\n";
@@ -983,7 +983,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function widget_content($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 			static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
 			$text = preg_replace_callback($anchorPattern,array('GA_Filter','ga_parse_widget_link'),$text);
@@ -993,7 +993,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function the_content($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 			if (!is_feed()) {
@@ -1006,7 +1006,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function comment_text($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 			if (!is_feed()) {
@@ -1019,7 +1019,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function comment_author_link($text) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $text;
 
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
@@ -1041,7 +1041,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		function bookmarks($bookmarks) {
 			global $current_user;
 			$options  = get_option('Yoast_Google_Analytics');
-			if (is_numeric($options["ignore_userlevel"]) && $current_user->user_level >= $options["ignore_userlevel"])
+			if ($current_user->user_level >= $options["ignore_userlevel"])
 				return $bookmarks;
 			
 			$i = 0;
