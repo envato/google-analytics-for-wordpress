@@ -1,14 +1,13 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v40
-Description: This plugin makes it simple to add Google Analytics with extra search engines and automatic clickout and download tracking to your WordPress blog. 
+Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v405
+Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.4
+Version: 4.0.5
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
-
 */
 
 // Determine the location
@@ -127,11 +126,26 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 								jQuery('#extrasebox').css("display","none");
 							}
 						}).change();
+						jQuery('#gajslocalhosting').change(function(){
+							if ((jQuery('#gajslocalhosting').attr('checked')) == true)  {
+								jQuery('#localhostingbox').css("display","block");
+							} else {
+								jQuery('#localhostingbox').css("display","none");
+							}
+						}).change();
 						jQuery('#customvarsettings :input').change(function() {
 							if (jQuery("#customvarsettings :input:checked").size() > 5) {
 								alert('The maximum number of allowed custom variables in Google Analytics is 5, please unselect one of the other custom variables before selecting this one.')
 								jQuery(this).attr('checked', false);
 							};
+						});
+						jQuery('#uastring').change(function(){
+							if ((jQuery('#switchtomanual').attr('checked')) == true)  {
+								if (!jQuery(this).val().match(/^UA-[\d-]+$/)) {
+									alert("That's not a valid UA ID, please make sure it looks something like this: UA-1234567-123, and that there are no spaces or other characters in the input field.");
+									jQuery(this).focus();
+								}
+							}
 						});
 					});
 				 </script>
@@ -172,14 +186,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gajsurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -190,8 +204,17 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['uastring'] = $_POST['uastring_man'];
 				}
 				
-				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics settings updated.</p></div>\n";
-				$options['msg'] .= "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";	
+				$cache = '';
+				if ( function_exists('w3tc_pgcache_flush') ) {
+					w3tc_pgcache_flush();
+					$cache = ' and <strong>W3TC Page Cache cleared</strong>';
+				} else if ( function_exists('wp_cache_clear_cache') ) {
+					wp_cache_clear_cache();
+					$cache = ' and <strong>WP Super Cache cleared</strong>';
+				}
+										
+				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics <strong>settings updated</strong>$cache.</p></div>\n";
+				$options['msg'] .= "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";
 			}
 			update_option($this->optionname, $options);
 		}
@@ -267,7 +290,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 												'method' 		=> 'GET', 
 												'body' 			=> '', 
 												'headers' 		=> $headers,
-												'timeout'		=> 10,
+												'timeout'		=> 20,
 											);
 											$result = $request->request( $api_url , $args );
 											if (is_array($result) && $result['response']['code'] == 200) {
@@ -313,7 +336,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 													if (!empty($sel)) {
 														$accountsel = true;
 													}
-													$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.'</option>'."\n";
+													$select2 .= "\t".'<option class="sub_'.$i.'" '.$sel.' value="'.$ua.'">'.$title.' - '.$ua.'</option>'."\n";
 												}
 												$select1 .= "\t".'<option '.selected($accountsel,true,false).' value="'.$i.'">'.$account.'</option>'."\n";
 												$i++;
@@ -337,7 +360,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 													window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
 												</script>';
 											}
-										
+											$line .= 'Please note that if you have several profiles of the same website, it doesn\'t matter which profile you select, and in fact another profile might show as selected later. You can check whether they\'re profiles for the same site by checking if they have the same UA code. If that\'s true, tracking will be correct.<br/>';
 											$line .= '<br/>Refresh this listing or switch to another account: ';
 										} else {
 											$line = 'Unfortunately, an error occurred while connecting to Google, please try again:';
@@ -503,6 +526,15 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'content' => $this->checkbox('trackadsense'),
 									);
 									$rows[] = array(
+										'id' => 'gajslocalhosting',
+										'label' => 'Host ga.js locally',
+										'content' => $this->checkbox('gajslocalhosting').'<div id="localhostingbox">
+											You have to provide a URL to your ga.js file:
+											<input type="text" name="gajsurl" size="30" value="'.$options['gajsurl'].'"/>
+										</div>',
+										'desc' => 'For some reasons you might want to use a locally hosted ga.js file, or another ga.js file, check the box and then please enter the full URL including http here.'
+									);
+									$rows[] = array(
 										'id' => 'extrase',
 										'label' => 'Track extra Search Engines',
 										'content' => $this->checkbox('extrase').'<div id="extrasebox">
@@ -626,7 +658,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						if ( count($modules) > 0 )
 							$this->postbox('toc','List of Available Modules',$this->toc($modules));
 						$this->plugin_like();
-						$this->postbox('donate','Donate $5, $10 or $20 now!','<form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						$this->postbox('donate','Donate $5, $10 or $20 now!','<p>This plugin has cost me countless hours of work, if you use it, please donate a token of your appreciation!</p><br/><form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
 						<input type="hidden" name="hosted_button_id" value="FW9FK4EBZ9FVJ">
 						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
@@ -725,7 +757,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$push[] = "'_setAllowLinker',true";
 				
 				if ( $options['anonymizeip'] )
-					$push[] = "'_anonymizeIp'";
+					$push[] = "'_gat._anonymizeIp'";
 					
 				if ( isset($options['domain']) && $options['domain'] != "" ) {
 					// should allow for a 'none' domain too!
@@ -854,7 +886,14 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	_gaq.push(<?php echo $pushstr; ?>);
 	(function() {
 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		ga.src = <?php 
+if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
+	echo "'".$options['gajsurl']."';";
+} else {
+	echo "('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';";
+}
+?>
+
 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 	})();
 	//]]></script>
