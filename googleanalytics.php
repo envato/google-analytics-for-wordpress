@@ -21,7 +21,7 @@ function gapp_plugin_path() {
 
 if ( ! class_exists( 'GA_Admin' ) ) {
 
-	require_once('yst_plugin_tools.php');
+	require_once plugin_dir_path(__FILE__).'yst_plugin_tools.php';
 	
 	class GA_Admin extends Yoast_GA_Plugin_Admin {
 
@@ -274,7 +274,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										else
 											$token = $options['ga_token'];
 										
-										require_once('xmlparser.php');
+										require_once plugin_dir_path(__FILE__).'xmlparser.php';
 										if (file_exists(ABSPATH.'wp-includes/class-http.php'))
 											require_once(ABSPATH.'wp-includes/class-http.php');
 
