@@ -30,6 +30,19 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.0.6 =
+* Bugs fixed in this release:
+	* Sanitizing relative URL's could go wrong on some blogs installed in subdirectories.
+	* Comment form tracking only worked for posts, not for pages, and would sometimes cause other issues. Patch by [Milan Dinić](http://blog.milandinic.com/).
+	* Settings page: now correctly hiding internal links to track as outbound block when outbound link tracking is disabled.
+* Code sanitization:
+	* Hardcoded the [scope for custom variables](http://code.google.com/apis/analytics/docs/gaJS/gaJSApiBasicConfiguration.html#_gat.GA_Tracker_._setCustomVar) to prevent that from possibly going wrong.
+	* Improved method of determining whether current user should be tracked or not.
+	* Added plugin version number in script branding comment, and moved branding comment to within CDATA section to assist in debugging, even when people use W3TC or another form of code minification.
+* Documentation fixes:
+	* Updated custom variable order in settings panel to reflect order of tracking. You can now determine their index key by counting down, first checked box is index 1, second 2, etc.
+	* Ignored users dropdown now correctly reflects that ignoring subcribers and up means ignoring ALL logged in users.
+	
 = 4.0.5 =
 * New features in this release: 
 	* Added a simple check to see if the UA code, when entered manually, matches a basic pattern of UA-1234567-12.
