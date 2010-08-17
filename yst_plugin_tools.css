@@ -41,7 +41,7 @@ div.inside ul li.yoast {
 	list-style-image: url(images/yoast-16x16.png); 
 }
 
-.text {
+.text, .select {
 	width: 250px;
 }
 
@@ -68,4 +68,14 @@ div.inside .button:hover, div.inside .button-primary:hover {
 
 .button, .button-primary {
 	margin-top: 10px;
+}
+
+.postbox#donate {
+	border-color: #fa0913;
+	border-width: 2px;
+}
+strong.red {
+	color: #fa0913;
+	font-weight: bold;
+	font-size: 105%;
 }
