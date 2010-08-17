@@ -4,11 +4,13 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 4.0.6
+Stable tag: 4.0.7
 
 The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allow you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
 == Description ==
+
+![Google Analytics for WordPress](http://cdn.yoast.com/downloads/ga-logo-532.png)
 
 The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allow you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
@@ -29,6 +31,12 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 4.0.7 =
+* Bugs fixed in this release:
+	* Changed access level from "edit_users" to "manage_options" so super-admins in an multi site environment would be able to access.
+	* Not a real bug but a fix nonetheless: UA ID is now trimmed on output, so spaces accidently entered in the settings screen won't prevent tracking.
+	* Changed double quotes in link tracking output to single quotes to resolve incompatibilities with several plugins.
 
 = 4.0.6 =
 * Bugs fixed in this release:

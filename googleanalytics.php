@@ -880,7 +880,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 	<script type="text/javascript">//<![CDATA[
 	// Google Analytics for WordPress by Yoast v<?php echo $options['version'];  ?> | http://yoast.com/wordpress/google-analytics/
 	var _gaq = _gaq || [];
-	_gaq.push(['_setAccount','<?php echo $options["uastring"]; ?>']);
+	_gaq.push(['_setAccount','<?php echo trim($options["uastring"]); ?>']);
 <?php
 	if ( $options["extrase"] ) {
 		if ( !empty($options["extraseurl"]) ) {
@@ -911,7 +911,7 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 <?php
 			} else if ( $options["uastring"] != "" ) {
 				echo "<!-- Google Analytics tracking code not shown because users over level ".$options["ignore_userlevel"]." are ignored -->\n";
-			} else if ( $options["uastring"] == "" && current_user_can('edit_users') ) {
+			} else if ( $options["uastring"] == "" && current_user_can('manage_options') ) {
 				echo "<!-- Google Analytics tracking code not shown because yo haven't chosen a Google Analytics account yet. -->\n";
 			}
 		}
@@ -1006,15 +1006,15 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
 					// Check for manually tagged outbound clicks, and replace them with the tracking of choice.
 					if (preg_match('/.*_track(Pageview|Event).*/i', $matches[4]) > 0) {
-						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*;)?[a-zA-Z0-9]+\._track(Pageview|Event)\([^\)]+\)(;)?(.*)?[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2$5"', $matches[4]);
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*;)?[a-zA-Z0-9]+\._track(Pageview|Event)\([^\)]+\)(;)?(.*)?[\'\"]/i', 'onclick=\'javascript:' . $trackBit .'$2$5\'', $matches[4]);
 					} else {
-						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*?)[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2"', $matches[4]);
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*?)[\'\"]/i', 'onclick=\'javascript:' . $trackBit .'$2\'', $matches[4]);
 					}
 				} else {
-					$matches[4] = 'onclick="javascript:' . $trackBit . '"' . $matches[4];
+					$matches[4] = 'onclick=\'javascript:' . $trackBit . '\'' . $matches[4];
 				}				
 			}
-			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
+			return '<a ' . $matches[1] . 'href=\'' . $matches[2] . '//' . $matches[3] . '\'' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
 		}
 
 		function ga_parse_article_link($matches){
