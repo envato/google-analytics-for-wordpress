@@ -153,7 +153,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 							}
 						});
 					});
-				 </script>
+				</script>
+				<link rel="shortcut icon" href="<?php echo plugin_dir_url(__FILE__); ?>/images/favicon.ico" />
 			<?php
 			}
 		}
@@ -252,7 +253,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			
 			?>
 			<div class="wrap">
-				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(http://cdn.yoast.com/wp-content/themes/yoast-v2/images/yoast-32x32.png) no-repeat;" class="icon32"><br /></div></a>
+				<a href="http://yoast.com/"><div id="yoast-icon" style="background: url(<?php echo plugin_dir_url(__FILE__) ?>images/ga-icon-32x32.png) no-repeat;" class="icon32"><br /></div></a>
 				<h2>Google Analytics for WordPress Configuration</h2>
 				<div class="postbox-container" style="width:65%;">
 					<div class="metabox-holder">	
@@ -667,7 +668,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						if ( count($modules) > 0 )
 							$this->postbox('toc','List of Available Modules',$this->toc($modules));
 						$this->plugin_like();
-						$this->postbox('donate','<strong class="red">Donate $5, $10, $20 or $50!</strong>','<p>This plugin has cost me countless hours of work, if you use it, please donate a token of your appreciation!</p><br/><form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						$this->postbox('donate','<strong class="red">Donate $10, $20 or $50!</strong>','<p>This plugin has cost me countless hours of work, if you use it, please donate a token of your appreciation!</p><br/><form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
 						<input type="hidden" name="hosted_button_id" value="FW9FK4EBZ9FVJ">
 						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
