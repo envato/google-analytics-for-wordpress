@@ -71,11 +71,11 @@ div.inside .button:hover, div.inside .button-primary:hover {
 }
 
 .postbox#donate {
-	border-color: #fa0913;
+	border-color: green;
 	border-width: 2px;
 }
 strong.red {
-	color: #fa0913;
+	color: green;
 	font-weight: bold;
 	font-size: 105%;
 }
