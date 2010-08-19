@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.7
+Version: 4.0.8
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -1007,15 +1007,15 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				if (preg_match('/onclick=[\'\"](.*?)[\'\"]/i', $matches[4]) > 0) {
 					// Check for manually tagged outbound clicks, and replace them with the tracking of choice.
 					if (preg_match('/.*_track(Pageview|Event).*/i', $matches[4]) > 0) {
-						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*;)?[a-zA-Z0-9]+\._track(Pageview|Event)\([^\)]+\)(;)?(.*)?[\'\"]/i', 'onclick=\'javascript:' . $trackBit .'$2$5\'', $matches[4]);
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*;)?[a-zA-Z0-9]+\._track(Pageview|Event)\([^\)]+\)(;)?(.*)?[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2$5"', $matches[4]);
 					} else {
-						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*?)[\'\"]/i', 'onclick=\'javascript:' . $trackBit .'$2\'', $matches[4]);
+						$matches[4] = preg_replace('/onclick=[\'\"](javascript:)?(.*?)[\'\"]/i', 'onclick="javascript:' . $trackBit .'$2"', $matches[4]);
 					}
 				} else {
-					$matches[4] = 'onclick=\'javascript:' . $trackBit . '\'' . $matches[4];
+					$matches[4] = 'onclick="javascript:' . $trackBit . '"' . $matches[4];
 				}				
 			}
-			return '<a ' . $matches[1] . 'href=\'' . $matches[2] . '//' . $matches[3] . '\'' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
+			return '<a ' . $matches[1] . 'href="' . $matches[2] . '//' . $matches[3] . '"' . ' ' . $matches[4] . '>' . $matches[5] . '</a>';
 		}
 
 		function ga_parse_article_link($matches){
