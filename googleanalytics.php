@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.8
+Version: 4.0.9
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -109,19 +109,23 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						jQuery('#trackoutbound').change(function(){
 							if ((jQuery('#trackoutbound').attr('checked')) == true)  {
 								jQuery('#internallinktracking').css("display","block");
+								jQuery('.internallinktracking').css("display","list-item");
 							} else {
 								jQuery('#internallinktracking').css("display","none");
+								jQuery('.internallinktracking').css("display","none");
 							}
 						}).change();
 						jQuery('#advancedsettings').change(function(){
 							if ((jQuery('#advancedsettings').attr('checked')) == true)  {
 								jQuery('#advancedgasettings').css("display","block");
 								jQuery('#customvarsettings').css("display","block");
-								jQuery('#toc').css("display","block");
+								jQuery('.advancedgasettings').css("display","list-item");
+								jQuery('.customvarsettings').css("display","list-item");
 							} else {
 								jQuery('#advancedgasettings').css("display","none");
 								jQuery('#customvarsettings').css("display","none");
-								jQuery('#toc').css("display","none");
+								jQuery('.advancedgasettings').css("display","none");
+								jQuery('.customvarsettings').css("display","none");
 							}
 						}).change();
 						jQuery('#extrase').change(function(){
@@ -176,7 +180,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function toc( $modules ) {
 			$output = '<ul>';
 			foreach ($modules as $module => $key) {
-				$output .= '<li><a href="#'.$key.'">'.$module.'</a></li>';
+				$output .= '<li class="'.$key.'"><a href="#'.$key.'">'.$module.'</a></li>';
 			}
 			$output .= '</ul>';
 			return $output;
@@ -199,7 +203,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -250,6 +254,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			echo $options['msg'];
 			$options['msg'] = '';
 			update_option($this->optionname, $options);
+			$modules = array();
 			
 			?>
 			<div class="wrap">
@@ -475,6 +480,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'content' =>  $this->checkbox('cv_all_categories'),
 									);
 
+									$modules['Custom Variables'] = 'customvarsettings';
 									$this->postbox('customvarsettings','Custom Variables Settings',$pre_content.$this->form_table($rows).$this->save_button());
 									
 									$rows = array();
@@ -586,7 +592,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'This adds <code><a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApi_gat.html#_gat._anonymizeIp">_anonymizeIp</a></code>, telling Google Analytics to anonymize the information sent by the tracker objects by removing the last octet of the IP address prior to its storage.',
 										'content' => $this->checkbox('anonymizeip'),
 									);
-									
+									$modules['Advanced Settings'] = 'advancedgasettings';
 									$this->postbox('advancedgasettings','Advanced Settings',$this->form_table($rows).$this->save_button());
 
 									$rows = array();
@@ -602,10 +608,8 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'desc' => 'The label to use for these links, this will be added to where the click came from, so if the label is "aff", the label for a click from the content of an article becomes "outbound-article-aff".',
 										'content' => $this->textinput('internallinklabel'),
 									);
-
+									$modules['Internal Link Tracking'] = 'internallinktracking';
 									$this->postbox('internallinktracking','Internal Links to Track as Outbound',$this->form_table($rows).$this->save_button());
-									
-									$modules = array();
 									
 /*									if (class_exists('RGForms') && GFCommon::$version >= '1.3.11') {
 										$pre_content = 'This plugin can automatically tag your Gravity Forms to track form submissions as either events or pageviews';
@@ -651,7 +655,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										$this->postbox('shoppecommerce','Shopp e-Commerce Settings',$pre_content.$this->form_table($rows).$this->save_button());
 										$modules['Shopp'] = 'shoppecommerce';
 									}
-								?>
+									$pre_content = '<p>If you want to confirm that tracking on your blog is working as it should, enable this option and check the console in <a href="http://getfirebug.com/">Firebug</a> (for Firefox), <a href="http://getfirebug.com/firebuglite">Firebug Lite</a> (for other browsers) or Chrome &amp; Safari\'s Web Inspector. Be absolutely sure to disable debugging afterwards, as it is slower than normal tracking.</p><p><strong>Note</strong>: the debugging and firebug scripts are only loaded for admins.</p>';
+									$rows = array();
+									$rows[] = array(
+										'id' => 'debug',
+										'label' => 'Enable debug mode',
+										'content' => $this->checkbox('debug'),
+									);
+									$rows[] = array(
+										'id' => 'firebuglite',
+										'label' => 'Enable Firebug Lite',
+										'content' => $this->checkbox('firebuglite'),
+									);
+									$this->postbox('debugmode','Debug Mode',$pre_content.$this->form_table($rows).$this->save_button());								
+									$modules['Debug Mode'] = 'debugmode';
+									?>
 					</form>
 					<form action="<?php echo $this->plugin_options_url(); ?>" method="post" onsubmit="javascript:return(confirm('Do you really want to reset all settings?'));">
 						<input type="hidden" name="reset" value="true"/>
@@ -876,6 +894,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$pushstr .= "[".$key."]";
 				}
 
+				if ( current_user_can('manage_options') && $options['firebuglite'] && $options['debug'] )
+					echo '<script src="https://getfirebug.com/firebug-lite.js" type="text/javascript"></script>';
 				?>
 				
 	<script type="text/javascript">//<![CDATA[
@@ -900,7 +920,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 	echo "'".$options['gajsurl']."';";
 } else {
-	echo "('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';";
+	$script = 'ga.js';
+	if ( current_user_can('manage_options') && $options['debug'] )
+		$script = 'u/ga_debug.js';
+	echo "('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/".$script."';";
 }
 ?>
 
@@ -908,7 +931,6 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 	})();
 	// End of Google Analytics for WordPress by Yoast v4.0
 	//]]></script>
-	
 <?php
 			} else if ( $options["uastring"] != "" ) {
 				echo "<!-- Google Analytics tracking code not shown because users over level ".$options["ignore_userlevel"]." are ignored -->\n";
@@ -977,7 +999,7 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 			}
 			$trackBit = "";
 			$extension = substr(strrchr($matches[3], '.'), 1);
-			$dlextensions = split(",",str_replace('.','',$options['dlextensions']));
+			$dlextensions = explode(",",str_replace('.','',$options['dlextensions']));
 			if ( $target ) {
 				if ( $target == 'email' ) {
 					$trackBit = GA_Filter::ga_get_tracking_link('mailto', str_replace('mailto:','',$matches[3]),'');
@@ -1174,14 +1196,26 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 		
 		function shopp_transaction_tracking( $push ) {
 			global $Shopp;
-			// Only process if we're in the checkout process (receipt page)
-			if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) 
-				return $push;
-			// Only process if we have valid order data
-			if (!isset($Shopp->Cart->data->Purchase) || empty($Shopp->Cart->data->Purchase->id)) 
-				return $push;
 
-			$Purchase = $Shopp->Cart->data->Purchase;
+			// Only process if we're in the checkout process (receipt page)
+			if (version_compare(substr(SHOPP_VERSION,0,3),'1.1') >= 0) {
+				// Only process if we're in the checkout process (receipt page)
+				if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) return $push;
+				if (empty($Shopp->Order->purchase)) return $push;
+
+				$Purchase = new Purchase($Shopp->Order->purchase);
+				$Purchase->load_purchased();
+			} else {
+				// For 1.0.x
+				// Only process if we're in the checkout process (receipt page)
+				if (function_exists('is_shopp_page') && !is_shopp_page('checkout')) return $push;
+				// Only process if we have valid order data
+				if (!isset($Shopp->Cart->data->Purchase)) return $push;
+				if (empty($Shopp->Cart->data->Purchase->id)) return $push;
+
+				$Purchase = $Shopp->Cart->data->Purchase;
+			}
+
 			$push[] = "'_addTrans',"
 						."'".$Purchase->id."',"										// Order ID
 						."'".GA_Filter::ga_str_clean(get_bloginfo('name'))."'," 	// Store

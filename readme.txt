@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 4.0.8
+Stable tag: 4.0.9
 
 The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allow you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
@@ -29,6 +29,14 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 4.0.9 =
+* Code enhancements:
+	* Updated Shopp integration to also work with the upcoming Shopp 1.1 and higher.
+	* Switched from [split](http://php.net/split) to [explode](http://php.net/explode), as split has been deprecated in PHP 5.3+.
+* New features:
+	* A new debug mode has been added, using the new [ga_debug.js](http://analytics.blogspot.com/2010/08/new-tools-to-debug-your-tracking-code.html). Along with this you can now enable Firebug Lite, so you can easily see the output from the debug script in each browser. Admins only, of course.
+	* A list of modules has been added to the right sidebar, to allow easy navigation within the settings page.
 
 = 4.0.8 =
 * Reverted double quote change from 4.0.7 because it was causing bigger issues.
@@ -227,3 +235,4 @@ Because that's where it belongs. It makes the page load faster (yes, faster, due
 2. Screenshot of the custom variable settings panel.
 3. Screenshot of the link tracking panel.
 4. Screenshot of the advanced settings panel.
+5. Screenshot of the debugging mode in action.
