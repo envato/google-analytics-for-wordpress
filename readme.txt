@@ -12,6 +12,10 @@ The Google Analytics for WordPress plugin allows you to track your blog easily a
 
 The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allow you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
 
+Check out the video:
+
+[blip.tv ?posts_id=4068073&dest=-1]
+
 For the full list of features, check out the [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/) homepage.
 
 * Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
