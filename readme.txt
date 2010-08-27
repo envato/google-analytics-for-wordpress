@@ -10,15 +10,39 @@ The Google Analytics for WordPress plugin allows you to track your blog easily a
 
 == Description ==
 
-The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. It adds the asynchronous tracking code for Google Analytics and automatically tracks and segments all outbound links from within posts, comment author links, links within comments, blogroll links and downloads. It'll add custom variables while tracking to show you pageviews per author, post type, category or publication year. It'll also allow you to track AdSense clicks, add extra search engines, ignore certain user levels, and much much more: this is simply the Ultimate Google Analytic solution for WP!
+The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. 
 
 Check out the video:
 
-[youtube http://www.youtube.com/v/tnUXzbvXxSQ?fs=1&hd=1]
+[youtube http://www.youtube.com/watch?v=tnUXzbvXxSQ]
 
-For the full list of features, check out the [Google Analytics for WordPress](http://yoast.com/wordpress/google-analytics/) homepage.
+Full list of features:
 
-* Other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
+* Simple installation through integration with Google Analytics API: authenticate, select the site you want to track and you're done.
+* This plugin uses the asynchronous tracking code, the fastest and most reliable tracking code Google Analytics offers.
+* Option to manually place the tracking code in another location.
+* Outbound link & downloads tracking.
+	* Configurable options to track outbound links either as pageviews.
+	* Option to track just downloads as pageviews.
+* Allows usage of custom variables to track meta data on pages. Support for the following custom variables:
+	* Author
+	* Single category and / or multiple categories
+	* Post type (especially useful if you use custom post types)
+	* Logged in users
+	* Publication Year
+	* Tags
+* Possibility to ignore any user level and up, so all editors and higher for instance.
+* Easily connect your AdSense and Analytics accounts.
+* Option to tag links with campaign tracking, with the option to use hashes (#).
+* Option anonymize IP's, for use in countries like Germany.
+* Full [debug mode](http://yoast.com/google-analytics-debug-mode/), including Firebug lite and ga_debug.js for debugging Analytics issues.
+* Allow local hosting of ga.js file.
+* Tracking non default search engines
+* Tracking of login and registration forms.
+
+Other interesting stuff:
+
+* Check out the other [Wordpress plugins](http://yoast.com/wordpress/) by the same author.
 * Want to increase traffic to your WordPress blog? Check out the [WordPress SEO](http://yoast.com/articles/wordpress-seo/) Guide!
 * Check out the authors [WordPress Hosting](http://yoast.com/articles/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
 * If you've still not seen enough, or you'd rather listen than read, check out the [WordPress Podcast](http://wp-community.org/), hosted by the author of this plugin and Frederick Townes, the creator of [W3 Total Cache](http://wordpress.org/extend/plugins/w3-total-cache/).
