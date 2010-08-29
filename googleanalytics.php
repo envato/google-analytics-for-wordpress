@@ -10,6 +10,8 @@ Author URI: http://yoast.com/
 License: GPL
 */
 
+// This plugin was originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
+
 // Determine the location
 function gapp_plugin_path() {
 	return plugins_url('', __FILE__).'/';
