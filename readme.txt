@@ -14,7 +14,7 @@ The Google Analytics for WordPress plugin allows you to track your blog easily a
 
 Check out the video:
 
-[youtube http://www.youtube.com/watch?v=tnUXzbvXxSQ]
+http://www.youtube.com/watch?v=tnUXzbvXxSQ&hd=1
 
 Full list of features:
 
