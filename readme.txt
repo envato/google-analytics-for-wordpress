@@ -12,7 +12,7 @@ Track your WordPress site easily and with lots of metadata: views per author & c
 
 The Google Analytics for WordPress plugin allows you to track your blog easily and with lots of metadata. 
 
-Check out the video:
+Check out the [Google Analytics for WordPress video](http://www.youtube.com/watch?v=tnUXzbvXxSQ):
 
 http://www.youtube.com/watch?v=tnUXzbvXxSQ&ap=%2526fmt%3D22&autoplay=1&rel=0
 
