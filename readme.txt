@@ -6,7 +6,7 @@ Requires at least: 2.8
 Tested up to: 3.0
 Stable tag: 4.0.9
 
-Track your WordPress site easily and with lots of metadata: views per author & category, automatically tracking outbound clicks and pageviews.
+Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews & more!
 
 == Description ==
 
