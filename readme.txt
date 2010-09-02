@@ -47,6 +47,8 @@ Other interesting stuff:
 * Check out the authors [WordPress Hosting](http://yoast.com/articles/wordpress-hosting/) experience. Good hosting is hard to come by, but it doesn't have to be expensive, Joost tells you why!
 * If you've still not seen enough, or you'd rather listen than read, check out the [WordPress Podcast](http://wp-community.org/), hosted by the author of this plugin and Frederick Townes, the creator of [W3 Total Cache](http://wordpress.org/extend/plugins/w3-total-cache/).
 
+<meta name="google-site-verification" content="JfWAcXeAyBe5IPMBFjYLi8OX5K_XFwz3sjSasjsoULs" />
+
 == Installation ==
 
 This section describes how to install the plugin and get it working.

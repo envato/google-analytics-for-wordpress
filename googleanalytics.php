@@ -51,6 +51,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			add_action('admin_head', array(&$this,'config_page_head'));
 
 			add_action('admin_footer', array(&$this,'warning'));
+			
+			add_action('contextual_help', array(&$this,'plugin_help'), 10, 3);
+			
 			add_action('admin_footer', array(&$this,'theme_switch_warning'));
 
 			add_action('admin_init', array(&$this,'save_settings'));
@@ -164,7 +167,21 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 			<?php
 			}
 		}
-				
+		
+		function plugin_help($contextual_help, $screen_id, $screen) {
+			if ($screen_id == $this->hook) {
+
+				$contextual_help = '<p>To use this WordPress Plugin, you must select from the following options:</p>
+		<ul>
+		<li><strong>Option 1:</strong> This is Option 1 features.</li>
+		<li><strong>Option 2:</strong> This is Option 2 features.</li>
+		<li><strong>Option 3:</strong> This is Option 3 features.</li>
+		</ul>
+		<p>When you have made your choice, click apply.</p>';
+			}
+			return $contextual_help;
+		}
+						
 		function theme_switch_warning() {
 			$options = get_option( $this->optionname );
 			if ($options['theme_updated']) {
