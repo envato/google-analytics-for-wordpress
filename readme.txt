@@ -3,8 +3,8 @@ Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
-Tested up to: 3.0
-Stable tag: 4.0.9
+Tested up to: 3.1
+Stable tag: 4.0.10
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
 
@@ -60,7 +60,23 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.0.10 =
+
+* Known issues:
+	* Authentication with Google gives errors in quite a few cases. Please use the manual option to add your UA code until we find a way to reliably fix it.
+	
+* Added functionality:
+	* Option to set `_setAllowHash` to false, for proper subdomain tracking and some other uses.
+	* Option to add a custom string of code to the tracking, before the push string is sent out.
+
+* Documentation fixes:
+	* Fixed link for `_setDomainName()`.
+	* Fixed some grammatical errors (keep emailing me about those, please!)
+	* Removed second comment in source output.
+	* Fixed version number output in source.
+
 = 4.0.9 =
+
 * Code enhancements:
 	* Updated Shopp integration to also work with the upcoming Shopp 1.1 and higher.
 	* Switched from [split](http://php.net/split) to [explode](http://php.net/explode), as split has been deprecated in PHP 5.3+.

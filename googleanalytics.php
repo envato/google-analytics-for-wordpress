@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.9
+Version: 4.0.10
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -215,14 +215,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
 				
-				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'ga_token', 'extraseurl', 'gajsurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel') as $option_name) {
+				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'customcode', 'ga_token', 'extraseurl', 'gajsurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
 					else
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'allowhash', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -259,11 +259,9 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 					$options['trackcommentform'] = true;
 				if ( !isset($options['ignore_userlevel']) || $options['ignore_userlevel'] == '')
 					$options['ignore_userlevel'] = 11;
-					
-				$options['version'] = '4.04';
 			}
-			if ($options['version'] < '4.06') {
-				$options['version'] = '4.06';
+			if ($options['version'] != '4.0.10') {
+				$options['version'] = '4.0.10';
 			}
 			update_option($this->optionname, $options);
 		}
@@ -519,13 +517,13 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'outboundpageview',
 										'label' => 'Track outbound clicks as pageviews',
-										'desc' => 'You do not need to enable this to enable outbound click tracking, this changes the default behavior of tracking clicks as events to tracking them as pageviews. This is therefore not recommended, as this would schew your statistics, but <em>is</em> sometimes necessary when you need to set outbound clicks as goals.',
+										'desc' => 'You do not need to enable this to enable outbound click tracking, this changes the default behavior of tracking clicks as events to tracking them as pageviews. This is therefore not recommended, as this would skew your statistics, but <em>is</em> sometimes necessary when you need to set outbound clicks as goals.',
 										'content' =>  $this->checkbox('outboundpageview'),
 									);
 									$rows[] = array(
 										'id' => 'downloadspageview',
 										'label' => 'Track downloads as pageviews',
-										'desc' => 'Not recommended, as this would schew your statistics, but it does make it possible to track downloads as goals.',
+										'desc' => 'Not recommended, as this would skew your statistics, but it does make it possible to track downloads as goals.',
 										'content' =>  $this->checkbox('downloadspageview'),
 									);
 									$rows[] = array(
@@ -533,12 +531,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'label' => 'Extensions of files to track as downloads',
 										'content' => $this->textinput('dlextensions'),
 									);
-									$rows[] = array(
-										'id' => 'trackprefix',
-										'label' => 'Prefix to use in Analytics before the tracked pageviews',
-										'desc' => 'This prefix is used before all pageviews, they are then segmented automatically after that. If nothing is entered here, <code>/yoast-ga/</code> is used.',
-										'content' => $this->textinput('trackprefix'),
-									);
+									if ( $options['outboundpageview'] ) {
+										$rows[] = array(
+											'id' => 'trackprefix',
+											'label' => 'Prefix to use in Analytics before the tracked pageviews',
+											'desc' => 'This prefix is used before all pageviews, they are then segmented automatically after that. If nothing is entered here, <code>/yoast-ga/</code> is used.',
+											'content' => $this->textinput('trackprefix'),
+										);
+									}
 									$rows[] = array(
 										'id' => 'domainorurl',
 										'label' => 'Track full URL of outbound clicks or just the domain',
@@ -551,8 +551,14 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 									$rows[] = array(
 										'id' => 'domain',
 										'label' => 'Domain Tracking',
-										'desc' => 'This allows you to set the domain that\'s set by <a href="http://code.google.com/apis/analytics/docs/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setDomainName"><code>setDomainName</code></a> for tracking subdomains, if empty this will not be set.',
+										'desc' => 'This allows you to set the domain that\'s set by <a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setDomainName"><code>setDomainName</code></a> for tracking subdomains, if empty this will not be set.',
 										'content' => $this->textinput('domain'),
+									);
+									$rows[] = array(
+										'id' => 'customcode',
+										'label' => 'Custom Code',
+										'desc' => 'Not for the average user: this allows you to add a line of code, to be added before the <code>trackPageview</code> call.',
+										'content' => $this->textinput('customcode'),
 									);
 									$rows[] = array(
 										'id' => 'trackadsense',
@@ -604,6 +610,12 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 										'label' => 'Add <code>_setAllowLinker</code>',
 										'desc' => 'This adds a <code><a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setAllowLinker">_setAllowLinker</a></code> call to your tracking code,  allowing you to use <code>_link</code> and related functions.',
 										'content' => $this->checkbox('allowlinker'),
+									);
+									$rows[] = array(
+										'id' => 'allowhash',
+										'label' => 'Set <code>_setAllowHash</code> to false',
+										'desc' => 'This sets <code><a href="http://code.google.com/apis/analytics/docs/gaJS/gaJSApiDomainDirectory.html#_gat.GA_Tracker_._setAllowHash">_setAllowHash</a></code> to false, allowing you to track subdomains etc.',
+										'content' => $this->checkbox('allowhash'),
 									);
 									$rows[] = array(
 										'id' => 'anonymizeip',
@@ -810,7 +822,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					if (substr($options['domain'],0,1) != "." && $options['domain'] != 'none')
 						$options['domain'] = ".".$options['domain'];
 					$push[] = "'_setDomainName','".$options['domain']."'";
-				}
+				} 
+
+				if ( $options['allowhash'] )
+					$push[] = "'_setAllowHash',false";
 
 				if ( $options['cv_loggedin'] ) {
 					$current_user = wp_get_current_user();
@@ -931,6 +946,8 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		echo '</script><script src="'.$url.'" type="text/javascript"></script>'."\n".'<script type="text/javascript">'; 
 	}
 
+	if ( $options['customcode'] && trim( $options['customcode'] ) != '' )
+		echo "\t".$options['customcode']."\n";
 ?>
 	_gaq.push(<?php echo $pushstr; ?>);
 	(function() {
@@ -948,7 +965,6 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 
 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 	})();
-	// End of Google Analytics for WordPress by Yoast v4.0
 	//]]></script>
 <?php
 			} else if ( $options["uastring"] != "" ) {
