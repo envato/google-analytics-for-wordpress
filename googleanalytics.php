@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
+Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.10
+Version: 4.0.11
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -72,7 +72,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 				wp_enqueue_script('jquery');
 				
 			?>
-				 <script type="text/javascript" charset="utf-8">				
+				 <script type="text/javascript">				
 					function makeSublist(parent,child,childVal)
 					{
 						jQuery("body").append("<select style='display:none' id='"+parent+child+"'></select>");
@@ -255,13 +255,11 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 		function upgrade() {
 			$options = get_option($this->optionname);
 			if ($options['version'] < '4.04') {
-				if ( !isset($options['trackcommentform']) || $options['trackcommentform'] == '')
-					$options['trackcommentform'] = true;
 				if ( !isset($options['ignore_userlevel']) || $options['ignore_userlevel'] == '')
 					$options['ignore_userlevel'] = 11;
 			}
-			if ($options['version'] != '4.0.10') {
-				$options['version'] = '4.0.10';
+			if ($options['version'] != '4.0.11') {
+				$options['version'] = '4.0.11';
 			}
 			update_option($this->optionname, $options);
 		}
@@ -387,7 +385,7 @@ if ( ! class_exists( 'GA_Admin' ) ) {
 												$try = $_GET['try'] + 1;
 
 											if ($i == 1 && $try < 4 && isset($_GET['token'])) {
-												$line .= '<script type="text/javascript" charset="utf-8">
+												$line .= '<script type="text/javascript">
 													window.location="'.$this->plugin_options_url().'&switchua=1&token='.$token.'&try='.$try.'";
 												</script>';
 											}
@@ -1338,7 +1336,7 @@ function yoast_track_comment_form() {
     $yoast_ga_options = get_option('Yoast_Google_Analytics');
     if ( yoast_ga_do_tracking() && $yoast_ga_options["trackcommentform"] ) {
 ?>
-<script type="text/javascript" charset="utf-8">
+<script type="text/javascript">
     jQuery(document).ready(function() {
         jQuery('#<?php echo $comment_form_id; ?>').submit(function() {
             _gaq.push(
@@ -1365,7 +1363,7 @@ function gfform_tag() {
 	}
 	wp_enqueue_script('jquery');
 	?>
-	<script type="text/javascript" charset="utf-8">
+	<script type="text/javascript">
 		jQuery(document).ready(function() {
 			jQuery('.gform_wrapper form').submit(function() {
 				_gaq.push(<?php echo $pv; ?>);

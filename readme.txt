@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.1
-Stable tag: 4.0.10
+Stable tag: 4.0.11
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
 
@@ -60,6 +60,12 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.0.11 =
+
+* Bugs fixed:
+	* You can now disable comment form tracking properly.
+	* Removed charset property from script tags to allow validation with HTML5 doctype.
+	
 = 4.0.10 =
 
 * Known issues:
@@ -282,3 +288,9 @@ Because that's where it belongs. It makes the page load faster (yes, faster, due
 3. Screenshot of the link tracking panel.
 4. Screenshot of the advanced settings panel.
 5. Screenshot of the debugging mode in action.
+
+== Upgrade Notice ==
+
+= 4.0.11 =
+
+You can now properly disable the comment form tracking, and the charset attribute on script tags is gone so you can validate as HTML5 too.
