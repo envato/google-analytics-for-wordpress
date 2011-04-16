@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v407
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.0.12
+Version: 4.0.13
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -12,7 +12,7 @@ License: GPL
 
 // This plugin was originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
-define('GAWP_VERSION', '4.0.12');
+define('GAWP_VERSION', '4.0.13');
 
 // Determine the location
 function gapp_plugin_path() {
@@ -23,9 +23,9 @@ function gapp_plugin_path() {
  * Admin User Interface
  */
 
-if ( ! class_exists( 'GA_Admin' ) ) {
+if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( 'GA_Admin' ) ) {
 
-	require_once plugin_dir_path(__FILE__).'yst_plugin_tools.php';
+	require_once plugin_dir_path( __FILE__ ) . 'yst_plugin_tools.php';
 	
 	class GA_Admin extends Yoast_GA_Plugin_Admin {
 
@@ -858,7 +858,15 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$customvarslot++;
 				} 
 
-				if ( is_singular() && !is_home() ) {
+				if ( function_exists('is_post_type_archive') && is_post_type_archive() ) {
+					if ( $options['cv_post_type'] ) {
+						$post_type = get_post_type();
+						if ( $post_type ) {
+							$push[] = "'_setCustomVar',".$customvarslot.",'post_type','".$post_type."',3";
+							$customvarslot++;						
+						}
+					}
+				} else if ( is_singular() && !is_home() ) {
 					if ( $options['cv_post_type'] ) {
 						$post_type = get_post_type();
 						if ( $post_type ) {
@@ -872,30 +880,32 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					}
 					if ( $options['cv_tags'] ) {
 						$i = 0;
-						$tagsstr = '';
-						foreach ( (array) get_the_tags() as $tag ) {
-							if ($i > 0)
-								$tagsstr .= ' ';
-							$tagsstr .= $tag->slug;
-							$i++;
+						if ( get_the_tags() ) {
+							$tagsstr = '';
+							foreach ( get_the_tags() as $tag ) {
+								if ($i > 0)
+									$tagsstr .= ' ';
+								$tagsstr .= $tag->slug;
+								$i++;
+							}
+							// Max 64 chars for value and label combined, hence 64 - 4
+							$tagsstr = substr($tagsstr, 0, 60);
+							$push[] = "'_setCustomVar',$customvarslot,'tags','".$tagsstr."',3";
 						}
-						// Max 64 chars for value and label combined, hence 64 - 4
-						$tagsstr = substr($tagsstr, 0, 60);
-						$push[] = "'_setCustomVar',$customvarslot,'tags','".$tagsstr."',3";
 						$customvarslot++;
 					}
-					if ( is_single() ) {
+					if ( is_singular() ) {
 						if ( $options['cv_year'] ) {
 							$push[] = "'_setCustomVar',$customvarslot,'year','".get_the_time('Y')."',3";
 							$customvarslot++;
 						}
-						if ( $options['cv_category'] ) {
+						if ( $options['cv_category'] && is_single() ) {
 							$cats = get_the_category();
 							if ( is_array( $cats ) && isset( $cats[0] ) )
 								$push[] = "'_setCustomVar',$customvarslot,'category','".$cats[0]->slug."',3";
 							$customvarslot++;
 						}
-						if ( $options['cv_all_categories'] ) {
+						if ( $options['cv_all_categories'] && is_single() ) {
 							$i = 0;
 							$catsstr = '';
 							foreach ( (array) get_the_category() as $cat ) {
@@ -957,7 +967,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				?>
 				
 	<script type="text/javascript">//<![CDATA[
-	// Google Analytics for WordPress by Yoast v<?php echo $options['version'];  ?> | http://yoast.com/wordpress/google-analytics/
+	// Google Analytics for WordPress by Yoast v<?php echo GAWP_VERSION;  ?> | http://yoast.com/wordpress/google-analytics/
 	var _gaq = _gaq || [];
 	_gaq.push(['_setAccount','<?php echo trim($options["uastring"]); ?>']);
 <?php
@@ -1243,7 +1253,7 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				$push[] = "'_addItem',"
 				."'".$cart_log_id."',"			// Order ID
 				."'".$item['sku']."',"			// Item SKU
-				."'".$item['name']."',"			// Item Name
+				."'". str_replace( "'", "", $item['name'] ) ."',"			// Item Name
 				."'".$item['category']."',"		// Item Category
 				."'".$item['price']."',"		// Item Price
 				."'".$item['quantity']."'";		// Item Quantity
@@ -1290,7 +1300,7 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				$push[] = 	"'_addItem',"
 							."'".$Purchase->id."',"
 							."'".$sku."',"
-							."'".$item->name."',"
+							."'". str_replace( "'", "", $item->name ) ."',"
 							."'".$item->optionlabel."',"
 							."'".number_format($item->unitprice,2)."',"
 							."'".$item->quantity."'";
