@@ -4,7 +4,7 @@ Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
 Tested up to: 3.1
-Stable tag: 4.0.11
+Stable tag: 4.0.13
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
 
@@ -23,8 +23,8 @@ Full list of features:
 * Option to manually place the tracking code in another location.
 * Outbound link & downloads tracking.
 	* Configurable options to track outbound links either as pageviews.
-	* Option to track just downloads as pageviews.
-* Allows usage of custom variables to track meta data on pages. Support for the following custom variables:
+	* Option to track just downloads as pageviews in Google Analytics.
+* Allows usage of custom variables in Google Analytics to track meta data on pages. Support for the following custom variables:
 	* Author
 	* Single category and / or multiple categories
 	* Post type (especially useful if you use custom post types)
@@ -32,7 +32,7 @@ Full list of features:
 	* Publication Year
 	* Tags
 * Possibility to ignore any user level and up, so all editors and higher for instance.
-* Easily connect your AdSense and Analytics accounts.
+* Easily connect your Google AdSense and Google Analytics accounts.
 * Option to tag links with campaign tracking, with the option to use hashes (#).
 * Option anonymize IP's, for use in countries like Germany.
 * Full [debug mode](http://yoast.com/google-analytics-debug-mode/), including Firebug lite and ga_debug.js for debugging Analytics issues.
@@ -60,6 +60,24 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.0.13 =
+
+* Fixed:
+	* Properly track the post type when you're on a post type archive page.
+	* Remove single quotes from item names for Shopp and WP E-commerce to prevent tracking issues (props [Caleb Whitmore](http://www.analyticspros.com/)).
+	* Only load the admin class when you're actually in admin and not doing AJAX.
+	* Prevent notices on post types that do not have categories or tags.
+
+= 4.0.12 =
+
+* Fixed:
+	* Tons of notices in backend and front end when no settings were saved yet.
+	* Set proper defaults for all variables.
+	* Notice for unset categories array on custom post types.
+	* Notice for unset variable.
+	* Error when user is not logged in in certain corner cases.
+	* Bug where $options was used but never loaded for blogroll links.
+	
 = 4.0.11 =
 
 * Bugs fixed:
