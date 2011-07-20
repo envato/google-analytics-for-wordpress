@@ -61,7 +61,7 @@ This section describes how to install the plugin and get it working.
 
 = 4.1.3 =
 
-* Security fix: badly crafted comments could lead to insertion of "weird" links into comments. They'd have to pass your moderation, but still... Immediate update advised.
+* Security fix: badly crafted comments could lead to insertion of "weird" links into comments. They'd have to pass your moderation, but still... Immediate update advised. Props to [David Whitehouse](http://www.david-whitehouse.org/) and [James Slater](http://james.slaterspage.com/) for finding it.
 
 = 4.1.2 =
 
