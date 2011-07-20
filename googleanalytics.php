@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v411
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.1.2
+Version: 4.1.3
 Requires at least: 2.8
 Author URI: http://yoast.com/
 License: GPL
@@ -12,7 +12,7 @@ License: GPL
 
 // This plugin was originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
-define('GAWP_VERSION', '4.1.1');
+define('GAWP_VERSION', '4.1.3');
 
 /*
  * Admin User Interface
@@ -1038,9 +1038,9 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				( $prefix == 'download' && $options['downloadspageview'] ) ) 
 			{
 				$prefix = GA_Filter::ga_get_tracking_prefix().$prefix;
-				$pushstr = "['_trackPageview','".$prefix."/".$target."']";
+				$pushstr = "['_trackPageview','".$prefix."/". esc_js( esc_url( $target ) )."']";
 			} else {
-				$pushstr = "['_trackEvent','".$prefix."','".$target."']";
+				$pushstr = "['_trackEvent','".$prefix."','".esc_js( esc_url( $target ) )."']";
 			}
 			return $jsprefix."_gaq.push(".$pushstr.");";
 		}
