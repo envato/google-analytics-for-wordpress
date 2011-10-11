@@ -1,10 +1,10 @@
-=== Google Analytics for WordPress ===
+﻿=== Google Analytics for WordPress ===
 Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
-Tested up to: 3.2
-Stable tag: 4.1.3
+Tested up to: 3.2.1
+Stable tag: 4.2
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
 
@@ -59,9 +59,15 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.2 =
+
+* Google Authentication now happens using OAuth. The requests have become signed as an extra security measure and tokens have become more stable, as opposed to the prior tokens used with AuthSub.
+* Added support for cross-domain tracking.
+* Fixed various small bugs.
+
 = 4.1.3 =
 
-* Security fix: badly crafted comments could lead to insertion of "weird" links into comments. They'd have to pass your moderation, but still... Immediate update advised. Props to [David Whitehouse](http://www.david-whitehouse.org/) and [James Slater](http://james.slaterspage.com/) for finding it.
+* Security fix: badly crafted comments could lead to insertion of "weird" links into comments. They'd have to pass your moderation, but still... Immediate update advised. Props to David Whitehouse and James Slater for finding it.
 
 = 4.1.2 =
 
@@ -324,6 +330,6 @@ Because that's where it belongs. It makes the page load faster (yes, faster, due
 
 == Upgrade Notice ==
 
-= 4.1.3 =
+= 4.0.11 =
 
-Security fix, please update ASAP. Old version is susceptible to link insertion.
+You can now properly disable the comment form tracking, and the charset attribute on script tags is gone so you can validate as HTML5 too.
