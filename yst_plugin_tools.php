@@ -235,7 +235,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 			require_once(ABSPATH.WPINC.'/rss.php');
 			if ( $rss = fetch_rss( 'http://yoast.com/feed/' ) ) {
 				echo '<div class="rss-widget">';
-				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="'.plugin_dir_url().'images/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="'.plugin_dir_url( __FILE__ ).'images/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
 				echo '<ul>';
 				$rss->items = array_slice( $rss->items, 0, 3 );
 				foreach ( (array) $rss->items as $item ) {
@@ -249,7 +249,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 				echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
 				echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
 				echo ' &nbsp; &nbsp; &nbsp; ';
-				echo '<a href="http://yoast.com/email-blog-updates/"><img src="'.plugin_dir_url().'images/email_sub.png" alt=""/> '.__( 'Subscribe by email', 'gawp_yoast' ).'</a>';
+				echo '<a href="http://yoast.com/email-blog-updates/"><img src="'.plugin_dir_url( __FILE__ ).'images/email_sub.png" alt=""/> '.__( 'Subscribe by email', 'gawp_yoast' ).'</a>';
 				echo '<form class="alignright" method="post"><input type="hidden" name="yoast_removedbwidget" value="true"/><input title="'.__( 'Remove this widget from all users dashboards', 'gawp_yoast' ).'" type="submit" value="X"/></form>';
 				echo '</div>';
 				echo '</div>';
