@@ -6,7 +6,7 @@
  */
 
 // Load the OAuth library.
-if ( ! class_exists( 'OAuthConsumer' ) )
+if ( ! class_exists( 'Yoast_OAuthConsumer' ) )
 	require( 'OAuth.php' );
 
 class WP_GData {
@@ -19,11 +19,11 @@ class WP_GData {
 
 	function __construct( $parameters = array(), $oauth_token = null, $oauth_token_secret = null ) {
 		$this->parameters = $parameters;
-		$this->signature_method = new OAuthSignatureMethod_HMAC_SHA1();
-		$this->consumer = new OAuthConsumer( 'anonymous', 'anonymous' );
+		$this->signature_method = new Yoast_OAuthSignatureMethod_HMAC_SHA1();
+		$this->consumer = new Yoast_OAuthConsumer( 'anonymous', 'anonymous' );
 
 		if ( !empty( $oauth_token ) && !empty( $oauth_token_secret ) )
-			$this->token = new OAuthConsumer( $oauth_token, $oauth_token_secret );
+			$this->token = new Yoast_OAuthConsumer( $oauth_token, $oauth_token_secret );
 		else
 			$this->token = null;
 	}
@@ -34,8 +34,8 @@ class WP_GData {
 			$parameters['oauth_callback'] = $oauth_callback;
 
 		$request = $this->oauth_request( self::request_token_url, 'GET', $parameters );
-		$token = OAuthUtil::parse_parameters( wp_remote_retrieve_body( $request ) );
-		$this->token = new OAuthConsumer( $token['oauth_token'], $token['oauth_token_secret'] );
+		$token = Yoast_OAuthUtil::parse_parameters( wp_remote_retrieve_body( $request ) );
+		$this->token = new Yoast_OAuthConsumer( $token['oauth_token'], $token['oauth_token_secret'] );
 		return $token;
 	}
 
@@ -43,7 +43,7 @@ class WP_GData {
 	 * Format and sign an OAuth / API request
 	 */
 	private function oauth_request( $url, $method, $parameters ) {
-		$request = OAuthRequest::from_consumer_and_token( $this->consumer, $this->token, $method, $url, $parameters );
+		$request = Yoast_OAuthRequest::from_consumer_and_token( $this->consumer, $this->token, $method, $url, $parameters );
 		$request->sign_request( $this->signature_method, $this->consumer, $this->token );
 
 		if ( 'GET' == $method )
@@ -72,8 +72,8 @@ class WP_GData {
 			$parameters['oauth_verifier'] = $oauth_verifier;
 
 		$request = $this->oauth_request( self::access_token_url, 'GET', $parameters );
-		$token = OAuthUtil::parse_parameters( wp_remote_retrieve_body( $request ) );
-		$this->token = new OAuthConsumer( $token['oauth_token'], $token['oauth_token_secret'] );
+		$token = Yoast_OAuthUtil::parse_parameters( wp_remote_retrieve_body( $request ) );
+		$this->token = new Yoast_OAuthConsumer( $token['oauth_token'], $token['oauth_token_secret'] );
 		return $token;
 	}
 
