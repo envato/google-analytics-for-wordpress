@@ -8,7 +8,6 @@
 if (!class_exists('Yoast_GA_Plugin_Admin')) {
 	class Yoast_GA_Plugin_Admin {
 
-		var $feed		= 'http://yoast.com/feed/';
 		var $hook 		= '';
 		var $filename	= '';
 		var $longname	= '';
@@ -18,12 +17,20 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		var $homepage	= '';
 		var $accesslvl	= 'edit_users';
 		
-		function __construct() {
+		function Yoast_GA_Plugin_Admin() {
+			add_action( 'admin_menu', array(&$this, 'register_settings_page') );
+			add_filter( 'plugin_action_links', array(&$this, 'add_action_link'), 10, 2 );
+			add_filter( 'ozh_adminmenu_icon', array(&$this, 'add_ozh_adminmenu_icon' ) );				
+			
+			add_action('admin_print_scripts', array(&$this,'config_page_scripts'));
+			add_action('admin_print_styles', array(&$this,'config_page_styles'));	
+			
+			add_action('wp_dashboard_setup', array(&$this,'widget_setup'));	
 		}
 		
 		function add_ozh_adminmenu_icon( $hook ) {
 			if ($hook == $this->hook) 
-				return $this->plugin_url.$this->ozhicon;
+				return plugin_dir_url( __FILE__ ).$this->ozhicon;
 			return $hook;
 		}
 		
@@ -33,7 +40,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 				wp_enqueue_style('thickbox');
 				wp_enqueue_style('global');
 				wp_enqueue_style('wp-admin');
-				wp_enqueue_style('ga-admin-css', $this->plugin_url . 'yst_plugin_tools.css');
+				wp_enqueue_style('gawp-css', plugin_dir_url( __FILE__ ). 'yst_plugin_tools.css');
 			}
 		}
 
@@ -52,7 +59,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 			static $this_plugin;
 			if( empty($this_plugin) ) $this_plugin = $this->filename;
 			if ( $file == $this_plugin ) {
-				$settings_link = '<a href="' . $this->plugin_options_url() . '">' . __('Settings') . '</a>';
+				$settings_link = '<a href="' . $this->plugin_options_url() . '">' . __('Settings', 'gawp_yoast') . '</a>';
 				array_unshift( $links, $settings_link );
 			}
 			return $links;
@@ -160,13 +167,13 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 			if (empty($hook)) {
 				$hook = $this->hook;
 			}
-			$content = '<p>'.__('Why not do any or all of the following:','ystplugin').'</p>';
+			$content = '<p>'.__('Why not do any or all of the following:', 'gawp_yoast' ).'</p>';
 			$content .= '<ul>';
-			$content .= '<li><a href="'.$this->homepage.'">'.__('Link to it so other folks can find out about it.','ystplugin').'</a></li>';
-			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Give it a good rating on WordPress.org.','ystplugin').'</a></li>';
-			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Let other people know that it works with your WordPress setup.','ystplugin').'</a></li>';
+			$content .= '<li><a href="'.$this->homepage.'">'.__('Link to it so other folks can find out about it.', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Give it a 5 star rating on WordPress.org.', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li><a href="http://wordpress.org/extend/plugins/'.$hook.'/">'.__('Let other people know that it works with your WordPress setup.', 'gawp_yoast' ).'</a></li>';
 			$content .= '</ul>';
-			$this->postbox($hook.'like', 'Like this plugin?', $content);
+			$this->postbox($hook.'like', __( 'Like this plugin?', 'gawp_yoast' ), $content);
 		}	
 		
 		/**
@@ -176,8 +183,8 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 			if (empty($hook)) {
 				$hook = $this->hook;
 			}
-			$content = '<p>If you\'ve found a bug in this plugin, please submit it in the <a href="http://yoast.com/mantis/bug_report_page.php">Yoast Bug Tracker</a> with a clear description.</p>';
-			$this->postbox($this->hook.'support', __('Found a bug?','ystplugin'), $content);
+			$content = '<p>'.sprintf( __( 'If you\'ve found a bug in this plugin, please submit it in the <a href="%s">Yoast Bug Tracker</a> with a clear description.', 'gawp_yoast' ), 'http://yoast.com/mantis/bug_report_page.php').'</p>';
+			$this->postbox($this->hook.'support', __('Found a bug?', 'gawp_yoast' ), $content);
 		}
 
 		/**
@@ -185,22 +192,25 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		 */
 		function news() {
 			include_once(ABSPATH . WPINC . '/feed.php');
-			$rss = fetch_feed( $this->feed );
+			$rss = fetch_feed('http://feeds.feedburner.com/joostdevalk');
 			$rss_items = $rss->get_items( 0, $rss->get_item_quantity(5) );
 			$content = '<ul>';
 			if ( !$rss_items ) {
-			    $content .= '<li class="yoast">'.__('No news items, feed might be broken...').'</li>';
+			    $content .= '<li class="yoast">'.__( 'No news items, feed might be broken...', 'gawp_yoast' ).'</li>';
 			} else {
 			    foreach ( $rss_items as $item ) {
 					$content .= '<li class="yoast">';
-					$content .= '<a class="rsswidget" href="'.esc_url( $item->get_permalink(), $protocolls=null, 'display' ).'">'. htmlentities($item->get_title()) .'</a> ';
+					$content .= '<a class="rsswidget" href="'.esc_url( $item->get_permalink(), $protocolls=null, 'display' ).'">'. esc_html($item->get_title()) .'</a> ';
 					$content .= '</li>';
 			    }
 			}						
-			$content .= '<li class="rss"><a href="http://yoast.com/feed/">'.__('Subscribe with RSS').'</a></li>';
-			$content .= '<li class="email"><a href="http://yoast.com/email-blog-updates/">'.__('Subscribe by email').'</a></li>';
+			$content .= '<li class="facebook"><a href="https://www.facebook.com/yoastcom">'.__( 'Like Yoast on Facebook', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li class="twitter"><a href="http://twitter.com/yoast">'.__( 'Follow Yoast on Twitter', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li class="googleplus"><a href="https://plus.google.com/115369062315673853712/posts">'.__( 'Circle Yoast on Google+', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li class="rss"><a href="http://yoast.com/feed/">'.__( 'Subscribe with RSS', 'gawp_yoast' ).'</a></li>';
+			$content .= '<li class="email"><a href="http://yoast.com/email-blog-updates/">'.__( 'Subscribe by email', 'gawp_yoast' ).'</a></li>';
 			$content .= '</ul>';
-			$this->postbox('yoastlatest', __('Latest news from Yoast'), $content);
+			$this->postbox('yoastlatest', __( 'Latest news from Yoast', 'gawp_yoast' ), $content);
 		}
 
 		function text_limit( $text, $limit, $finish = ' [&hellip;]') {
@@ -219,28 +229,28 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 				update_option('yoastdbwidget',$options);
 			}			
 			if ($options['removedbwidget']) {
-				_e("If you reload, this widget will be gone and never appear again, unless you decide to delete the database option 'yoastdbwidget'.");
+				_e( "If you reload, this widget will be gone and never appear again, unless you decide to delete the database option 'yoastdbwidget'.", 'gawp_yoast' );
 				return;
 			}
-			require_once( ABSPATH . WPINC .'/rss.php' );
-			if ( $rss = fetch_rss( $this->feed ) ) {
+			require_once(ABSPATH.WPINC.'/rss.php');
+			if ( $rss = fetch_rss( 'http://yoast.com/feed/' ) ) {
 				echo '<div class="rss-widget">';
-				echo '<a href="http://yoast.com/" title="'.__('Go to Yoast.com').'"><img src="'.$this->plugin_url.'images/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
+				echo '<a href="http://yoast.com/" title="Go to Yoast.com"><img src="'.plugin_dir_url( __FILE__ ).'images/yoast-logo-rss.png" class="alignright" alt="Yoast"/></a>';			
 				echo '<ul>';
 				$rss->items = array_slice( $rss->items, 0, 3 );
 				foreach ( (array) $rss->items as $item ) {
 					echo '<li>';
-					echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. htmlentities($item['title']) .'</a> ';
+					echo '<a class="rsswidget" href="'.clean_url( $item['link'], $protocolls=null, 'display' ).'">'. esc_html($item['title']) .'</a> ';
 					echo '<span class="rss-date">'. date('F j, Y', strtotime($item['pubdate'])) .'</span>';
 					echo '<div class="rssSummary">'. $this->text_limit($item['summary'],250) .'</div>';
 					echo '</li>';
 				}
 				echo '</ul>';
 				echo '<div style="border-top: 1px solid #ddd; padding-top: 10px; text-align:center;">';
-				echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> '.__('Subscribe with RSS').'</a>';
+				echo '<a href="http://feeds2.feedburner.com/joostdevalk"><img src="'.get_bloginfo('wpurl').'/wp-includes/images/rss.png" alt=""/> Subscribe with RSS</a>';
 				echo ' &nbsp; &nbsp; &nbsp; ';
-				echo '<a href="http://yoast.com/email-blog-updates/"><img src="'.$this->plugin_url.'images/email_sub.png" alt=""/> '.__('Subscribe by email').'</a>';
-				echo '<form class="alignright" method="post"><input type="hidden" name="yoast_removedbwidget" value="true"/><input title="'.__('Remove this widget from all users dashboards').'" type="submit" value="X"/></form>';
+				echo '<a href="http://yoast.com/email-blog-updates/"><img src="'.plugin_dir_url( __FILE__ ).'images/email_sub.png" alt=""/> '.__( 'Subscribe by email', 'gawp_yoast' ).'</a>';
+				echo '<form class="alignright" method="post"><input type="hidden" name="yoast_removedbwidget" value="true"/><input title="'.__( 'Remove this widget from all users dashboards', 'gawp_yoast' ).'" type="submit" value="X"/></form>';
 				echo '</div>';
 				echo '</div>';
 			}
@@ -249,7 +259,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		function widget_setup() {
 			$options = get_option('yoastdbwidget');
 			if (!$options['removedbwidget'])
-		    	wp_add_dashboard_widget( 'yoast_db_widget' , __('The Latest news from Yoast') , array(&$this, 'db_widget'));
+		    	wp_add_dashboard_widget( 'yoast_db_widget' , __( 'The Latest news from Yoast', 'gawp_yoast' ) , array(&$this, 'db_widget'));
 		}
 	}
 }

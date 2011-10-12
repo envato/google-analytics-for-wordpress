@@ -33,6 +33,18 @@ div.inside ul li.rss {
 	list-style-image: url(images/rss.png);
 }
 
+div.inside ul li.twitter {
+	list-style-image: url(images/twitter-icon.png);
+}
+
+div.inside ul li.facebook {
+	list-style-image: url(images/facebook-icon.png);
+}
+
+div.inside ul li.googleplus {
+	list-style-image: url(images/google-plus-icon.png);
+}
+
 div.inside ul li.email {
 	list-style-image: url(images/email_sub.png);
 }
@@ -78,4 +90,7 @@ strong.red {
 	color: green;
 	font-weight: bold;
 	font-size: 105%;
+}
+.postbox {
+	margin: 0 10px 10px 0;
 }
