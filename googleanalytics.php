@@ -883,7 +883,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Cleans the variable to make it ready for storing in Google Analytics
 		 */
 		function ga_str_clean($val) {
-			return remove_accents(str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val)))));
+			return remove_accents(str_replace('\'','\\\'',str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val))))));
 		}
 		/*
 		 * Insert the tracking code into the page
