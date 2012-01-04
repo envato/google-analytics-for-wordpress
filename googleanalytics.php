@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v420
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.2.2
+Version: 4.2.3
 Requires at least: 3.0
 Author URI: http://yoast.com/
 License: GPL
@@ -12,7 +12,7 @@ License: GPL
 
 // This plugin was originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
-define('GAWP_VERSION', '4.2.2');
+define('GAWP_VERSION', '4.2.3');
 
 /*
  * Admin User Interface
@@ -223,7 +223,7 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 						$options[$option_name] = '';
 				}
 				
-				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'allowhash', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'trackcrossdomain','gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite', 'disable_pagespeed_tracking') as $option_name) {
+				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'allowhash', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'trackcrossdomain','gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite') as $option_name) {
 					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
 						$options[$option_name] = true;
 					else
@@ -579,12 +579,6 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 										'content' => $this->textinput('othercrossdomains'),
 									);
 									$rows[] = array(
-										'id' => 'disable_pagespeed_tracking',
-										'label' => 'Disable Site Speed tracking',
-										'desc' => 'This disables the Site Speed tracking feature of Google Analytics that is enabled by default in this plugin.',
-										'content' => $this->checkbox('disable_pagespeed_tracking'),
-									);
-									$rows[] = array(
 										'id' => 'customcode',
 										'label' => 'Custom Code',
 										'desc' => 'Not for the average user: this allows you to add a line of code, to be added before the <code>trackPageview</code> call.',
@@ -883,7 +877,7 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 		 * Cleans the variable to make it ready for storing in Google Analytics
 		 */
 		function ga_str_clean($val) {
-			return remove_accents(str_replace('\'','\\\'',str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val))))));
+			return remove_accents(str_replace('---','-',str_replace(' ','-',strtolower(html_entity_decode($val)))));
 		}
 		/*
 		 * Insert the tracking code into the page
@@ -919,10 +913,10 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 				if ( isset($options['domain']) && $options['domain'] != "" ) 
 					$push[] = "'_setDomainName','".$options['domain']."'";
 
-				if ( $options['trackcrossdomain'] )
+				if ( isset($options['trackcrossdomain']) && $options['trackcrossdomain'] )
 					$push[] = "'_setDomainName','".$options['primarycrossdomain']."'";
 
-				if ( $options['allowhash'] )
+				if ( isset($options['allowhash']) && $options['allowhash'] )
 					$push[] = "'_setAllowHash',false";
 
 				if ( $options['cv_loggedin'] ) {
@@ -1018,10 +1012,6 @@ if ( ! class_exists( 'GA_Filter' ) ) {
 					$push[] = "'_trackPageview'";
 				}
 				
-				if ( !isset( $options['disable_pagespeed_tracking'] ) || !$options['disable_pagespeed_tracking'] ) {
-					$push[] = "'_trackPageLoadTime'";
-				}
-
 				$push = apply_filters('yoast-ga-push-after-pageview',$push);
 
 				if ( defined('WPSC_VERSION') && $options['wpec_tracking'] )
@@ -1152,8 +1142,10 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 				} else if ( in_array($extension, $dlextensions) ) {
 					$trackBit = GA_Filter::ga_get_tracking_link('download', $matches[3],'');
 				} else if ( $target["domain"] != $origin["domain"] ){
-					$crossdomains = explode(',',str_replace(' ','',$options['othercrossdomains']));
-					if ( $options['trackcrossdomain'] && in_array($target["host"],$crossdomains) ) {
+					$crossdomains = array();
+					if (isset($options['othercrossdomains']))
+						$crossdomains = explode(',',str_replace(' ','',$options['othercrossdomains']));
+					if ( isset($options['trackcrossdomain']) && $options['trackcrossdomain'] && in_array($target["host"],$crossdomains) ) {
 						$trackBit = '_gaq.push([\'_link\', \'' . $matches[2] . '//' . $matches[3] . '\']); return false;"';
 					} else if ( $options['trackoutbound'] && in_array($options['domainorurl'], array('domain','url')) ) {
 						$url = $options['domainorurl'] == 'domain' ? $target["host"] : $matches[3];
@@ -1253,7 +1245,7 @@ if ( $options['gajslocalhosting'] && !empty($options['gajsurl']) ) {
 
 	        static $anchorPattern = '/(.*\s+.*?href\s*=\s*)["\'](.*?)["\'](.*)/';
 			preg_match($anchorPattern, $text, $matches);
-			if ($matches[2] == "") return $text;
+			if (!isset($matches[2]) || $matches[2] == "") return $text;
 
 			$trackBit = '';
 			$target = GA_Filter::ga_get_domain($matches[2]);

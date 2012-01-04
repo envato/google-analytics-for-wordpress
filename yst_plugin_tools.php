@@ -83,7 +83,10 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		 */
 		function checkbox($id) {
 			$options = get_option( $this->optionname );
-			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($options[$id],true,false).'/>';
+			$checked = false;
+			if ( isset($options[$id]) )
+				$checked = true;
+			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($checked,true,false).'/>';
 		}
 
 		/**
@@ -91,7 +94,10 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		 */
 		function textinput($id) {
 			$options = get_option( $this->optionname );
-			return '<input class="text" type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$options[$id].'"/>';
+			$val = '';
+			if ( isset( $options[$id] ) )
+				$val = $options[$id];
+			return '<input class="text" type="text" id="'.$id.'" name="'.$id.'" size="30" value="'.$val.'"/>';
 		}
 
 		/**
