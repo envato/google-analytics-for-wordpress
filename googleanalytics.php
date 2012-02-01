@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Google Analytics for WordPress
-Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=google-analytics-for-wordpress&utm_content=v420
+Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=wpgaplugin&utm_content=v420
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
 Version: 4.2.3
@@ -53,7 +53,7 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 			add_action( 'admin_menu', 			array(&$this, 'register_settings_page') );
 
 			// Register the contextual help for the settings page
-			add_action( 'contextual_help', 		array(&$this, 'plugin_help'), 10, 3 );
+//			add_action( 'contextual_help', 		array(&$this, 'plugin_help'), 10, 3 );
 			
 			// Give the settings page a nice icon in Ozh's menu
 			add_filter( 'ozh_adminmenu_icon', 	array(&$this, 'add_ozh_adminmenu_icon' ) );				
@@ -65,9 +65,6 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 			add_action('admin_print_scripts', 	array(&$this, 'config_page_scripts') );
 			add_action('admin_print_styles', 	array(&$this, 'config_page_styles') );
 			
-			// Setup the dashboard news widget
-			add_action('wp_dashboard_setup', 	array(&$this, 'widget_setup') );	
-
 			// Print stuff in the settings page's head
 			add_action('admin_head', 			array(&$this, 'config_page_head') );
 
@@ -740,13 +737,19 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 					<?php
 						if ( count($modules) > 0 )
 							$this->postbox('toc','List of Available Modules',$this->toc($modules));
-						$this->plugin_like();
-						$this->postbox('donate','<strong class="red">Donate $10, $20 or $50!</strong>','<p>This plugin has cost me countless hours of work, if you use it, please donate a token of your appreciation!</p><br/><form style="margin-left:50px;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+						$this->postbox('donate','<strong class="red">'.__( 'Help Spread the Word!' ).'</strong>','<p><strong>'.__( 'Want to help make this plugin even better? All donations are used to improve this plugin, so donate $20, $50 or $100 now!' ).'</strong></p><form style="width:160px;margin:0 auto;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 						<input type="hidden" name="cmd" value="_s-xclick">
 						<input type="hidden" name="hosted_button_id" value="FW9FK4EBZ9FVJ">
-						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit">
 						<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
-						</form>');
+						</form>'
+						.'<p>'.__('Or you could:').'</p>'
+						.'<ul>'
+						.'<li><a href="http://wordpress.org/extend/plugins/google-analytics-for-wordpress/">'.__('Rate the plugin 5★ on WordPress.org').'</a></li>'
+						.'<li><a href="http://wordpress.org/tags/google-analytics-for-wordpress">'.__('Help out other users in the forums').'</a></li>'
+						.'<li>'.sprintf( __('Blog about it & link to the %1$splugin page%2$s'), '<a href="http://yoast.com/wordpress/google-analytics/#utm_source=wpadmin&utm_medium=sidebanner&utm_term=link&utm_campaign=wpgaplugin">', '</a>').'</li>');
+						$this->postbox('sitereview','<strong>'.__('Want to Improve your Site?').'</strong>','<p>'.sprintf( __('If you want to improve your site, but don\'t know where to start, you should order a %1$swebsite review%2$s from Yoast!'), '<a href="http://yoast.com/hire-me/website-review/#utm_source=wpadmin&utm_medium=sidebanner&utm_term=link&utm_campaign=wpgaplugin">', '</a>').'</p>'.'<p>'.__('The results of this review contain a full report of improvements for your site, encompassing my findings for improvements in different key areas such as SEO to Usability to Site Speed & more.').'</p>'.'<p><a class="button-secondary" href="http://yoast.com/hire-me/website-review/#utm_source=wpadmin&utm_medium=sidebanner&utm_term=button&utm_campaign=wpgaplugin">'.__('Click here to read more &raquo;').'</a></p>');
+
 						$this->plugin_support();
 						$this->news(); 
 					?>
@@ -1452,7 +1455,7 @@ function track_comment_form_head() {
 }
 add_action('wp_print_scripts','track_comment_form_head');
 
-$comment_form_id = '';
+$comment_form_id = 'commentform';
 function yoast_get_comment_form_id($args) {
 	global $comment_form_id;
 	$comment_form_id = $args['id_form'];
@@ -1470,7 +1473,7 @@ function yoast_track_comment_form() {
         jQuery('#<?php echo $comment_form_id; ?>').submit(function() {
             _gaq.push(
                 ['_setAccount','<?php echo $yoast_ga_options["uastring"]; ?>'],
-                ['_trackEvent','comment']
+                ['_trackEvent','comment','submit']
             );
         });
     });    
