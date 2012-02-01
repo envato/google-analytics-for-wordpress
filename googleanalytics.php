@@ -4,7 +4,7 @@ Plugin Name: Google Analytics for WordPress
 Plugin URI: http://yoast.com/wordpress/google-analytics/#utm_source=wordpress&utm_medium=plugin&utm_campaign=wpgaplugin&utm_content=v420
 Description: This plugin makes it simple to add Google Analytics to your WordPress blog, adding lots of features, eg. custom variables and automatic clickout and download tracking. 
 Author: Joost de Valk
-Version: 4.2.3
+Version: 4.2.4
 Requires at least: 3.0
 Author URI: http://yoast.com/
 License: GPL
@@ -210,9 +210,10 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 				$options = $this->set_defaults();
 				$options['msg'] = "<div class=\"updated\"><p>".__('Google Analytics settings reset.')."</p></div>\n";
 			} elseif ( isset($_POST['submit']) && isset($_POST['plugin']) && $_POST['plugin'] == 'google-analytics-for-wordpress') {
+			
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Google Analytics for WordPress options.'));
 				check_admin_referer('analyticspp-config');
-				
+
 				foreach (array('uastring', 'dlextensions', 'domainorurl','position','domain', 'customcode', 'ga_token', 'extraseurl', 'gajsurl', 'gfsubmiteventpv', 'trackprefix', 'ignore_userlevel', 'internallink', 'internallinklabel', 'primarycrossdomain', 'othercrossdomains') as $option_name) {
 					if (isset($_POST[$option_name]))
 						$options[$option_name] = $_POST[$option_name];
@@ -221,7 +222,7 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 				}
 				
 				foreach (array('extrase', 'trackoutbound', 'admintracking', 'trackadsense', 'allowanchor', 'allowlinker', 'allowhash', 'rsslinktagging', 'advancedsettings', 'trackregistration', 'theme_updated', 'cv_loggedin', 'cv_authorname', 'cv_category', 'cv_all_categories', 'cv_tags', 'cv_year', 'cv_post_type', 'outboundpageview', 'downloadspageview', 'trackcrossdomain','gajslocalhosting', 'manual_uastring', 'taggfsubmit', 'wpec_tracking', 'shopp_tracking', 'anonymizeip', 'trackcommentform', 'debug','firebuglite') as $option_name) {
-					if (isset($_POST[$option_name]) && $_POST[$option_name] != 'off')
+					if (isset($_POST[$option_name]) && $_POST[$option_name] == 'on')
 						$options[$option_name] = true;
 					else
 						$options[$option_name] = false;
@@ -240,20 +241,23 @@ if ( is_admin() && ( !defined('DOING_AJAX') || !DOING_AJAX ) && !class_exists( '
 						$options['primarycrossdomain'] = $origin["domain"];
 					}
 				}
-				
-				$cache = '';
-				if ( function_exists('w3tc_pgcache_flush') ) {
+
+				if ( function_exists('w3tc_pgcache_flush') )
 					w3tc_pgcache_flush();
+
+				if ( function_exists('w3tc_dbcache_flush') )
 					w3tc_dbcache_flush();
+					
+				if ( function_exists('w3tc_minify_flush') )
 					w3tc_minify_flush();
+
+				if ( function_exists('w3tc_objectcache_flush') )					
 					w3tc_objectcache_flush();
-					$cache = ' and <strong>W3TC Caches cleared</strong>';
-				} else if ( function_exists('wp_cache_clear_cache') ) {
+
+				if ( function_exists('wp_cache_clear_cache') )
 					wp_cache_clear_cache();
-					$cache = ' and <strong>WP Super Cache cleared</strong>';
-				}
 										
-				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics <strong>settings updated</strong>$cache.</p></div>\n";
+				$options['msg'] = "<div id=\"updatemessage\" class=\"updated fade\"><p>Google Analytics <strong>settings updated</strong>.</p></div>\n";
 				$options['msg'] .= "<script type=\"text/javascript\">setTimeout(function(){jQuery('#updatemessage').hide('slow');}, 3000);</script>";
 			}
 			update_option($this->optionname, $options);

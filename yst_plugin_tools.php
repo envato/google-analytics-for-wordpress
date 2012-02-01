@@ -84,7 +84,7 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		function checkbox($id) {
 			$options = get_option( $this->optionname );
 			$checked = false;
-			if ( isset($options[$id]) )
+			if ( isset($options[$id]) && $options[$id] == 1 )
 				$checked = true;
 			return '<input type="checkbox" id="'.$id.'" name="'.$id.'"'. checked($checked,true,false).'/>';
 		}
