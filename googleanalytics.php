@@ -41,7 +41,8 @@ if ( is_admin() && ( !defined( 'DOING_AJAX' ) || !DOING_AJAX ) && !class_exists(
 	require_once plugin_dir_path( __FILE__ ) . 'yst_plugin_tools.php';
 	require_once plugin_dir_path( __FILE__ ) . '/wp-gdata/wp-gdata.php';
 
-	if ( !isset( $options['tracking_popup'] ) )
+	global $wp_version;
+	if ( version_compare( $wp_version, '3.3', '>=' ) && !isset( $options['tracking_popup'] ) )
 		require_once plugin_dir_path( __FILE__ ) . 'class-pointer.php';
 
 	if ( isset( $options['yoast_tracking'] ) && ( 'on' == $options['yoast_tracking'] || true === $options['yoast_tracking'] ) )

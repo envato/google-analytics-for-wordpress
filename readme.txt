@@ -3,7 +3,7 @@ Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
-Tested up to: 3.3
+Tested up to: 3.4
 Stable tag: 4.2.5
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
