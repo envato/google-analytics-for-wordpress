@@ -199,6 +199,10 @@ if (!class_exists('Yoast_GA_Plugin_Admin')) {
 		function news() {
 			include_once(ABSPATH . WPINC . '/feed.php');
 			$rss = fetch_feed('http://feeds.feedburner.com/joostdevalk');
+			
+			if ( is_wp_error( $rss ) )
+				return false;
+				
 			$rss_items = $rss->get_items( 0, $rss->get_item_quantity(5) );
 			$content = '<ul>';
 			if ( !$rss_items ) {
