@@ -83,7 +83,6 @@ class GA_Pointer {
                 nonce: nonce
             }
             jQuery.post( ajaxurl, wpga_tracking_data, function( response ) {
-                alert( 'done: ' + input + response );
                 jQuery('#wp-pointer-0').remove();
             } );
         }

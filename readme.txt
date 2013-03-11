@@ -58,6 +58,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.3.1 =
+
+* Removes a left over JS alert.
+
 = 4.3 =
 
 * Major refactor of plugin code, to only load necessary code on front and backend.
