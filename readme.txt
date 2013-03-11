@@ -3,7 +3,7 @@ Contributors: joostdevalk
 Donate link: http://yoast.com/donate/
 Tags: analytics, google analytics, statistics, tracking, stats, google
 Requires at least: 2.8
-Tested up to: 3.4
+Tested up to: 3.5
 Stable tag: 4.2.8
 
 Track your WordPress site easily and with lots of metadata: views per author & category, automatic tracking of outbound clicks and pageviews.
@@ -57,6 +57,12 @@ This section describes how to install the plugin and get it working.
 1. Go to the options panel under the 'Settings' menu and add your Analytics account number and set the settings you want.
 
 == Changelog ==
+
+= 4.3 =
+
+* Major refactor of plugin code, to only load necessary code on front and backend.
+* Made entire plugin i18n ready.
+* Fixed Google Authentication process (thanks to [Jan Willem Eshuis](http://www.janwillemeshuis.nl/)).
 
 = 4.2.8 =
 

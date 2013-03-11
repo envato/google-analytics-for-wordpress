@@ -30,27 +30,27 @@ div.inside a:hover, div.inside a.rsswidget:hover {
 	text-decoration: underline;
 }
 div.inside ul li.rss {
-	list-style-image: url(images/rss.png);
+	list-style-image: url(../images/rss.png);
 }
 
 div.inside ul li.twitter {
-	list-style-image: url(images/twitter-icon.png);
+	list-style-image: url(../images/twitter-icon.png);
 }
 
 div.inside ul li.facebook {
-	list-style-image: url(images/facebook-icon.png);
+	list-style-image: url(../images/facebook-icon.png);
 }
 
 div.inside ul li.googleplus {
-	list-style-image: url(images/google-plus-icon.png);
+	list-style-image: url(../images/google-plus-icon.png);
 }
 
 div.inside ul li.email {
-	list-style-image: url(images/email_sub.png);
+	list-style-image: url(../images/email_sub.png);
 }
 
 div.inside ul li.yoast {
-	list-style-image: url(images/yoast-16x16.png); 
+	list-style-image: url(../images/yoast-16x16.png);
 }
 
 .text, .select {
