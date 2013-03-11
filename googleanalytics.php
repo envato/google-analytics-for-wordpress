@@ -28,9 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // This plugin was originally based on Rich Boakes' Analytics plugin: http://boakes.org/analytics
 
-define( 'GAWP_VERSION', '4.2.8' );
+define( "GAWP_VERSION", '4.2.8' );
 
-define( 'GAWP_URL', trailingslashit( plugin_dir_url( __FILE__ ) ) );
+define( "GAWP_URL", trailingslashit( plugin_dir_url( __FILE__ ) ) );
+
+define( "GAWP_PATH", plugin_dir_path( __FILE__ ) );
 
 if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
@@ -40,16 +42,16 @@ if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
 	$options = get_option( 'Yoast_Google_Analytics' );
 	if ( isset( $options['yoast_tracking'] ) && $options['yoast_tracking'] )
-		require_once plugin_dir_path( __FILE__ ) . 'inc/class-tracking.php';
+		require_once GAWP_PATH . 'inc/class-tracking.php';
 
 } else {
 	load_plugin_textdomain( 'gawp', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
-	require_once plugin_dir_path( __FILE__ ) . 'inc/functions.php';
+	require_once GAWP_PATH . 'inc/functions.php';
 
 	if ( is_admin() ) {
-		require_once plugin_dir_path( __FILE__ ) . 'admin/class-admin.php';
+		require_once GAWP_PATH . 'admin/class-admin.php';
 	} else {
-		require_once plugin_dir_path( __FILE__ ) . 'frontend/class-frontend.php';
+		require_once GAWP_PATH . 'frontend/class-frontend.php';
 	}
 }

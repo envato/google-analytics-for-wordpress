@@ -154,15 +154,6 @@ class GA_Admin extends Yoast_GA_Plugin_Admin {
 		return $contextual_help;
 	}
 
-	function toc( $modules ) {
-		$output = '<ul>';
-		foreach ( $modules as $module => $key ) {
-			$output .= '<li class="' . $key . '"><a href="#' . $key . '">' . $module . '</a></li>';
-		}
-		$output .= '</ul>';
-		return $output;
-	}
-
 	function save_settings() {
 		$options = get_option( $this->optionname );
 
@@ -256,13 +247,13 @@ class GA_Admin extends Yoast_GA_Plugin_Admin {
     <div class="wrap">
     <a href="http://yoast.com/">
         <div id="yoast-icon"
-             style="background: url(<?php echo $this->plugin_url; ?>../images/ga-icon-32x32.png) no-repeat;"
+             style="background: url('<?php echo GAWP_URL; ?>images/ga-icon-32x32.png') no-repeat;"
              class="icon32"><br/></div>
     </a>
 
     <h2><?php _e( "Google Analytics for WordPress Configuration", 'gawp' ) ?></h2>
 
-    <div class="postbox-container" style="width:65%;">
+    <div class="postbox-container" style="width:60%;">
     <div class="metabox-holder">
     <div class="meta-box-sortables">
     <form action="<?php echo $this->plugin_options_url(); ?>" method="post" id="analytics-conf">
@@ -326,15 +317,26 @@ class GA_Admin extends Yoast_GA_Plugin_Admin {
 				if ( !empty( $options['uastring'] ) )
 					$currentua = $options['uastring'];
 
-				foreach ( $arr['feed']['entry'] as $site ) {
-					if ( isset( $site['dxp:property']['1_attr']['value'] ) )
-						$ua = trim( $site['dxp:property']['1_attr']['value'] );
-					if ( isset( $site['dxp:property']['2_attr']['value'] ) )
-						$title = trim( $site['dxp:property']['2_attr']['value'] );
-					if ( !empty( $ua ) && !empty( $title ) )
-						$ga_accounts[$ua] = $title;
+				// Check whether the feed output is the new one, first set, or the old one, second set.
+				if ( $arr['feed']['link_attr']['href'] == 'https://www.googleapis.com/analytics/v2.4/management/accounts/~all/webproperties/~all/profiles' ) {
+					foreach ( $arr['feed']['entry'] as $site ) {
+						if ( isset( $site['dxp:property']['1_attr']['value'] ) )
+							$ua = trim( $site['dxp:property']['1_attr']['value'] );
+						if ( isset( $site['dxp:property']['2_attr']['value'] ) )
+							$title = trim( $site['dxp:property']['2_attr']['value'] );
+						if ( !empty( $ua ) && !empty( $title ) )
+							$ga_accounts[$ua] = $title;
+					}
+				} else if ( $arr['feed']['link_attr']['href'] == 'https://www.google.com/analytics/feeds/accounts/default' ) {
+					foreach ( $arr['feed']['entry'] as $site ) {
+						if ( isset( $site['dxp:property']['3_attr']['value'] ) )
+							$ua = trim( $site['dxp:property']['3_attr']['value'] );
+						if ( isset( $site['dxp:property']['1_attr']['value'] ) )
+							$title = trim( $site['dxp:property']['1_attr']['value'] );
+						if ( !empty( $ua ) && !empty( $title ) )
+							$ga_accounts[$ua] = $title;
+					}
 				}
-
 				asort( $ga_accounts );
 
 				$select = '<select class="chzn-select" name="uastring" data-placeholder="' . __( 'Please select the correct Analytics Account', 'gawp' ) . '"  id="ga_account">';
@@ -676,24 +678,20 @@ class GA_Admin extends Yoast_GA_Plugin_Admin {
     </div>
     </div>
     </div>
-    <div class="postbox-container side" style="width:20%;">
+    <div class="postbox-container side" style="width:261px;">
         <div class="metabox-holder">
             <div class="meta-box-sortables">
 				<?php
-				$this->postbox( 'donate', '<strong class="red">' . __( 'Help Spread the Word!', 'gawp' ) . '</strong>', '<p><strong>' . __( 'Want to help make this plugin even better? All donations are used to improve this plugin, so donate $20, $50 or $100 now!' ) . '</strong></p><form style="width:160px;margin:0 auto;" action="https://www.paypal.com/cgi-bin/webscr" method="post">
-						<input type="hidden" name="cmd" value="_s-xclick">
-						<input type="hidden" name="hosted_button_id" value="FW9FK4EBZ9FVJ">
-						<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit">
-						<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
-						</form>'
-					. '<p>' . __( 'Or you could:', 'gawp' ) . '</p>'
-					. '<ul>'
-					. '<li><a href="http://wordpress.org/extend/plugins/google-analytics-for-wordpress/">' . __( 'Rate the plugin 5★ on WordPress.org', 'gawp' ) . '</a></li>'
-					. '<li><a href="http://wordpress.org/tags/google-analytics-for-wordpress">' . __( 'Help out other users in the forums', 'gawp' ) . '</a></li>'
-					. '<li>' . sprintf( __( 'Blog about it & link to the %1$splugin page%2$s' ), '<a href="http://yoast.com/wordpress/google-analytics/#utm_source=wpadmin&utm_medium=sidebanner&utm_term=link&utm_campaign=wpgaplugin">', '</a>' ) . '</li>' );
+				$this->postbox( 'spread', '<strong>' . __( 'Help Spread the Word!', 'gawp' ) . '</strong>',
+					'<ul>'
+						. '<li><a href="http://wordpress.org/extend/plugins/google-analytics-for-wordpress/">' . __( 'Rate the plugin 5★ on WordPress.org', 'gawp' ) . '</a></li>'
+						. '<li><a href="http://wordpress.org/tags/google-analytics-for-wordpress">' . __( 'Help out other users in the forums', 'gawp' ) . '</a></li>'
+						. '<li>' . sprintf( __( 'Blog about it & link to the %1$splugin page%2$s' ), '<a href="http://yoast.com/wordpress/google-analytics/#utm_source=wpadmin&utm_medium=sidebanner&utm_term=link&utm_campaign=wpgaplugin">', '</a>' ) . '</li></ul>' );
 				?>
-                <a target="_blank" href="https://yoast.com/hire-us/website-review/#utm_source=gawp-config&utm_medium=banner&utm_campaign=website-review-banner"><img src="<?php echo GAWP_URL; ?>/images/banner-website-review.png" alt="Website Review banner"/></a>
-			</div>
+                <a target="_blank"
+                   href="https://yoast.com/hire-us/website-review/#utm_source=gawp-config&utm_medium=banner&utm_campaign=website-review-banner"><img
+                        src="<?php echo GAWP_URL; ?>images/banner-website-review.png" alt="Website Review banner"/></a>
+            </div>
             <br/><br/><br/>
         </div>
     </div>
