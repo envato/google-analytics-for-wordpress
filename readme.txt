@@ -58,6 +58,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 4.3.2 =
+
+* Bugfix: Google Analytics crappy API output is different when you have a single GA account versus multiple. Annoying, but fixed now.
+ 
 = 4.3.1 =
 
 * Removes a left over JS alert.

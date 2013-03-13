@@ -317,54 +317,69 @@ class GA_Admin extends Yoast_GA_Plugin_Admin {
 				if ( !empty( $options['uastring'] ) )
 					$currentua = $options['uastring'];
 
-				// Check whether the feed output is the new one, first set, or the old one, second set.
-				if ( $arr['feed']['link_attr']['href'] == 'https://www.googleapis.com/analytics/v2.4/management/accounts/~all/webproperties/~all/profiles' ) {
-					foreach ( $arr['feed']['entry'] as $site ) {
-						if ( isset( $site['dxp:property']['1_attr']['value'] ) )
-							$ua = trim( $site['dxp:property']['1_attr']['value'] );
-						if ( isset( $site['dxp:property']['2_attr']['value'] ) )
-							$title = trim( $site['dxp:property']['2_attr']['value'] );
-						if ( !empty( $ua ) && !empty( $title ) )
-							$ga_accounts[$ua] = $title;
+				if ( isset( $arr['feed']['entry'] ) && is_array( $arr['feed']['entry'] ) ) {
+					// Check whether the feed output is the new one, first set, or the old one, second set.
+					if ( $arr['feed']['link_attr']['href'] == 'https://www.googleapis.com/analytics/v2.4/management/accounts/~all/webproperties/~all/profiles' ) {
+						if ( isset( $arr['feed']['entry']['id'] ) ) {
+							// Single account in the feed
+							if ( isset( $arr['feed']['entry']['dxp:property']['1_attr']['value'] ) )
+								$ua = trim( $arr['feed']['entry']['dxp:property']['1_attr']['value'] );
+							if ( isset( $arr['feed']['entry']['dxp:property']['2_attr']['value'] ) )
+								$title = trim( $arr['feed']['entry']['dxp:property']['2_attr']['value'] );
+							if ( !empty( $ua ) && !empty( $title ) )
+								$ga_accounts[$ua] = $title;
+						} else {
+							// Multiple accounts in the feed
+							foreach ( $arr['feed']['entry'] as $site ) {
+								if ( isset( $site['dxp:property']['1_attr']['value'] ) )
+									$ua = trim( $site['dxp:property']['1_attr']['value'] );
+								if ( isset( $site['dxp:property']['2_attr']['value'] ) )
+									$title = trim( $site['dxp:property']['2_attr']['value'] );
+								if ( !empty( $ua ) && !empty( $title ) )
+									$ga_accounts[$ua] = $title;
+							}
+						}
+					} else if ( $arr['feed']['link_attr']['href'] == 'https://www.google.com/analytics/feeds/accounts/default' ) {
+						foreach ( $arr['feed']['entry'] as $site ) {
+							if ( isset( $site['dxp:property']['3_attr']['value'] ) )
+								$ua = trim( $site['dxp:property']['3_attr']['value'] );
+							if ( isset( $site['dxp:property']['1_attr']['value'] ) )
+								$title = trim( $site['dxp:property']['1_attr']['value'] );
+							if ( !empty( $ua ) && !empty( $title ) )
+								$ga_accounts[$ua] = $title;
+						}
 					}
-				} else if ( $arr['feed']['link_attr']['href'] == 'https://www.google.com/analytics/feeds/accounts/default' ) {
-					foreach ( $arr['feed']['entry'] as $site ) {
-						if ( isset( $site['dxp:property']['3_attr']['value'] ) )
-							$ua = trim( $site['dxp:property']['3_attr']['value'] );
-						if ( isset( $site['dxp:property']['1_attr']['value'] ) )
-							$title = trim( $site['dxp:property']['1_attr']['value'] );
-						if ( !empty( $ua ) && !empty( $title ) )
-							$ga_accounts[$ua] = $title;
+					asort( $ga_accounts );
+
+					$select = '<select class="chzn-select" name="uastring" data-placeholder="' . __( 'Please select the correct Analytics Account', 'gawp' ) . '"  id="ga_account">';
+					$select .= "\t<option></option>\n";
+					foreach ( $ga_accounts as $ua => $title ) {
+						$sel = selected( $ua, $currentua, false );
+						$select .= "\t" . '<option ' . $sel . ' value="' . $ua . '">' . $title . ' - ' . $ua . '</option>' . "\n";
 					}
-				}
-				asort( $ga_accounts );
+					$select .= '</select>';
 
-				$select = '<select class="chzn-select" name="uastring" data-placeholder="' . __( 'Please select the correct Analytics Account', 'gawp' ) . '"  id="ga_account">';
-				$select .= "\t<option></option>\n";
-				foreach ( $ga_accounts as $ua => $title ) {
-					$sel = selected( $ua, $currentua, false );
-					$select .= "\t" . '<option ' . $sel . ' value="' . $ua . '">' . $title . ' - ' . $ua . '</option>' . "\n";
-				}
-				$select .= '</select>';
+					$line = '<input type="hidden" name="ga_token" value="' . $token . '"/>';
+					$line .= __( 'Please select the correct Analytics account to track:', 'gawp' ) . '<br/>';
+					$line .= '<table class="form_table">';
+					$line .= '<tr><th>' . __( 'Profile', 'gawp' ) . ':</th><td>' . $select . '</td></tr>';
+					$line .= '</table>';
 
-				$line = '<input type="hidden" name="ga_token" value="' . $token . '"/>';
-				$line .= __( 'Please select the correct Analytics account to track:', 'gawp' ) . '<br/>';
-				$line .= '<table class="form_table">';
-				$line .= '<tr><th>' . __( 'Profile', 'gawp' ) . ':</th><td>' . $select . '</td></tr>';
-				$line .= '</table>';
+					$try = 1;
+					if ( isset( $_GET['try'] ) )
+						$try = $_GET['try'] + 1;
 
-				$try = 1;
-				if ( isset( $_GET['try'] ) )
-					$try = $_GET['try'] + 1;
-
-				if ( count( $ga_accounts ) == 0 && $try < 4 && isset( $_GET['token'] ) ) {
-					$line .= '<script type="text/javascript">
+					if ( count( $ga_accounts ) == 0 && $try < 4 && isset( $_GET['token'] ) ) {
+						$line .= '<script type="text/javascript">
 													window.location="' . $this->plugin_options_url() . '&switchua=1&token=' . $token . '&try=' . $try . '";
 												</script>';
+					}
+					$line .= __( 'Please note that if you have several profiles of the same website, it doesn\'t matter which profile you select, and in fact another profile might show as selected later. You can check whether they\'re profiles for the same site by checking if they have the same UA code. If that\'s true, tracking will be correct.', 'gawp' );
+					$line .= '<br/><br/>';
+					$line .= __( 'Refresh this listing or switch to another account: ', 'gawp' );
+				} else {
+					$line = __( 'Unfortunately, an error occurred while connecting to Google, please try again:', 'gawp' );
 				}
-				$line .= __( 'Please note that if you have several profiles of the same website, it doesn\'t matter which profile you select, and in fact another profile might show as selected later. You can check whether they\'re profiles for the same site by checking if they have the same UA code. If that\'s true, tracking will be correct.', 'gawp' );
-				$line .= '<br/><br/>';
-				$line .= __( 'Refresh this listing or switch to another account: ', 'gawp' );
 			} else {
 				$line = __( 'Unfortunately, an error occurred while connecting to Google, please try again:', 'gawp' );
 			}
