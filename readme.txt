@@ -58,6 +58,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= Trunk = 
+
+* Fixed a possible null return of content on exceeding `pcre.backtrack_limit`. Props Dave Scott.
+
 = 4.3.3 =
 
 * Fix a possible fatal error in tracking.

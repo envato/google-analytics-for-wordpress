@@ -427,7 +427,9 @@ if ( !class_exists( 'GA_Filter' ) ) {
 
 			if ( !is_feed() ) {
 				static $anchorPattern = '/<a (.*?)href=[\'\"](.*?)\/\/([^\'\"]+?)[\'\"](.*?)>(.*?)<\/a>/i';
-				$text = preg_replace_callback( $anchorPattern, array( $this, 'parse_article_link' ), $text );
+				$replacedText = preg_replace_callback( $anchorPattern, array( $this, 'parse_article_link' ), $text );
+				if( $replacedText !== null ) 
+					$text = $replacedText;
 			}
 			return $text;
 		}
