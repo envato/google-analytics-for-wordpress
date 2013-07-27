@@ -177,7 +177,7 @@ if ( !class_exists( 'GA_Filter' ) ) {
 						}
 					}
 					if ( $this->options['cv_authorname'] ) {
-						$push[] = "'_setCustomVar',$customvarslot,'author','" . $this->str_clean( get_the_author_meta( 'display_name', $wp_query->post->post_author ) ) . "',3";
+						$push[] = "'_setCustomVar',$customvarslot,'author','" . $this->str_clean( addslashes( get_the_author_meta( 'display_name', $wp_query->post->post_author ) ) ) . "',3";
 						$customvarslot++;
 					}
 					if ( $this->options['cv_tags'] ) {
